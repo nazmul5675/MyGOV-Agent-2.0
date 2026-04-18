@@ -1,37 +1,59 @@
 # MyGOV Agent 2.0
 
-Premium GovTech web application scaffold for citizen case intake, tracking, and protected admin review. The product direction follows a Citizens First model: one trusted entry point for multimodal case submission, structured intake, unified tracking, and role-aware back-office decision support.
+MyGOV Agent 2.0 is a premium GovTech web application built for hackathon delivery with production-style structure. It gives citizens one trusted entry point for multimodal case intake and unified tracking, while giving admins a protected review workspace with cleaner evidence context, structured summaries, and clearer decision controls.
 
 ## Problem Statement
 
-Government digital experiences often fragment citizen requests across departments, channels, and follow-up loops. MyGOV Agent 2.0 provides a calmer, more trustworthy workflow:
+Citizen service journeys are often fragmented across portals, departments, and follow-up loops. That leads to duplicated submissions, slow routing, and unclear status visibility. MyGOV Agent 2.0 addresses that by combining:
 
-- Citizens submit a case through text, photo, document, or voice note.
-- The system structures intake into a clean case packet.
-- Citizens track status, reminders, and evidence in one place.
-- Admins review, route, request documents, and resolve cases from a protected workspace.
+- Multimodal intake for text, photo, document, and voice-note-first reporting
+- Structured case packets that are easier to route and review
+- Clear citizen tracking with reminders and timeline updates
+- Protected admin workflows for review, routing, and resolution
 
-## User Roles
+## Roles
 
 - `citizen`
 - `admin`
 
-Admin includes officer-style review capabilities. All internal review pages live under `/admin`.
+Admin includes officer capabilities. All internal review surfaces are protected under `/admin`.
 
-## Key Features
+## Major Features
 
-- Next.js App Router architecture with server-first route protection
-- Premium landing page and reusable design system inspired by the provided starter ZIP
-- Firebase Authentication scaffold with secure session-cookie route handlers
-- Demo login mode for judges when Firebase secrets are not configured yet
-- Citizen dashboard, case intake, upload progress UI, and case detail tracking
-- Admin queue, case review surface, evidence previews, notes, and status actions
-- AI-ready intake scaffold with citizen summary, admin summary, urgency, missing docs, and structured JSON
-- Firestore and Storage rules starter files for RBAC-minded security setup
+- Premium landing page with a polished civic-tech visual system
+- Firebase email/password authentication
+- Secure server-side session cookies for authenticated app routes
+- Role-based access protection for citizen and admin experiences
+- Citizen dashboard, notifications, profile, case intake, and case tracking
+- Admin queue with search and status filters
+- Admin decision center with evidence, summaries, notes, and action controls
+- AI-ready intake scaffold with category, urgency, missing-doc checklist, and summaries
+- Firestore and Storage rules starter files reflecting role-aware access patterns
+
+## Architecture Summary
+
+- `src/app/(marketing)`
+  Public landing experience
+- `src/app/(auth)`
+  Login experience
+- `src/app/(app)`
+  Protected product routes for citizens and admins
+- `src/app/api/auth`
+  Session login and logout handlers
+- `src/components/common`
+  Shared UI such as status badges, timeline, cards, and headers
+- `src/components/forms`
+  Auth, intake, and admin review interactions
+- `src/components/layout`
+  Marketing shell, app frame, sidebar, topbar, and mobile nav
+- `src/lib/auth`
+  Session reading and role enforcement helpers
+- `src/lib/firebase`
+  Firebase client, admin, and role helpers
 
 ## Stack
 
-- Next.js 16
+- Next.js 16 App Router
 - React 19
 - TypeScript
 - Tailwind CSS v4
@@ -47,61 +69,47 @@ Admin includes officer-style review capabilities. All internal review pages live
 - class-variance-authority
 - Sonner
 
-## Architecture Summary
+## Environment Setup
 
-- `src/app/(marketing)`:
-  Public landing experience
-- `src/app/(auth)`:
-  Login flow
-- `src/app/(app)`:
-  Protected citizen and admin product routes
-- `src/app/api/auth/*`:
-  Session creation and logout handlers
-- `src/components/*`:
-  Reusable UI system and role-aware shells
-- `src/lib/*`:
-  Auth, Firebase, demo data, and shared types
+Use `.env.example` as the committed reference and copy `.env.local.example` to `.env.local` for local development.
 
-## Setup
+Required variables:
 
-1. Install dependencies:
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+- `SESSION_COOKIE_NAME`
+- `NEXT_PUBLIC_APP_URL`
 
-```bash
-npm install
+How to fill them:
+
+1. Open Firebase Console.
+2. Go to Project settings -> General -> Your apps.
+3. Copy the web app config values into the `NEXT_PUBLIC_*` variables.
+4. Go to Project settings -> Service accounts.
+5. Generate or use an existing service account and copy the project id, client email, and private key into the `FIREBASE_*` variables.
+6. Keep the private key wrapped in quotes and preserve `\n` line breaks as shown in `.env.local.example`.
+7. Set `NEXT_PUBLIC_APP_URL` to `http://localhost:3000` locally and to your deployed HTTPS origin in production.
+
+No secrets are hardcoded in the application source. Firebase config is read from environment variables in `src/lib/firebase`.
+
+## Firebase Setup
+
+1. Enable Email/Password sign-in in Firebase Authentication.
+2. Create Firestore user documents in `users/{uid}` with at least:
+
+```json
+{
+  "name": "Aisyah Rahman",
+  "role": "citizen"
+}
 ```
-
-2. Copy environment values:
-
-```bash
-cp .env.local.example .env.local
-```
-
-3. Add Firebase web config and Firebase Admin secrets.
-
-4. Run the app:
-
-```bash
-npm run dev
-```
-
-5. Open `http://localhost:3000`.
-
-## Environment Variables
-
-See `.env.example` and `.env.local.example`.
-
-Required groups:
-
-- Next public Firebase config
-- Firebase Admin service account config
-- `SESSION_SECRET`
-- cookie naming
-- app URL
-
-## Firebase Setup Notes
-
-- Enable Email/Password in Firebase Authentication.
-- Create `users/{uid}` documents in Firestore with at least:
 
 ```json
 {
@@ -110,65 +118,62 @@ Required groups:
 }
 ```
 
-- Apply `firestore.rules` and `storage.rules` after adapting them to your project.
-- `src/app/api/auth/login/route.ts` exchanges an ID token for a secure session cookie.
+3. Optionally mirror the role into Firebase custom claims for faster downstream rule checks.
+4. Apply `firestore.rules` and `storage.rules`.
+5. Add matching test accounts in Firebase Authentication.
 
-## Scripts
+## Local Development
 
-- `npm run dev`
-- `npm run build`
-- `npm run start`
-- `npm run lint`
+```bash
+npm install
+npm run dev
+```
 
-## Folder Structure
+Open `http://localhost:3000`.
 
-```text
-src/
-  app/
-    (marketing)/
-    (auth)/
-    (app)/
-    api/auth/
-  components/
-    common/
-    forms/
-    layout/
-    providers/
-    ui/
-  lib/
-    auth/
-    firebase/
+Quality checks used in this repo:
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
 ```
 
 ## Demo Credentials
 
-Demo mode is available from `/login` without Firebase setup.
+Use real Firebase Authentication users for demos.
 
-- Citizen placeholder: `citizen@demo.mygov.my`
-- Admin placeholder: `admin@demo.mygov.my`
-- Password placeholder: `Demo123!`
+- Citizen account placeholder: `citizen@your-project.test`
+- Admin account placeholder: `admin@your-project.test`
+
+Role access is determined by Firebase custom claims or Firestore `users/{uid}.role`.
 
 ## AI Usage Disclosure
 
-This MVP does not yet call Gemini directly. It prepares the product for later AI integration by generating structured intake fields, missing-document scaffolds, citizen summary content, and admin summary content in a clean extension point.
-
-## Roadmap
-
-- Firestore-backed mutations for case create/review actions
-- Real Firebase Storage uploads with resumable progress and metadata persistence
-- Google sign-in
-- Notification center backed by Firestore and FCM
-- Gemini intake summarization and document gap detection
-- Admin user management and settings pages
+The current build does not directly call Gemini yet. It prepares the app for future AI integration by structuring intake data, citizen summaries, admin summaries, urgency, and missing-document scaffolds so a later AI layer can plug in cleanly.
 
 ## Deployment Notes
 
-- Vercel is a practical deployment target for the frontend.
-- Add Firebase Admin secrets in project environment settings.
-- Set `NEXT_PUBLIC_APP_URL` to the deployed origin.
-- Use HTTPS in production so secure cookies work correctly.
+- Vercel is a practical target for the Next.js frontend.
+- Add all Firebase Admin and client variables in deployment environment settings.
+- Use HTTPS in production so session cookies behave securely.
+- Make sure the deployed domain is added to Firebase Authentication authorized domains.
 
-## Build Progress
+## Git Workflow Notes
+
+- The repo now tracks `main` on GitHub.
+- Each completed milestone is committed with a meaningful message and pushed immediately.
+- Validation is run before milestone commits whenever changes affect the shipped app.
+
+## Screenshots
+
+- `docs/screenshots/landing-page.png` - placeholder
+- `docs/screenshots/citizen-dashboard.png` - placeholder
+- `docs/screenshots/create-case-flow.png` - placeholder
+- `docs/screenshots/admin-queue.png` - placeholder
+- `docs/screenshots/admin-review.png` - placeholder
+
+## Current Milestones
 
 - `chore: initialize next.js app shell`
 - `feat: add auth, RBAC, and core citizen-admin app flows`

@@ -1,22 +1,30 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 
-import { getAdminAuth } from "@/lib/firebase/admin";
+import { getAdminAuth, getUserRole } from "@/lib/firebase/admin";
 import { sessionCookieName } from "@/lib/constants";
-
-const schema = z.object({
-  idToken: z.string().min(10),
-});
+import { sessionExchangeSchema } from "@/lib/validation/auth";
 
 export async function POST(request: Request) {
-  const body = schema.parse(await request.json());
+  const body = sessionExchangeSchema.parse(await request.json());
   const adminAuth = getAdminAuth();
 
   if (!adminAuth) {
     return NextResponse.json(
-      { error: "Firebase Admin is not configured. Use demo login until secrets are added." },
+      { error: "Firebase Admin is not configured. Add the server credentials first." },
       { status: 400 }
+    );
+  }
+
+  const decoded = await adminAuth.verifyIdToken(body.idToken, true);
+  const roleFromClaims =
+    typeof decoded.role === "string" ? decoded.role : null;
+  const role = roleFromClaims || (await getUserRole(decoded.uid)) || "citizen";
+
+  if (role !== "citizen" && role !== "admin") {
+    return NextResponse.json(
+      { error: "This account does not have an allowed application role." },
+      { status: 403 }
     );
   }
 
@@ -32,5 +40,5 @@ export async function POST(request: Request) {
     maxAge: expiresIn / 1000,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, role });
 }

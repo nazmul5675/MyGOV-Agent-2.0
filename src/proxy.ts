@@ -1,11 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import {
-  demoCookieName,
-  protectedPrefixes,
-  sessionCookieName,
-} from "@/lib/constants";
+import { protectedPrefixes, sessionCookieName } from "@/lib/constants";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -13,8 +9,7 @@ export function proxy(request: NextRequest) {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 
-  const hasSession =
-    request.cookies.has(demoCookieName) || request.cookies.has(sessionCookieName);
+  const hasSession = request.cookies.has(sessionCookieName);
 
   if (isProtected && !hasSession) {
     const loginUrl = new URL("/login", request.url);

@@ -1,10 +1,14 @@
+import { readSession } from "@/lib/auth/session";
 import Link from "next/link";
 
 import { LogoMark } from "@/components/common/logo-mark";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function MarketingHeader() {
+export async function MarketingHeader() {
+  const session = await readSession();
+  const workspaceHref = session?.role === "admin" ? "/admin" : "/dashboard";
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/40 bg-background/80 backdrop-blur-2xl">
       <div className="container-shell flex h-20 items-center justify-between gap-6">
@@ -36,19 +40,19 @@ export function MarketingHeader() {
         </nav>
         <div className="flex items-center gap-3">
           <Link
-            href="/login"
+            href={session ? workspaceHref : "/login"}
             className={cn(
               buttonVariants({ variant: "outline", size: "lg" }),
               "rounded-full px-5"
             )}
           >
-            Login
+            {session ? "Open workspace" : "Login"}
           </Link>
           <Link
-            href="/cases/new"
+            href={session ? workspaceHref : "/login"}
             className={cn(buttonVariants({ size: "lg" }), "rounded-full px-5")}
           >
-            Start a case
+            {session ? "Continue" : "Start a case"}
           </Link>
         </div>
       </div>

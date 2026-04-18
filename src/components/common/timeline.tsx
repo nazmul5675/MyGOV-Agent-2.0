@@ -17,11 +17,12 @@ export function Timeline({ events }: { events: CaseEvent[] }) {
         const Icon = iconMap[event.type];
 
         return (
-          <li key={event.id} className="flex gap-4">
-            <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+          <li key={event.id} className="relative flex gap-4 pl-1">
+            <div className="absolute left-5 top-11 h-[calc(100%+8px)] w-px bg-gradient-to-b from-primary/18 to-transparent last:hidden" />
+            <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground shadow-[0_12px_26px_rgba(12,74,132,0.12)]">
               <Icon className="size-4" />
             </div>
-            <div className="surface-panel flex-1 p-5">
+            <div className="surface-panel flex-1 p-5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h4 className="font-semibold text-foreground">{event.title}</h4>
                 <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">

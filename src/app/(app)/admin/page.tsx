@@ -3,7 +3,7 @@ import { ClipboardCheck, Clock3, ShieldCheck } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/session";
 import { getAdminQueue, getAdminStats } from "@/lib/demo-data";
-import { CaseCard } from "@/components/common/case-card";
+import { AdminQueueBoard } from "@/components/admin/admin-queue-board";
 import { PageHeader } from "@/components/common/page-header";
 import { StatCard } from "@/components/common/stat-card";
 
@@ -35,11 +35,7 @@ export default async function AdminDashboardPage() {
           title="Priority queue"
           description="This queue demonstrates the premium admin experience inspired by your officer review reference: evidence-first, summary-rich, and action-ready."
         />
-        <div className="grid gap-5 xl:grid-cols-2">
-          {queue.map((item) => (
-            <CaseCard key={item.id} item={item} href={`/admin/cases/${item.id}`} />
-          ))}
-        </div>
+        <AdminQueueBoard cases={queue} />
       </section>
     </div>
   );

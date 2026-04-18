@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import {
+  CheckCircle2,
   FileAudio2,
   FileText,
   ImagePlus,
@@ -113,7 +114,7 @@ export function CaseIntakeForm() {
       toast.success("Case submitted", {
         description: `${values.title} is now being structured for routing.`,
       });
-      router.push("/cases/case-1001");
+      router.push("/cases/case-1001?submitted=1");
       router.refresh();
     });
   };
@@ -258,7 +259,12 @@ export function CaseIntakeForm() {
                         {item.kind.replace("_", " ")}
                       </p>
                     </div>
-                    <span className="font-semibold text-primary">{item.progress}%</span>
+                    <div className="flex items-center gap-2">
+                      {item.progress === 100 ? (
+                        <CheckCircle2 className="size-4 text-[#1d7d49]" />
+                      ) : null}
+                      <span className="font-semibold text-primary">{item.progress}%</span>
+                    </div>
                   </div>
                   <Progress value={item.progress} />
                 </motion.div>
@@ -309,6 +315,10 @@ export function CaseIntakeForm() {
                 <p className="text-sm leading-6 text-muted-foreground">{item}</p>
               </div>
             ))}
+            <div className="rounded-[20px] bg-accent/65 p-4 text-sm leading-6 text-accent-foreground">
+              Uploaded files will map cleanly into Firestore metadata and
+              Firebase Storage paths once the project credentials are connected.
+            </div>
             <Button
               type="submit"
               size="lg"

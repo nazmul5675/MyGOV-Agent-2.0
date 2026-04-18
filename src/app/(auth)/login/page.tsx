@@ -20,7 +20,8 @@ export default function LoginPage() {
             Sign in to the citizen or admin workspace.
           </h1>
           <p className="max-w-xl text-lg leading-8 text-muted-foreground">
-            Firebase email/password auth is wired for production setup, and protected demo sessions are available right now so the hackathon flow can be shown end-to-end.
+            Firebase Auth now drives the full login flow, and server-issued
+            session cookies enforce access on the citizen and admin workspaces.
           </p>
         </div>
         <div className="hero-gradient rounded-[32px] p-8 text-primary-foreground">
@@ -29,8 +30,8 @@ export default function LoginPage() {
           </p>
           <ul className="mt-4 space-y-3 text-sm leading-7 text-primary-foreground/80">
             <li>Secure cookie-based sessions for server-side checks</li>
-            <li>Role-aware admin protection under `/admin`</li>
-            <li>Clean Firebase Admin and client config boundaries</li>
+            <li>Role-aware admin protection under `/admin` and all subroutes</li>
+            <li>Clean Firebase Admin and client config boundaries with env-driven setup</li>
           </ul>
         </div>
         <Link href="/" className="text-sm font-semibold text-primary underline-offset-4 hover:underline">

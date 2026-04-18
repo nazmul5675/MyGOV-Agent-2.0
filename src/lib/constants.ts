@@ -1,6 +1,7 @@
 import type { CaseStatus, CaseType } from "@/lib/types";
 
 export const APP_NAME = "MyGOV Agent 2.0";
+export const USER_ROLES = ["citizen", "admin"] as const;
 
 export const protectedPrefixes = ["/dashboard", "/cases", "/admin"];
 
@@ -22,6 +23,3 @@ export const caseTypeLabelMap: Record<CaseType, string> = {
 
 export const sessionCookieName =
   process.env.SESSION_COOKIE_NAME || "mygov_session";
-
-export const demoCookieName =
-  process.env.DEMO_SESSION_COOKIE_NAME || "mygov_demo_session";

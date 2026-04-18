@@ -9,19 +9,54 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.role == "admin";
     }
 
+    function isAllowedRole() {
+      return isSignedIn() &&
+        (request.auth.token.role == "citizen" || request.auth.token.role == "admin");
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.role == "citizen";
+      allow update: if
+        (isOwner(userId) &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.role == "citizen") ||
+        isAdmin();
+      allow delete: if isAdmin();
     }
 
     match /cases/{caseId} {
-      allow read: if isAdmin() || (isSignedIn() && resource.data.citizenId == request.auth.uid);
-      allow create: if isSignedIn();
-      allow update: if isAdmin();
+      allow read: if isAdmin() || (isAllowedRole() && resource.data.citizenId == request.auth.uid);
+      allow create: if
+        isAllowedRole() &&
+        request.resource.data.citizenId == request.auth.uid &&
+        request.resource.data.status == "submitted";
+      allow update: if
+        (isAdmin()) ||
+        (isAllowedRole() &&
+          resource.data.citizenId == request.auth.uid &&
+          request.resource.data.citizenId == resource.data.citizenId &&
+          request.resource.data.status == resource.data.status);
+      allow delete: if isAdmin();
+    }
+
+    match /cases/{caseId}/events/{eventId} {
+      allow read: if isAdmin() || (isAllowedRole() &&
+        get(/databases/$(database)/documents/cases/$(caseId)).data.citizenId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
     }
 
     match /notifications/{notificationId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isAllowedRole() && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /subtasks/{subtaskId} {
+      allow read: if isAdmin();
       allow write: if isAdmin();
     }
   }

@@ -13,6 +13,8 @@ export function Topbar({
   session: AppSession;
   title: string;
 }) {
+  const noticeHref = session.role === "citizen" ? "/notifications" : "/admin";
+
   return (
     <div className="glass-panel flex items-center justify-between rounded-[28px] px-5 py-4">
       <div>
@@ -24,9 +26,12 @@ export function Topbar({
         </p>
       </div>
       <div className="flex items-center gap-3">
-        <button className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground transition-transform hover:-translate-y-0.5">
+        <Link
+          href={noticeHref}
+          className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(0,30,64,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+        >
           <Bell className="size-4" />
-        </button>
+        </Link>
         <div className="hidden items-center gap-3 rounded-full bg-white/70 px-2 py-2 sm:flex">
           <Avatar className="size-9">
             <AvatarFallback className="bg-primary text-primary-foreground">

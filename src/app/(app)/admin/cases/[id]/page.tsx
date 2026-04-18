@@ -58,8 +58,16 @@ export default async function AdminCaseDetailPage({
             </p>
             <div className="mt-4 space-y-3">
               {item.evidence.map((evidence) => (
-                <div key={evidence.id} className="rounded-[22px] bg-muted/80 p-4">
-                  <p className="font-semibold text-foreground">{evidence.name}</p>
+                <div
+                  key={evidence.id}
+                  className="rounded-[22px] bg-muted/80 p-4 transition-colors hover:bg-accent/55"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-semibold text-foreground">{evidence.name}</p>
+                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                      {evidence.status}
+                    </span>
+                  </div>
                   <p className="mt-2 text-sm text-muted-foreground">
                     {evidence.kind.replace("_", " ")} • {evidence.sizeLabel}
                   </p>
@@ -93,14 +101,18 @@ export default async function AdminCaseDetailPage({
                 <Layers3 className="size-4" />
                 <span className="text-sm font-semibold">Category</span>
               </div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.intake.category}</p>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {item.intake.category}
+              </p>
             </div>
             <div className="surface-panel p-5">
               <div className="flex items-center gap-2 text-primary">
                 <AlertTriangle className="size-4" />
                 <span className="text-sm font-semibold">Urgency</span>
               </div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.intake.urgency}</p>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {item.intake.urgency}
+              </p>
             </div>
             <div className="surface-panel p-5">
               <div className="flex items-center gap-2 text-primary">

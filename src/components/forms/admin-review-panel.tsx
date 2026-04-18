@@ -22,13 +22,18 @@ export function AdminReviewPanel() {
   );
 
   return (
-    <Card className="surface-panel">
+    <Card className="surface-panel top-6 xl:sticky">
       <CardHeader>
         <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
           Decision center
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="rounded-[22px] bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
+          Actions here are scaffolded for Firestore mutations. The interface is
+          organized to keep notes, routing, and decision states in one place for
+          officer-style review.
+        </div>
         <Textarea
           rows={6}
           className="rounded-3xl bg-white/70"
@@ -39,8 +44,10 @@ export function AdminReviewPanel() {
           {actions.map((action) => (
             <Button
               key={action}
-              variant={action === "Approve" || action === "Resolve" ? "default" : "outline"}
-              size="lg"
+              variant={
+                action === "Approve" || action === "Resolve" ? "default" : "outline"
+              }
+              size="default"
               className="justify-start rounded-2xl"
               onClick={() =>
                 toast.success(action, {

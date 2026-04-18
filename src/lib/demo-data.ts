@@ -12,13 +12,13 @@ const today = new Date("2026-04-18T10:00:00.000Z");
 export const demoUsers: Record<string, AppSession> = {
   "citizen-001": {
     uid: "citizen-001",
-    email: "citizen@demo.mygov.my",
+    email: "citizen@mygov.test",
     name: "Aisyah Rahman",
     role: "citizen",
   },
   "admin-001": {
     uid: "admin-001",
-    email: "admin@demo.mygov.my",
+    email: "admin@mygov.test",
     name: "Farid Hakim",
     role: "admin",
   },

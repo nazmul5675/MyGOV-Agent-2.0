@@ -15,7 +15,7 @@ export function CaseCard({
   href: string;
 }) {
   return (
-    <article className="surface-panel flex h-full flex-col gap-5 p-6 transition-transform duration-300 hover:-translate-y-1">
+    <article className="surface-panel interactive-lift flex h-full flex-col gap-5 p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-3">
           <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -54,8 +54,8 @@ export function CaseCard({
       <Link
         href={href}
         className={cn(
-          buttonVariants({ variant: "outline", size: "lg" }),
-          "mt-auto justify-between rounded-2xl px-4"
+          buttonVariants({ variant: "outline", size: "default" }),
+          "mt-auto justify-between px-4"
         )}
       >
         Open case

@@ -48,6 +48,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
   --shadow-ambient: 0 20px 48px rgba(6, 17, 38, 0.08);
   --shadow-soft: 0 18px 40px rgba(6, 17, 38, 0.05);
+  --shadow-lift: 0 24px 54px rgba(6, 17, 38, 0.1);
 }
 
 :root {
@@ -143,6 +144,9 @@
   h4 {
     font-family: var(--font-heading);
   }
+  ::selection {
+    @apply bg-primary/15 text-foreground;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -156,12 +160,12 @@
 }
 
 @utility glass-panel {
-  @apply border border-white/40 bg-white/75 backdrop-blur-2xl dark:border-white/10 dark:bg-white/6;
+  @apply border border-white/45 bg-white/78 backdrop-blur-2xl dark:border-white/10 dark:bg-white/6;
   box-shadow: var(--shadow-soft);
 }
 
 @utility surface-panel {
-  @apply rounded-3xl border border-border/60 bg-card/90 backdrop-blur-sm;
+  @apply rounded-3xl border border-border/60 bg-card/92 backdrop-blur-sm transition-[transform,box-shadow,border-color,background-color] duration-300;
   box-shadow: var(--shadow-soft);
 }
 
@@ -171,4 +175,9 @@
 
 @utility text-balance {
   text-wrap: balance;
+}
+
+@utility interactive-lift {
+  @apply transition-[transform,box-shadow,border-color,background-color] duration-300 hover:-translate-y-1;
+  box-shadow: var(--shadow-soft);
 }
