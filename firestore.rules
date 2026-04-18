@@ -34,6 +34,10 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /users/{userId}/assistantThreads/{threadId}/messages/{messageId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
     match /cases/{caseId} {
       allow read: if isAdmin() || (isAllowedRole() && resource.data.citizenId == request.auth.uid);
       allow create: if
@@ -53,6 +57,22 @@ service cloud.firestore {
       allow read: if isAdmin() || (isAllowedRole() &&
         get(/databases/$(database)/documents/cases/$(caseId)).data.citizenId == request.auth.uid);
       allow create, update, delete: if isAdmin();
+    }
+
+    match /cases/{caseId}/files/{fileId} {
+      allow read: if isAdmin() || (isAllowedRole() &&
+        get(/databases/$(database)/documents/cases/$(caseId)).data.citizenId == request.auth.uid);
+      allow create: if isAdmin() || (isAllowedRole() &&
+        get(/databases/$(database)/documents/cases/$(caseId)).data.citizenId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /cases/{caseId}/chat/{messageId} {
+      allow read: if isAdmin() || (isAllowedRole() &&
+        get(/databases/$(database)/documents/cases/$(caseId)).data.citizenId == request.auth.uid);
+      allow create: if isAdmin() || (isAllowedRole() &&
+        get(/databases/$(database)/documents/cases/$(caseId)).data.citizenId == request.auth.uid);
+      allow update, delete: if false;
     }
 
     match /cases/{caseId}/subtasks/{subtaskId} {

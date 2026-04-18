@@ -1,103 +1,144 @@
 # MyGOV Agent 2.0
 
-MyGOV Agent 2.0 is a premium GovTech case-management web app built for a Citizens First hackathon story. It gives citizens one trusted entry point to submit public complaints, flood-related requests, and reminder-driven service cases, while giving admins a protected review workspace to triage, update, and resolve the same live records.
+MyGOV Agent 2.0 is a live Firebase-backed GovTech platform built for a Citizens First hackathon demo. It combines AI-assisted guidance, structured case intake, document management, citizen-facing tracking, and an admin operations console in one polished Next.js application.
 
-The product is designed around one memorable hero flow:
+The core product story is simple and memorable:
 
-1. A citizen signs in securely.
-2. The citizen creates a real case with evidence uploaded to Firebase Storage.
-3. The app writes the case and timeline into Firestore.
-4. The citizen sees live tracking on the case detail page.
-5. An admin opens the same record, reviews evidence, updates status, and appends real timeline events.
+1. A citizen signs in or creates an account.
+2. The citizen uploads evidence, asks the embedded assistant what is missing, and submits a real case.
+3. Firestore stores the case, file metadata, notifications, chat history, and event timeline.
+4. The citizen tracks the same live case from the dashboard and case workspace.
+5. An admin opens the same record, reviews files, updates status, adds notes, and appends live events.
 
-## Why This Matters
+## Problem Statement
 
-Citizen service journeys are often fragmented across agencies, portals, and follow-up loops. That creates repeated submissions, unclear ownership, and poor status visibility.
+Citizen service journeys are often fragmented across multiple portals, agencies, and document requests. That creates:
 
-MyGOV Agent 2.0 addresses that with:
+- repeated submissions
+- unclear case ownership
+- poor visibility into status updates
+- weak document handling
+- avoidable friction for both citizens and officers
 
-- One no-wrong-door citizen intake surface
-- Structured case packets that are easier to route and review
-- Live tracking with evidence and timeline history
-- Protected admin review workflows with clearer decisions and follow-up actions
-- An AI-ready data model that can grow into intake extraction, routing, and grounded policy reasoning later
+MyGOV Agent 2.0 focuses on one trusted entry point with clearer guidance, cleaner evidence handling, and a more operational admin experience.
+
+## Why This Matters for GovTech
+
+- Citizens need a no-wrong-door experience, not a maze of forms.
+- Officers need structured intake, visible documents, and clearer next-step cues.
+- AI should support real workflows, not sit beside them as a novelty.
+- Document handling and case tracking should feel like one system.
 
 ## Roles
 
 - `citizen`
 - `admin`
 
-Admin includes officer-style behavior. There is no third role in the current app.
+Admin includes officer-style capabilities. There is no third role.
+
+## Product Pillars
+
+- AI helping chat box
+- File and document management
+- Citizen dashboard command center
+- Admin operations dashboard and review workspace
 
 ## Major Features
 
-- Premium landing page and marketing shell with calm civic-tech styling
+- Premium landing page and protected app shell
 - Firebase email/password authentication
-- Secure server-issued session cookies for authenticated routes
-- Strict RBAC with citizen and admin access only
-- Live Firestore-backed dashboards, profiles, notifications, queues, and case detail pages
-- Live Firebase Storage evidence uploads with progress and real failure states
-- Real case creation flow with initial event timeline writes
-- Real admin actions for review, routing, request-docs, notes, in-progress, resolve, and reject
-- Event timeline rendered from `cases/{caseId}/events/{eventId}`
-- Route-level loading, empty, and setup/error states
-- AI-ready intake structure for summaries, urgency, missing documents, and future model integration
+- Registration, forgot-password, password visibility toggles, and profile basics
+- Server-issued session cookies for protected routes
+- Strict RBAC for `citizen` and `admin`
+- Live Firestore-backed dashboards, profiles, notifications, cases, files, timelines, and chat messages
+- Firebase Storage uploads with progress, cleanup, and real failure states
+- Citizen case creation with real evidence metadata persistence
+- Case-linked and dashboard-level assistant chat scaffolding
+- Admin queue, decision actions, internal notes, and evidence review tools
+- Timeline rendering from `cases/{caseId}/events/{eventId}`
+- Loading, empty, setup-error, and success states across live routes
+
+## Hero Demo Flow
+
+1. Register a citizen account.
+2. Sign in and land on `/dashboard`.
+3. Ask the AI helper what documents are needed.
+4. Start `/cases/new`, upload evidence, and submit a live case.
+5. Open `/cases/[id]` to show files, reminders, assistant context, and timeline.
+6. Sign in as an admin and open `/admin`.
+7. Review the same case in `/admin/cases/[id]`.
+8. Mark files, add notes, request more documents, route, or resolve.
+9. Return to the citizen view and show the updated live history.
 
 ## Route Map
+
+### Public
 
 - `/`
   Marketing landing page
 - `/login`
   Firebase login
+- `/register`
+  Citizen registration
+- `/forgot-password`
+  Firebase password reset flow
+
+### Citizen
+
 - `/dashboard`
-  Citizen dashboard with live stats and cases
+  Live citizen command center with stats, files, reminders, activity, and AI help
 - `/cases/new`
-  Live case submission flow
+  Guided live case intake with uploads
 - `/cases/[id]`
-  Citizen case detail and real event timeline
+  Citizen case workspace with status, files, timeline, reminders, and assistant chat
 - `/notifications`
-  User notification center
+  Live notification center
 - `/profile`
-  User profile view
+  Firestore-backed profile basics and onboarding completion
+
+### Admin
+
 - `/admin`
-  Admin queue and dashboard
+  Operations dashboard with queue, file review signals, and recent activity
 - `/admin/cases/[id]`
-  Admin decision center for one case
+  Admin review workspace with evidence tools, status actions, notes, timeline, and assistant help
 
 ## Architecture Summary
 
 - `src/app/(marketing)`
-  Public landing experience
+  Public product and positioning shell
 - `src/app/(auth)`
-  Login experience
+  Login, register, forgot-password
 - `src/app/(app)`
   Protected citizen and admin routes
 - `src/app/api/auth`
-  Session login and logout handlers
+  Login, logout, registration session exchange
 - `src/app/api/cases`
-  Case creation and evidence mutation routes
+  Live case creation and evidence metadata APIs
 - `src/app/api/admin`
-  Admin mutation routes
+  Admin actions and file review APIs
+- `src/app/api/assistant`
+  Assistant chat message persistence and response scaffold
+- `src/components/auth`
+  Reusable auth shell and field helpers
 - `src/components/common`
-  Shared UI, skeletons, timeline, cards, headers, and live-data setup states
+  Shared dashboard, evidence, assistant, timeline, and skeleton components
+- `src/components/admin`
+  Queue and evidence-review admin surfaces
 - `src/components/forms`
-  Login, intake, and admin review interactions
-- `src/components/layout`
-  Marketing shell and app shell
+  Case intake, login, register, forgot-password, profile, and review forms
 - `src/lib/auth`
-  Session reading and role enforcement
+  Session reading and route protection
 - `src/lib/firebase`
-  Firebase client/admin setup and config checks
+  Firebase client/admin setup
 - `src/lib/repositories`
-  Live Firestore reads and writes
+  Firestore reads and writes
 - `src/lib/actions`
-  Client-facing API wrappers
+  Client API wrappers
 - `src/lib/validation`
-  Zod request validation
+  Zod schemas
 - `src/hooks`
-  Upload state and client workflow helpers
-- `src/types`
-  Shared app types
+  Live upload state handling
 - `scripts`
   Seed utility
 
@@ -116,25 +157,91 @@ Admin includes officer-style behavior. There is no third role in the current app
 - React Hook Form
 - Zod
 - Lucide React
-- class-variance-authority
 - Sonner
 
-## Data Model
+## Live Data Model
 
-Primary live collections:
+Primary collections and subcollections:
 
 - `users/{uid}`
 - `users/{uid}/notifications/{notificationId}`
+- `users/{uid}/assistantThreads/dashboard/messages/{messageId}`
 - `cases/{caseId}`
 - `cases/{caseId}/events/{eventId}`
+- `cases/{caseId}/files/{fileId}`
+- `cases/{caseId}/chat/{messageId}`
 - `cases/{caseId}/subtasks/{subtaskId}` reserved for future use
 
-Notes:
+### Auth Fields vs Profile Fields
 
-- Citizen dashboards are computed from the user’s live case records.
-- Case detail pages read the main case document plus the `events` subcollection.
-- Notifications are stored under each user document.
-- Evidence metadata is stored on the case document and points to Firebase Storage objects.
+Firebase Auth stores only authentication credentials:
+
+- email
+- password
+
+Firestore `users/{uid}` stores product profile data:
+
+- `uid`
+- `fullName`
+- `email`
+- `role`
+- `dateOfBirth`
+- `phoneNumber`
+- `addressText`
+- `createdAt`
+- `updatedAt`
+
+`dateOfBirth` is stored instead of raw age because age changes over time and would become stale.
+
+### Case Shape
+
+Case documents currently include:
+
+- reference
+- title
+- type
+- status
+- location
+- summary
+- citizen identity fields
+- progress
+- reminders
+- intake summaries
+- latest internal note
+
+### File Metadata Shape
+
+File records and mirrored evidence summaries include fields such as:
+
+- `id`
+- `caseId`
+- `ownerUid`
+- `storagePath`
+- `name`
+- `kind`
+- `contentType`
+- `sizeBytes`
+- `uploadedAt`
+- `status`
+- `category`
+- `notes`
+
+## AI-Assisted Workflow Shape
+
+The current assistant is intentionally practical and transparent:
+
+- dashboard-level assistant chat persists to Firestore
+- case-linked assistant chat persists to Firestore
+- responses are scaffolded and context-aware
+- the UI and data model are ready for future model integration
+
+Planned integration path:
+
+- Gemini 2.5 Flash-Lite for intake extraction and lightweight guidance
+- Gemini 2.5 Flash for reasoning and summaries
+- Document AI for document extraction
+- Maps/Geocoding for location normalization
+- RAG for grounded policy responses
 
 ## Environment Setup
 
@@ -155,7 +262,6 @@ Required server variables:
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
-- `FIREBASE_STORAGE_BUCKET`
 - `SESSION_COOKIE_NAME`
 
 How to fill them:
@@ -164,51 +270,53 @@ How to fill them:
 2. Go to Project settings -> General -> Your apps.
 3. Copy the Firebase web app config into the `NEXT_PUBLIC_*` variables.
 4. Go to Project settings -> Service accounts.
-5. Use a Firebase Admin service account for `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY`.
-6. Keep `FIREBASE_PRIVATE_KEY` wrapped in quotes and preserve `\n` line breaks exactly.
-7. Set `NEXT_PUBLIC_APP_URL` to `http://localhost:3000` locally and your deployed HTTPS origin in production.
+5. Copy the service account `project_id`, `client_email`, and `private_key`.
+6. Keep `FIREBASE_PRIVATE_KEY` wrapped in quotes and preserve `\n` line breaks.
+7. Set `NEXT_PUBLIC_APP_URL` to `http://localhost:3000` locally.
 
 Reference files:
 
 - `.env.example`
 - `.env.local.example`
 
-## Firebase Setup
+## Firebase Console Setup
 
 1. Enable Email/Password sign-in in Firebase Authentication.
-2. Enable the Cloud Firestore API for the project.
-3. Create the Firebase Storage bucket referenced by `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`.
-4. Create Firestore user documents in `users/{uid}` with at least:
+2. Enable the Cloud Firestore API.
+3. Create the Firebase Storage bucket referenced by the web config.
+4. Add real Firebase Auth users.
+5. Ensure matching `users/{uid}` docs exist with:
 
 ```json
 {
-  "name": "Aisyah Rahman",
+  "fullName": "Aisyah Rahman",
+  "email": "citizen@example.com",
   "role": "citizen"
 }
 ```
 
 ```json
 {
-  "name": "Farid Hakim",
+  "fullName": "Farid Hakim",
+  "email": "admin@example.com",
   "role": "admin"
 }
 ```
 
-5. Create matching Firebase Authentication users for those accounts.
-6. Optionally mirror the role into Firebase custom claims for faster downstream checks.
+6. Optionally mirror the role into Firebase custom claims.
 7. Deploy:
    - `firestore.rules`
    - `storage.rules`
    - `firestore.indexes.json`
 
-## Current Firebase Console Notes
+## Important Live Setup Notes
 
-During live verification against the configured project, two setup blockers were found:
+The app no longer silently falls back to demo data. If Firebase services are unavailable, the UI now shows explicit setup or error states.
 
-- Cloud Firestore API is disabled for `mygov-d48ef`
-- The configured Storage bucket does not currently exist
+During live verification against the configured Firebase project, these console blockers were found:
 
-The app now fails honestly with setup/error states instead of silently showing demo data when those services are unavailable.
+- Cloud Firestore API was disabled for `mygov-d48ef`
+- The configured Storage bucket did not yet exist
 
 ## Local Development
 
@@ -232,7 +340,7 @@ npm run seed
 
 ## Validation
 
-The app is validated with:
+Run after each major milestone:
 
 ```bash
 npm run lint
@@ -240,118 +348,89 @@ npm run typecheck
 npm run build
 ```
 
-Note:
+Note: `npm run typecheck` may depend on Next-generated route types in `.next/types`, so a recent `next build` or `next dev` keeps that stable.
 
-- `npm run typecheck` depends on Next’s generated route types being present in `.next/types`
-- In normal workflow this is fine after a build or dev run
+## File and Storage Notes
 
-## Firestore and Storage Notes
+- Files are uploaded to Firebase Storage
+- File metadata is stored in Firestore
+- Upload failures do not pretend success
+- Admin file review writes back to Firestore and appends case events
+- Citizens and admins see the same live evidence trail from different surfaces
 
-- Firestore is the source of truth for users, cases, timelines, admin actions, and notifications
-- Storage is the source of truth for uploaded evidence files
-- The app no longer silently falls back to runtime demo data
-- Upload failure does not pretend success
-- Admin actions append live case events and write live user notifications
+## Registration and Account Onboarding
 
-## Demo Flow
+The auth experience now supports:
 
-Recommended hackathon demo:
+- citizen registration
+- secure login
+- forgot password
+- password visibility toggles
+- profile completion on `/profile`
 
-1. Sign in as a citizen.
-2. Create a flood relief or public complaint case.
-3. Upload one or more evidence files.
-4. Submit and land on the real `/cases/[id]` page.
-5. Show the live event timeline and evidence metadata.
-6. Sign in as an admin.
-7. Open the same case in `/admin/cases/[id]`.
-8. Add an internal note, request more documents, route, or resolve.
-9. Return to the citizen view and show the updated live case history.
+Registration flow:
 
-Short proof flow:
+1. Create Firebase Auth email/password account.
+2. Exchange the ID token with the server.
+3. Create `users/{uid}` in Firestore with role `citizen`.
+4. Issue a secure session cookie.
+5. Redirect to profile completion.
 
-- Open `/notifications` to show user-level follow-up notifications
+Forgot password flow:
 
-Roadmap moment:
-
-- Show how reminder-driven flows can become proactive cases later
+- Uses Firebase Auth password reset email
+- Shows explicit success and error states
+- Does not expose role or profile details
 
 ## Seed Support
 
-If you want starter user documents for a new Firebase project:
+If you need starter Firebase user documents:
 
 ```bash
 npm run seed
 ```
 
-The seed script currently creates starter `users` records only. It is a setup helper, not a runtime fallback path.
-
-## AI Roadmap
-
-The app is intentionally AI-ready without overbuilding the AI layer yet.
-
-Planned integrations:
-
-- Gemini 2.5 Flash-Lite for intake JSON extraction
-- Gemini 2.5 Flash for reasoning and summary generation
-- Document AI for document extraction
-- Maps and Geocoding for normalized location data
-- RAG for grounded policy and eligibility guidance
-- Agent-style orchestration for intake, routing, and reminders later
-
-The current data model already leaves room for:
-
-- structured intake JSON
-- citizen summary
-- admin summary
-- missing document checklist
-- urgency and category fields
+Seed data is a setup utility only. It is not used as runtime fallback.
 
 ## AI Usage Disclosure
 
-The current app does not yet call Gemini or Document AI in production flows. AI-related fields are scaffolds and product-shape decisions only. No hidden AI outputs are being presented as live model results in the current build.
+The current build does not claim to run Gemini or Document AI in production. The assistant is a live, persisted, AI-ready scaffold with case and file context, designed to plug into future model workflows cleanly.
 
 ## Deployment Notes
 
-- Vercel is a practical hosting target for the Next.js app
-- Add all Firebase client and admin variables to the deployment environment
-- Use HTTPS in production so session cookies stay secure
+- Vercel is a practical host for the Next.js app
+- Add all Firebase client and admin environment variables
 - Add the deployed domain to Firebase Authentication authorized domains
-- Confirm Firestore API and Storage bucket are enabled before demo day
+- Use HTTPS in production for secure session cookies
+- Confirm Firestore API, Storage bucket, and rules deployment before demo day
 
 ## Git Workflow Notes
 
-This repo is already connected to GitHub and `main` is pushed.
-
-Milestone-based workflow used in this build:
-
-- commit after each major feature phase
-- run validation before pushing
-- keep commit messages clean and product-oriented
+The repo is connected to GitHub and `main` is actively pushed after milestone work.
 
 Recent milestone commits:
 
-- `refactor: require live firebase data and remove fallback mode`
-- `feat: finalize live case creation and event timeline`
-- `feat: harden admin review actions and queue states`
-- `feat: polish loading empty and error states`
+- `feat: add ai assistant and file management surfaces to citizen flow`
+- `feat: improve live case workspace with uploads chat and timeline`
+- `feat: upgrade admin dashboard and evidence management workflow`
+- `feat: polish auth basics forms and user-friendly interactions`
 
 ## Demo Credentials
 
-Use real Firebase Authentication users.
+Use real Firebase Auth users.
 
-Placeholders:
+Suggested placeholders:
 
 - Citizen: `citizen@your-project.test`
 - Admin: `admin@your-project.test`
-
-Role access comes from Firebase custom claims or `users/{uid}.role`.
 
 ## Screenshot Placeholders
 
 - `docs/screenshots/landing-page.png`
 - `docs/screenshots/login.png`
+- `docs/screenshots/register.png`
 - `docs/screenshots/citizen-dashboard.png`
 - `docs/screenshots/create-case.png`
-- `docs/screenshots/case-detail.png`
-- `docs/screenshots/admin-queue.png`
+- `docs/screenshots/case-workspace.png`
+- `docs/screenshots/admin-dashboard.png`
 - `docs/screenshots/admin-review.png`
