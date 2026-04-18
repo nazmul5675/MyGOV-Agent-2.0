@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth/session";
 import { getAdminQueue, getAdminStats } from "@/lib/demo-data";
 import { AdminQueueBoard } from "@/components/admin/admin-queue-board";
 import { PageHeader } from "@/components/common/page-header";
+import { Reveal } from "@/components/common/reveal";
 import { StatCard } from "@/components/common/stat-card";
 
 export const metadata: Metadata = {
@@ -24,19 +25,23 @@ export default async function AdminDashboardPage() {
         description="Admins get a focused queue with evidence context, AI-ready summaries, missing document signals, and direct actions in one protected workspace."
       />
 
-      <div className="grid gap-5 md:grid-cols-3">
-        <StatCard {...stats[0]} icon={<ClipboardCheck className="size-5" />} />
-        <StatCard {...stats[1]} icon={<ShieldCheck className="size-5" />} />
-        <StatCard {...stats[2]} icon={<Clock3 className="size-5" />} />
-      </div>
+      <Reveal>
+        <div className="grid gap-5 md:grid-cols-3">
+          <StatCard {...stats[0]} icon={<ClipboardCheck className="size-5" />} />
+          <StatCard {...stats[1]} icon={<ShieldCheck className="size-5" />} />
+          <StatCard {...stats[2]} icon={<Clock3 className="size-5" />} />
+        </div>
+      </Reveal>
 
-      <section className="space-y-5">
-        <PageHeader
-          title="Priority queue"
-          description="This queue demonstrates the premium admin experience inspired by your officer review reference: evidence-first, summary-rich, and action-ready."
-        />
-        <AdminQueueBoard cases={queue} />
-      </section>
+      <Reveal delay={0.06}>
+        <section className="space-y-5">
+          <PageHeader
+            title="Priority queue"
+            description="This queue demonstrates the premium admin experience inspired by your officer review reference: evidence-first, summary-rich, and action-ready."
+          />
+          <AdminQueueBoard cases={queue} />
+        </section>
+      </Reveal>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/session";
 import { getCitizenCases, getCitizenStats, getUpcomingReminders } from "@/lib/demo-data";
 import { CaseCard } from "@/components/common/case-card";
 import { PageHeader } from "@/components/common/page-header";
+import { Reveal } from "@/components/common/reveal";
 import { StatCard } from "@/components/common/stat-card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -33,8 +34,9 @@ export default async function DashboardPage() {
         }
       />
 
-      <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="hero-gradient rounded-[32px] p-8 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)]">
+      <Reveal>
+        <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="hero-gradient rounded-[32px] p-8 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">
             Guardian mode
           </p>
@@ -45,15 +47,17 @@ export default async function DashboardPage() {
             Proactive reminders turn routine services into ready-to-finish case packets so citizens do not need to start from scratch.
           </p>
         </div>
-        <div className="grid gap-5 md:grid-cols-3 xl:grid-cols-1">
-          <StatCard {...stats[0]} icon={<Files className="size-5" />} />
-          <StatCard {...stats[1]} icon={<BellRing className="size-5" />} />
-          <StatCard {...stats[2]} icon={<ShieldEllipsis className="size-5" />} />
-        </div>
-      </section>
+          <div className="grid gap-5 md:grid-cols-3 xl:grid-cols-1">
+            <StatCard {...stats[0]} icon={<Files className="size-5" />} />
+            <StatCard {...stats[1]} icon={<BellRing className="size-5" />} />
+            <StatCard {...stats[2]} icon={<ShieldEllipsis className="size-5" />} />
+          </div>
+        </section>
+      </Reveal>
 
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-5">
+      <Reveal delay={0.06}>
+        <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="space-y-5">
           <PageHeader
             title="Recent cases"
             description="Clean summaries, visible progress, and evidence context help citizens understand what is happening without admin jargon."
@@ -64,7 +68,7 @@ export default async function DashboardPage() {
             ))}
           </div>
         </div>
-        <div className="surface-panel p-6">
+          <div className="surface-panel p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
             Reminders and notifications
           </p>
@@ -81,8 +85,9 @@ export default async function DashboardPage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
+          </div>
+        </section>
+      </Reveal>
     </div>
   );
 }
