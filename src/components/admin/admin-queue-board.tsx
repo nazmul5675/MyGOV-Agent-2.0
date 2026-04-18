@@ -1,12 +1,15 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, ShieldAlert } from "lucide-react";
 
 import type { CaseItem } from "@/lib/types";
-import { CaseCard } from "@/components/common/case-card";
 import { EmptyState } from "@/components/common/empty-state";
+import { StatusBadge } from "@/components/common/status-badge";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type AdminQueueFilter = "all" | "needs_review" | "need_more_docs" | "in_progress" | "resolved";
 
@@ -99,7 +102,71 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
       {filteredCases.length ? (
         <div className="grid gap-5 xl:grid-cols-2">
           {filteredCases.map((item) => (
-            <CaseCard key={item.id} item={item} href={`/admin/cases/${item.id}`} />
+            <article key={item.id} className="surface-panel interactive-lift flex h-full flex-col gap-5 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+                    {item.reference}
+                  </p>
+                  <h3 className="mt-2 text-xl font-bold tracking-tight text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {item.citizenName} · {item.location}
+                  </p>
+                </div>
+                <StatusBadge status={item.status} />
+              </div>
+
+              <p className="text-sm leading-7 text-muted-foreground">{item.intake.adminSummary}</p>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[20px] bg-muted/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Evidence
+                  </p>
+                  <p className="mt-2 font-semibold text-foreground">{item.evidence.length} files</p>
+                </div>
+                <div className="rounded-[20px] bg-muted/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Missing docs
+                  </p>
+                  <p className="mt-2 font-semibold text-foreground">
+                    {item.intake.missingDocuments.length || 0}
+                  </p>
+                </div>
+                <div className="rounded-[20px] bg-muted/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Urgency
+                  </p>
+                  <p className="mt-2 font-semibold capitalize text-foreground">
+                    {item.intake.urgency}
+                  </p>
+                </div>
+              </div>
+
+              {item.evidence.some((file) =>
+                ["uploaded", "needs_replacement", "under_review"].includes(file.status)
+              ) ? (
+                <div className="rounded-[20px] border border-orange-200 bg-orange-50 p-4 text-sm leading-6 text-orange-900">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <ShieldAlert className="size-4" />
+                    Files need operational review
+                  </div>
+                  <p className="mt-2">
+                    Review uploaded evidence before routing or resolving this case.
+                  </p>
+                </div>
+              ) : null}
+
+              <Link
+                href={`/admin/cases/${item.id}`}
+                className={cn(buttonVariants({ variant: "outline" }), "mt-auto justify-between px-4")}
+              >
+                Open review workspace
+                <ShieldAlert className="size-4" />
+              </Link>
+            </article>
           ))}
         </div>
       ) : (

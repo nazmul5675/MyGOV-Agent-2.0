@@ -1,8 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, FileText, Layers3, UserRound } from "lucide-react";
+import {
+  AlertTriangle,
+  FileText,
+  Layers3,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 
+import { EvidenceReviewPanel } from "@/components/admin/evidence-review-panel";
+import { AssistantPanel } from "@/components/common/assistant-panel";
+import { EvidenceManager } from "@/components/common/evidence-manager";
 import { EmptyState } from "@/components/common/empty-state";
 import { LiveDataState } from "@/components/common/live-data-state";
 import { PageHeader } from "@/components/common/page-header";
@@ -10,7 +19,10 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { Timeline } from "@/components/common/timeline";
 import { AdminReviewPanel } from "@/components/forms/admin-review-panel";
 import { requireRole } from "@/lib/auth/session";
-import { getAdminCaseById } from "@/lib/repositories/cases";
+import {
+  getAdminCaseById,
+  listCaseAssistantMessages,
+} from "@/lib/repositories/cases";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -26,10 +38,16 @@ export default async function AdminCaseDetailPage({
   await requireRole("admin");
   const { id } = await params;
   let item: Awaited<ReturnType<typeof getAdminCaseById>> | null = null;
+  let messages:
+    | Awaited<ReturnType<typeof listCaseAssistantMessages>>
+    | null = null;
   let errorMessage: string | null = null;
 
   try {
     item = await getAdminCaseById(id);
+    if (item) {
+      messages = await listCaseAssistantMessages(id);
+    }
   } catch (error) {
     errorMessage =
       error instanceof Error
@@ -70,7 +88,7 @@ export default async function AdminCaseDetailPage({
       <PageHeader
         eyebrow={item.reference}
         title="Decision center"
-        description="A protected admin review surface with evidence signals, citizen context, structured intake, timeline, and action controls."
+        description="A live operations workspace for case review, evidence management, admin notes, and AI-ready guidance."
       />
 
       <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
@@ -94,32 +112,30 @@ export default async function AdminCaseDetailPage({
           </div>
 
           <div className="surface-panel p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-              Evidence
-            </p>
+            <div className="flex items-center gap-3">
+              <Sparkles className="size-5 text-primary" />
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                Review signals
+              </p>
+            </div>
             <div className="mt-4 space-y-3">
-              {item.evidence.length ? item.evidence.map((evidence) => (
-                <div
-                  key={evidence.id}
-                  className="rounded-[22px] bg-muted/80 p-4 transition-colors hover:bg-accent/55"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-semibold text-foreground">{evidence.name}</p>
-                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                      {evidence.status}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {evidence.kind.replace("_", " ")} - {evidence.sizeLabel}
-                  </p>
+              {[
+                item.intake.missingDocuments.length
+                  ? `Missing docs: ${item.intake.missingDocuments.join(", ")}`
+                  : "No missing document signals are flagged right now.",
+                item.evidence.some((file) =>
+                  ["uploaded", "under_review", "needs_replacement"].includes(file.status)
+                )
+                  ? "At least one file still needs explicit review."
+                  : "Evidence states are up to date for the current file set.",
+                item.latestInternalNote
+                  ? `Latest internal note: ${item.latestInternalNote}`
+                  : "No internal note has been saved yet.",
+              ].map((entry) => (
+                <div key={entry} className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground">
+                  {entry}
                 </div>
-              )) : (
-                <EmptyState
-                  icon={<FileText className="size-5" />}
-                  title="No evidence attached"
-                  description="This live case does not have any Storage-backed evidence metadata yet."
-                />
-              )}
+              ))}
             </div>
           </div>
         </aside>
@@ -157,7 +173,7 @@ export default async function AdminCaseDetailPage({
                 <AlertTriangle className="size-4" />
                 <span className="text-sm font-semibold">Urgency</span>
               </div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              <p className="mt-3 text-sm capitalize leading-7 text-muted-foreground">
                 {item.intake.urgency}
               </p>
             </div>
@@ -173,6 +189,14 @@ export default async function AdminCaseDetailPage({
               </p>
             </div>
           </div>
+
+          <EvidenceManager
+            files={item.evidence}
+            title="Evidence workspace"
+            description="Uploaded evidence stays grouped with live review states, making it easier to decide whether to accept, route, or request a better copy."
+          />
+
+          <EvidenceReviewPanel caseId={item.id} files={item.evidence} />
 
           <div className="surface-panel p-7">
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
@@ -190,7 +214,15 @@ export default async function AdminCaseDetailPage({
           </div>
         </div>
 
-        <AdminReviewPanel caseId={item.id} initialNote={item.latestInternalNote} />
+        <div className="space-y-6">
+          <AdminReviewPanel caseId={item.id} initialNote={item.latestInternalNote} />
+          <AssistantPanel
+            caseId={item.id}
+            initialMessages={messages || []}
+            title="AI review helper"
+            subtitle="Use the assistant to summarize the packet, check for missing documents, and prepare a clearer citizen-facing follow-up note."
+          />
+        </div>
       </section>
     </div>
   );

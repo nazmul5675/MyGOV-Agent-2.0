@@ -1,12 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ClipboardCheck, Clock3, ShieldAlert, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  ClipboardCheck,
+  Clock3,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  Workflow,
+} from "lucide-react";
 
 import { AdminQueueBoard } from "@/components/admin/admin-queue-board";
+import { EvidenceManager } from "@/components/common/evidence-manager";
+import { EmptyState } from "@/components/common/empty-state";
 import { LiveDataState } from "@/components/common/live-data-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Reveal } from "@/components/common/reveal";
 import { StatCard } from "@/components/common/stat-card";
+import { Timeline } from "@/components/common/timeline";
 import { requireRole } from "@/lib/auth/session";
 import { getAdminDashboardData } from "@/lib/repositories/cases";
 import { buttonVariants } from "@/components/ui/button";
@@ -58,7 +69,7 @@ export default async function AdminDashboardPage() {
     );
   }
 
-  const { stats, queue } = data;
+  const { stats, queue, filesNeedingReview, recentActivity, suggestedActions } = data;
   const statIcons = [
     <ClipboardCheck className="size-5" key="total" />,
     <ShieldCheck className="size-5" key="review" />,
@@ -84,12 +95,61 @@ export default async function AdminDashboardPage() {
       </Reveal>
 
       <Reveal delay={0.06}>
-        <section className="space-y-5">
-          <PageHeader
-            title="Priority queue"
-            description="This queue demonstrates the premium admin experience inspired by your officer review reference: evidence-first, summary-rich, and action-ready."
-          />
-          <AdminQueueBoard cases={queue} />
+        <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="space-y-5">
+            <PageHeader
+              title="Priority queue"
+              description="This queue stays evidence-first, summary-rich, and action-ready so the operations team can move fast without losing context."
+            />
+            <AdminQueueBoard cases={queue} />
+          </div>
+
+          <div className="space-y-6">
+            <EvidenceManager
+              files={filesNeedingReview}
+              title="Files needing review"
+              description="This file manager turns uploads into a visible operational surface instead of buried attachments."
+              dense
+            />
+
+            <section className="surface-panel p-6">
+              <div className="flex items-center gap-3">
+                <Sparkles className="size-5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                  AI-ready guidance
+                </p>
+              </div>
+              <div className="mt-4 space-y-3">
+                {suggestedActions.map((action) => (
+                  <div key={action} className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground">
+                    {action}
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        </section>
+      </Reveal>
+
+      <Reveal delay={0.1}>
+        <section className="surface-panel p-6">
+          <div className="flex items-center gap-3">
+            <Workflow className="size-5 text-primary" />
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+              Recent operations activity
+            </p>
+          </div>
+          <div className="mt-5">
+            {recentActivity.length ? (
+              <Timeline events={recentActivity} />
+            ) : (
+              <EmptyState
+                icon={<Workflow className="size-5" />}
+                title="No recent operations activity yet"
+                description="Once cases are submitted and reviewed, the latest workflow events will appear here."
+              />
+            )}
+          </div>
         </section>
       </Reveal>
     </div>
