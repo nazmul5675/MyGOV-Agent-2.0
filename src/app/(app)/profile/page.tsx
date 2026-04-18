@@ -40,7 +40,7 @@ export default async function ProfilePage({
         <PageHeader
           eyebrow="Profile"
           title="Citizen profile and identity readiness"
-          description="This optional page rounds out the demo with a calm profile surface for identity, stored document readiness, and future settings work."
+          description="Keep your identity, contact details, and supporting profile information ready for faster case handling."
         />
         <LiveDataState
           tone="setup"

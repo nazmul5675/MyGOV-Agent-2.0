@@ -42,7 +42,7 @@ export default async function NotificationsPage() {
         <PageHeader
           eyebrow="Notifications"
           title="Stay ahead of reminders and status changes"
-          description="A notification center scaffold is included so reminder cards and future FCM events have a clean place to land."
+          description="Track reminders, case updates, and follow-up requests in one clear notification center."
         />
         <LiveDataState
           tone="setup"
@@ -67,7 +67,7 @@ export default async function NotificationsPage() {
       <PageHeader
         eyebrow="Notifications"
         title="Stay ahead of reminders and status changes"
-        description="A notification center scaffold is included so reminder cards and future FCM events have a clean place to land."
+        description="Track reminders, case updates, and follow-up requests in one clear notification center."
       />
 
       <div className="grid gap-4">

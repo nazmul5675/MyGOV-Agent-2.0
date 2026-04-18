@@ -59,11 +59,10 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(createCaseSchema),
     defaultValues: {
-      title: "Section 17 street repair and lighting complaint",
+      title: "",
       caseType: "public_complaint",
-      location: "Jalan 17/22, Petaling Jaya, Selangor",
-      description:
-        "There are several potholes and a broken streetlamp near the school crossing. Cars are swerving and it feels unsafe at night.",
+      location: "",
+      description: "",
     },
   });
 
@@ -126,6 +125,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               <Input
                 id="title"
                 className="h-12 rounded-2xl bg-white/70"
+                placeholder="Briefly name the issue or request"
                 {...form.register("title")}
               />
               <p className="text-sm text-destructive">
@@ -155,6 +155,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               <Input
                 id="location"
                 className="h-12 rounded-2xl bg-white/70"
+                placeholder="Where is this happening?"
                 {...form.register("location")}
               />
               <p className="text-sm text-destructive">
@@ -167,6 +168,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 id="description"
                 rows={7}
                 className="rounded-3xl bg-white/70"
+                placeholder="Explain what happened, what support you need, and any urgency we should know about."
                 {...form.register("description")}
               />
               <p className="text-sm text-destructive">
@@ -214,8 +216,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             </label>
             {missingClientVars.length ? (
               <div className="rounded-[24px] border border-destructive/20 bg-[#fff1ed] p-4 text-sm leading-7 text-[#9a3b2f]">
-                Live uploads require Firebase client config. Missing:
-                {" "}
+                Live uploads require Firebase client config. Missing:{" "}
                 {missingClientVars.join(", ")}
               </div>
             ) : null}
@@ -248,7 +249,11 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                     <div>
                       <p className="font-semibold text-foreground">{item.name}</p>
                       <p className="text-muted-foreground">
-                        {item.kind.replace("_", " ")} · {(item.size / 1024 / 1024).toFixed(2)} MB
+                        {`${item.kind.replace("_", " ")} · ${(
+                          item.size /
+                          1024 /
+                          1024
+                        ).toFixed(2)} MB`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -321,10 +326,10 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
-                  Voice note ready
+                  Guided intake
                 </p>
                 <p className="font-heading text-2xl font-bold tracking-tight">
-                  AI-ready intake packet
+                  Structured case packet
                 </p>
               </div>
             </div>

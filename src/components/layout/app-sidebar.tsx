@@ -1,30 +1,9 @@
 import Link from "next/link";
-import {
-  Bell,
-  LayoutDashboard,
-  Settings2,
-  ShieldCheck,
-  Sparkles,
-  UserRound,
-} from "lucide-react";
 
 import { LogoMark } from "@/components/common/logo-mark";
 import type { UserRole } from "@/lib/types";
+import { roleNavigation } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-
-const roleNav = {
-  citizen: [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/cases/new", label: "Create Case", icon: Sparkles },
-    { href: "/notifications", label: "Notifications", icon: Bell },
-    { href: "/profile", label: "Profile", icon: UserRound },
-  ],
-  admin: [
-    { href: "/admin", label: "Case Queue", icon: LayoutDashboard },
-    { href: "/admin", label: "Review Center", icon: ShieldCheck },
-    { href: "/admin", label: "Operations", icon: Settings2 },
-  ],
-};
 
 export function AppSidebar({
   role,
@@ -47,7 +26,7 @@ export function AppSidebar({
         </div>
       </div>
       <nav className="mt-8 space-y-2">
-        {roleNav[role].map((item) => {
+        {roleNavigation[role].map((item) => {
           const Icon = item.icon;
           const active =
             currentPath === item.href || currentPath.startsWith(`${item.href}/`);
@@ -74,11 +53,10 @@ export function AppSidebar({
           System readiness
         </p>
         <p className="mt-2 font-heading text-2xl font-bold tracking-tight">
-          Secure and live
+          Ready to route
         </p>
         <p className="mt-3 text-sm leading-6 text-primary-foreground/75">
-          Session cookies, role guards, and Firebase hooks are ready for
-          production setup.
+          Live case routing, file handling, and assistant guidance are available from this workspace.
         </p>
       </div>
     </aside>

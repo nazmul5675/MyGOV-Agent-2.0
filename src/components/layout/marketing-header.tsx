@@ -39,6 +39,17 @@ export async function MarketingHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-3">
+          {session ? (
+            <Link
+              href="/profile"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "lg" }),
+                "rounded-full px-5"
+              )}
+            >
+              Profile
+            </Link>
+          ) : null}
           <Link
             href={session ? workspaceHref : "/login"}
             className={cn(

@@ -97,7 +97,7 @@ export function ProfileBasicsForm({
         {showWelcome ? (
           <SuccessBlock
             title="Your account is ready"
-            description="You can keep going with the dashboard now, or complete a few profile details here for a more polished demo flow."
+            description="You can head straight to the dashboard, or complete a few profile details now for smoother case handling later."
           />
         ) : null}
 

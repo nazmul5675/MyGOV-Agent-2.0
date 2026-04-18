@@ -48,11 +48,11 @@ export default function LandingPage() {
               <div className="absolute -right-10 top-0 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
               <div className="space-y-8">
                 <div className="inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/80">
-                  Guardian mode active
+                  Proactive assistance
                 </div>
                 <div className="space-y-3">
                   <h2 className="font-heading text-3xl font-bold tracking-tight">
-                    Your license renewal is due in 12 days.
+                    Your next government action is already clear.
                   </h2>
                   <p className="max-w-md text-sm leading-7 text-primary-foreground/78">
                     Citizens receive proactive reminders, while admins get cleaner packets and fewer fragmented follow-ups.
@@ -88,7 +88,7 @@ export default function LandingPage() {
                 {
                   icon: Sparkles,
                   title: "Structure the intake instantly",
-                  body: "The app scaffolds a machine-readable intake packet with summaries, urgency, and document gaps for later AI enrichment.",
+                  body: "The app structures intake into a reusable packet with summaries, urgency signals, and document gaps ready for smarter downstream review.",
                 },
                 {
                   icon: ShieldCheck,
@@ -124,7 +124,7 @@ export default function LandingPage() {
                   Calm confidence for citizens. Fast clarity for admins.
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-muted-foreground">
-                  The visual system is evolved from your starter references: deep sovereign blue, restrained gold highlights, editorial type hierarchy, soft lifted cards, and minimal borders guided by tonal depth.
+                  The visual system builds on your starter direction: deep sovereign blue, restrained gold highlights, editorial type hierarchy, soft lifted cards, and minimal borders guided by tonal depth.
                 </p>
               </div>
               <div className="grid gap-5 sm:grid-cols-2">

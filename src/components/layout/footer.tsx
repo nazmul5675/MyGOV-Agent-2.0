@@ -5,8 +5,8 @@ export function Footer() {
         <div>
           <p className="font-semibold text-foreground">MyGOV Agent 2.0</p>
           <p>
-            Premium GovTech intake, tracking, and admin review scaffold for
-            hackathon demos.
+            Premium GovTech intake, tracking, and admin review for
+            citizen-first digital services.
           </p>
         </div>
         <div className="flex gap-6">

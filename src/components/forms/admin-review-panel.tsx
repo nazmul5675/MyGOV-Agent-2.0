@@ -65,7 +65,7 @@ export function AdminReviewPanel({
   const router = useRouter();
   const [note, setNote] = useState(
     initialNote ||
-      "Routing looks correct. A wider road photo will improve severity confidence before dispatch."
+      "Review the file quality, confirm the category, and leave a clear next step for the citizen if more information is needed."
   );
   const [isPending, startTransition] = useTransition();
   const [activeAction, setActiveAction] = useState<string | null>(null);

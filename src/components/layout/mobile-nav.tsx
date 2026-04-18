@@ -1,29 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Bell,
-  LayoutDashboard,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
 
 import type { UserRole } from "@/lib/types";
+import { roleNavigation } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-
-const mobileRoleNav = {
-  citizen: [
-    { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-    { href: "/cases/new", label: "New", icon: Sparkles },
-    { href: "/dashboard", label: "Cases", icon: LayoutDashboard },
-    { href: "/notifications", label: "Alerts", icon: Bell },
-  ],
-  admin: [
-    { href: "/admin", label: "Queue", icon: LayoutDashboard },
-    { href: "/admin", label: "Review", icon: ShieldCheck },
-    { href: "/admin", label: "Alerts", icon: Bell },
-  ],
-};
 
 export function MobileNav({
   role,
@@ -32,10 +13,17 @@ export function MobileNav({
   role: UserRole;
   currentPath: string;
 }) {
+  const navItems = roleNavigation[role];
+
   return (
     <nav className="glass-panel fixed inset-x-4 bottom-4 z-40 rounded-[28px] px-3 py-2 lg:hidden">
-      <div className="grid grid-cols-4 gap-2">
-        {mobileRoleNav[role].map((item) => {
+      <div
+        className={cn(
+          "grid gap-2",
+          navItems.length === 4 ? "grid-cols-4" : "grid-cols-3"
+        )}
+      >
+        {navItems.map((item) => {
           const Icon = item.icon;
           const active =
             currentPath === item.href || currentPath.startsWith(`${item.href}/`);
@@ -52,7 +40,7 @@ export function MobileNav({
               )}
             >
               <Icon className="size-4" />
-              {item.label}
+              {item.shortLabel || item.label}
             </Link>
           );
         })}

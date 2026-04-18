@@ -55,7 +55,7 @@ export default async function DashboardPage() {
       <div className="space-y-6">
         <PageHeader
           eyebrow="Citizen dashboard"
-          title={`Selamat datang, ${session.name.split(" ")[0]}.`}
+          title={`Welcome back, ${session.name.split(" ")[0]}.`}
           description="Track every case in one place, complete document requests quickly, and stay ahead of renewal reminders with a calmer citizen experience."
         />
         <LiveDataState
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Citizen dashboard"
-        title={`Selamat datang, ${session.name.split(" ")[0]}.`}
+        title={`Welcome back, ${session.name.split(" ")[0]}.`}
         description="Track every case in one place, complete document requests quickly, and stay ahead of renewal reminders with a calmer citizen experience."
         actions={
           <Link
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
         <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="hero-gradient rounded-[32px] p-8 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">
-              Guardian mode
+              Citizen command center
             </p>
             <h2 className="mt-4 text-4xl font-black tracking-tight">
               One live place for cases, files, and guided next steps.
