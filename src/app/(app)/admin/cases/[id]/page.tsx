@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { AlertTriangle, FileText, Layers3, UserRound } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/session";
-import { getCaseById } from "@/lib/demo-data";
+import { getAdminCaseById } from "@/lib/repositories/cases";
 import { AdminReviewPanel } from "@/components/forms/admin-review-panel";
 import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge } from "@/components/common/status-badge";
@@ -20,7 +20,7 @@ export default async function AdminCaseDetailPage({
 }) {
   await requireRole("admin");
   const { id } = await params;
-  const item = getCaseById(id);
+  const item = await getAdminCaseById(id);
 
   if (!item) notFound();
 
@@ -135,7 +135,7 @@ export default async function AdminCaseDetailPage({
           </div>
         </div>
 
-        <AdminReviewPanel />
+        <AdminReviewPanel caseId={item.id} initialNote={item.latestInternalNote} />
       </section>
     </div>
   );

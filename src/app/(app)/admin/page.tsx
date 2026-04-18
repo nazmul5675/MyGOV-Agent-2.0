@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ClipboardCheck, Clock3, ShieldCheck } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/session";
-import { getAdminQueue, getAdminStats } from "@/lib/demo-data";
+import { getAdminDashboardData } from "@/lib/repositories/cases";
 import { AdminQueueBoard } from "@/components/admin/admin-queue-board";
 import { PageHeader } from "@/components/common/page-header";
 import { Reveal } from "@/components/common/reveal";
@@ -14,8 +14,7 @@ export const metadata: Metadata = {
 
 export default async function AdminDashboardPage() {
   await requireRole("admin");
-  const stats = getAdminStats();
-  const queue = getAdminQueue();
+  const { stats, queue } = await getAdminDashboardData();
 
   return (
     <div className="space-y-6">
@@ -26,10 +25,11 @@ export default async function AdminDashboardPage() {
       />
 
       <Reveal>
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           <StatCard {...stats[0]} icon={<ClipboardCheck className="size-5" />} />
           <StatCard {...stats[1]} icon={<ShieldCheck className="size-5" />} />
           <StatCard {...stats[2]} icon={<Clock3 className="size-5" />} />
+          <StatCard {...stats[3]} icon={<Clock3 className="size-5" />} />
         </div>
       </Reveal>
 

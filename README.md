@@ -24,6 +24,7 @@ Admin includes officer capabilities. All internal review surfaces are protected 
 - Firebase email/password authentication
 - Secure server-side session cookies for authenticated app routes
 - Role-based access protection for citizen and admin experiences
+- Firestore-backed repositories for users, cases, case events, and notifications
 - Citizen dashboard, notifications, profile, case intake, and case tracking
 - Admin queue with search and status filters
 - Admin decision center with evidence, summaries, notes, and action controls
@@ -40,6 +41,10 @@ Admin includes officer capabilities. All internal review surfaces are protected 
   Protected product routes for citizens and admins
 - `src/app/api/auth`
   Session login and logout handlers
+- `src/app/api/cases`
+  Case creation and evidence write routes
+- `src/app/api/admin`
+  Admin mutation routes
 - `src/components/common`
   Shared UI such as status badges, timeline, cards, and headers
 - `src/components/forms`
@@ -48,8 +53,16 @@ Admin includes officer capabilities. All internal review surfaces are protected 
   Marketing shell, app frame, sidebar, topbar, and mobile nav
 - `src/lib/auth`
   Session reading and role enforcement helpers
+- `src/lib/actions`
+  Client-facing API wrappers
 - `src/lib/firebase`
   Firebase client, admin, and role helpers
+- `src/lib/repositories`
+  Firestore-backed reads and writes with documented fallback behavior
+- `src/lib/validation`
+  Zod validation schemas
+- `src/hooks`
+  Client upload state hooks
 
 ## Stack
 
@@ -148,6 +161,16 @@ Use real Firebase Authentication users for demos.
 
 Role access is determined by Firebase custom claims or Firestore `users/{uid}.role`.
 
+## Seed Support
+
+If you need starter user documents for a new Firebase project:
+
+```bash
+npm run seed
+```
+
+This seeds the `users` collection using the current Firebase Admin environment variables.
+
 ## AI Usage Disclosure
 
 The current build does not directly call Gemini yet. It prepares the app for future AI integration by structuring intake data, citizen summaries, admin summaries, urgency, and missing-document scaffolds so a later AI layer can plug in cleanly.
@@ -178,3 +201,5 @@ The current build does not directly call Gemini yet. It prepares the app for fut
 - `chore: initialize next.js app shell`
 - `feat: add auth, RBAC, and core citizen-admin app flows`
 - `feat: add profile and notification center scaffolds`
+- `feat: harden firebase auth and refine case workflows`
+- `feat: polish motion and responsive app shell`

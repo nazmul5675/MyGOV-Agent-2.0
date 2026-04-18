@@ -21,13 +21,28 @@ export interface AppSession {
   avatar?: string;
 }
 
+export interface UserProfile {
+  id: string;
+  uid: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  phone?: string;
+  location?: string;
+  documents?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface NotificationItem {
   id: string;
+  userId?: string;
   title: string;
   body: string;
   createdAt: string;
   read: boolean;
   tone: "info" | "warning" | "success";
+  actionHref?: string;
 }
 
 export interface CaseEvent {
@@ -37,6 +52,7 @@ export interface CaseEvent {
   description: string;
   createdAt: string;
   actor: string;
+  actorId?: string;
 }
 
 export interface EvidenceFile {
@@ -46,6 +62,9 @@ export interface EvidenceFile {
   sizeLabel: string;
   uploadedAt: string;
   status: "uploaded" | "processing" | "flagged";
+  downloadUrl?: string;
+  storagePath?: string;
+  contentType?: string;
 }
 
 export interface IntakeSummary {
@@ -75,10 +94,23 @@ export interface CaseItem {
   evidence: EvidenceFile[];
   timeline: CaseEvent[];
   intake: IntakeSummary;
+  latestInternalNote?: string;
+  updatedBy?: string;
 }
 
 export interface DashboardStat {
   label: string;
   value: string;
   change: string;
+}
+
+export interface CitizenDashboardData {
+  stats: DashboardStat[];
+  cases: CaseItem[];
+  reminders: NotificationItem[];
+}
+
+export interface AdminDashboardData {
+  stats: DashboardStat[];
+  queue: CaseItem[];
 }

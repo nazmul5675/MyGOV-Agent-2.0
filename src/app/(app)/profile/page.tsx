@@ -3,6 +3,7 @@ import { BadgeCheck, FileCheck2, UserRound } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/session";
 import { PageHeader } from "@/components/common/page-header";
+import { getUserProfile } from "@/lib/repositories/users";
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 
 export default async function ProfilePage() {
   const session = await requireRole("citizen");
+  const profile = await getUserProfile(session);
 
   return (
     <div className="space-y-6">
@@ -26,8 +28,8 @@ export default async function ProfilePage() {
               <UserRound className="size-7" />
             </div>
             <div>
-              <p className="font-heading text-3xl font-bold tracking-tight">{session.name}</p>
-              <p className="text-sm text-primary-foreground/75">{session.email}</p>
+              <p className="font-heading text-3xl font-bold tracking-tight">{profile.name}</p>
+              <p className="text-sm text-primary-foreground/75">{profile.email}</p>
             </div>
           </div>
           <p className="mt-6 max-w-xl text-sm leading-7 text-primary-foreground/82">
@@ -40,12 +42,14 @@ export default async function ProfilePage() {
             {
               icon: BadgeCheck,
               title: "Identity health",
-              body: "Digital identity verified and ready for assisted service workflows.",
+              body: `${profile.role === "citizen" ? "Citizen" : "Admin"} account verified and ready for assisted service workflows.`,
             },
             {
               icon: FileCheck2,
               title: "Stored documents",
-              body: "MyKad, proof of address, and renewal references can be surfaced here later.",
+              body: profile.documents?.length
+                ? profile.documents.join(", ")
+                : "MyKad, proof of address, and renewal references can be surfaced here later.",
             },
           ].map((item) => {
             const Icon = item.icon;

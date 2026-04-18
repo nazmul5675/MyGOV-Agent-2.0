@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {
   Bell,
-  BriefcaseBusiness,
   LayoutDashboard,
   ShieldCheck,
   Sparkles,
@@ -16,12 +15,12 @@ const mobileRoleNav = {
   citizen: [
     { href: "/dashboard", label: "Home", icon: LayoutDashboard },
     { href: "/cases/new", label: "New", icon: Sparkles },
-    { href: "/cases/case-1001", label: "Cases", icon: BriefcaseBusiness },
+    { href: "/dashboard", label: "Cases", icon: LayoutDashboard },
     { href: "/notifications", label: "Alerts", icon: Bell },
   ],
   admin: [
     { href: "/admin", label: "Queue", icon: LayoutDashboard },
-    { href: "/admin/cases/case-1001", label: "Review", icon: ShieldCheck },
+    { href: "/admin", label: "Review", icon: ShieldCheck },
     { href: "/admin", label: "Alerts", icon: Bell },
   ],
 };

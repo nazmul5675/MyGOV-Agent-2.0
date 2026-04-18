@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { BellRing, CircleCheckBig, TriangleAlert } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/session";
-import { demoNotifications } from "@/lib/demo-data";
+import { listNotificationsForUser } from "@/lib/repositories/notifications";
+import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
 
 export const metadata: Metadata = {
@@ -16,7 +17,8 @@ const toneIconMap = {
 };
 
 export default async function NotificationsPage() {
-  await requireRole("citizen");
+  const session = await requireRole("citizen");
+  const notifications = await listNotificationsForUser(session.uid);
 
   return (
     <div className="space-y-6">
@@ -27,7 +29,7 @@ export default async function NotificationsPage() {
       />
 
       <div className="grid gap-4">
-        {demoNotifications.map((notification) => {
+        {notifications.length ? notifications.map((notification) => {
           const Icon = toneIconMap[notification.tone];
           return (
             <article key={notification.id} className="surface-panel flex items-start gap-4 p-6">
@@ -49,7 +51,13 @@ export default async function NotificationsPage() {
               </div>
             </article>
           );
-        })}
+        }) : (
+          <EmptyState
+            icon={<BellRing className="size-5" />}
+            title="No notifications yet"
+            description="New status changes, reminder nudges, and case follow-ups will appear here."
+          />
+        )}
       </div>
     </div>
   );

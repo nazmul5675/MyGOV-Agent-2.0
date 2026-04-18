@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
 import {
   CheckCircle2,
   FileAudio2,
@@ -18,7 +17,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { firebaseStorage } from "@/lib/firebase/client";
+import { attachEvidenceAction, createCaseAction } from "@/lib/actions/cases";
+import { useFileUploads } from "@/hooks/use-file-uploads";
+import { createCaseSchema } from "@/lib/validation/cases";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,34 +34,18 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-const schema = z.object({
-  title: z.string().min(8, "Add a clear case title."),
-  caseType: z.enum(["flood_relief", "public_complaint", "reminder_renewal"]),
-  location: z.string().min(6, "Add a location."),
-  description: z.string().min(24, "Add a fuller description for faster routing."),
-});
+type FormValues = z.infer<typeof createCaseSchema>;
 
-type FormValues = z.infer<typeof schema>;
-
-interface UploadItem {
-  id: string;
-  name: string;
-  kind: "photo" | "document" | "voice_note";
-  progress: number;
+interface CaseIntakeFormProps {
+  userId: string;
 }
 
-function inferKind(file: File): UploadItem["kind"] {
-  if (file.type.startsWith("image/")) return "photo";
-  if (file.type.startsWith("audio/")) return "voice_note";
-  return "document";
-}
-
-export function CaseIntakeForm() {
+export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
   const router = useRouter();
-  const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [isPending, startTransition] = useTransition();
+  const { uploads, queueFiles, uploadForCase, resetUploads } = useFileUploads();
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(createCaseSchema),
     defaultValues: {
       title: "Section 17 street repair and lighting complaint",
       caseType: "public_complaint",
@@ -75,47 +60,38 @@ export function CaseIntakeForm() {
     [uploads.length]
   );
 
-  const simulateUpload = (file: File) => {
-    const id = `${file.name}-${Date.now()}`;
-    setUploads((current) => [
-      ...current,
-      { id, name: file.name, kind: inferKind(file), progress: 0 },
-    ]);
-
-    let progress = 0;
-    const timer = window.setInterval(() => {
-      progress += 16;
-      setUploads((current) =>
-        current.map((item) =>
-          item.id === id ? { ...item, progress: Math.min(progress, 100) } : item
-        )
-      );
-
-      if (progress >= 100) {
-        window.clearInterval(timer);
-      }
-    }, 140);
-  };
-
-  const handleFiles = (files: FileList | null) => {
-    if (!files) return;
-
-    Array.from(files).forEach((file) => {
-      simulateUpload(file);
-      if (firebaseStorage) {
-        // Wire uploadBytesResumable here when Firebase Storage secrets are configured.
-      }
-    });
-  };
-
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
-      await new Promise((resolve) => window.setTimeout(resolve, 900));
-      toast.success("Case submitted", {
-        description: `${values.title} is now being structured for routing.`,
-      });
-      router.push("/cases/case-1001?submitted=1");
-      router.refresh();
+      try {
+        const created = await createCaseAction(values);
+        const uploadedEvidence = await uploadForCase(created.caseId, userId);
+
+        if (uploadedEvidence.length) {
+          await attachEvidenceAction(
+            created.caseId,
+            uploadedEvidence.map((item) => ({
+              id: item.id,
+              name: item.name,
+              kind: item.kind,
+              size:
+                parseFloat(item.sizeLabel) *
+                (item.sizeLabel.includes("MB") ? 1024 * 1024 : 1024),
+              downloadUrl: item.downloadUrl,
+              storagePath: item.storagePath,
+              contentType: item.contentType,
+            }))
+          );
+        }
+
+        toast.success("Case submitted", {
+          description: `${values.title} was saved and routed successfully.`,
+        });
+        resetUploads();
+        router.push(`/cases/${created.caseId}?submitted=1`);
+        router.refresh();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to submit case");
+      }
     });
   };
 
@@ -194,8 +170,8 @@ export function CaseIntakeForm() {
                 Evidence and uploads
               </CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                Photos, documents, and voice notes improve intake structuring and
-                admin review.
+                Photos, documents, and voice notes upload into Firebase Storage
+                when credentials are connected, with metadata saved against the case.
               </p>
             </div>
             <div className="rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -212,14 +188,15 @@ export function CaseIntakeForm() {
                   Drop files or browse from device
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  JPG, PDF, DOC, and M4A supported for the demo scaffold
+                  JPG, PDF, DOC, and M4A supported
                 </p>
               </div>
               <Input
+                id="evidence-files"
                 type="file"
                 multiple
                 className="hidden"
-                onChange={(event) => handleFiles(event.target.files)}
+                onChange={(event) => queueFiles(event.target.files)}
               />
             </label>
 
@@ -236,8 +213,8 @@ export function CaseIntakeForm() {
                     <Icon className="size-5 text-primary" />
                     <p className="mt-3 font-semibold text-foreground">{item.label}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Structured metadata and upload progress ready for Firebase
-                      Storage.
+                      Uploaded files generate metadata, progress state, and
+                      evidence records for the case timeline.
                     </p>
                   </div>
                 );
@@ -246,12 +223,7 @@ export function CaseIntakeForm() {
 
             <div className="space-y-3">
               {uploads.map((item) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-[24px] bg-white/80 p-4"
-                >
+                <div key={item.id} className="rounded-[24px] bg-white/80 p-4">
                   <div className="mb-3 flex items-center justify-between gap-4 text-sm">
                     <div>
                       <p className="font-semibold text-foreground">{item.name}</p>
@@ -267,7 +239,7 @@ export function CaseIntakeForm() {
                     </div>
                   </div>
                   <Progress value={item.progress} />
-                </motion.div>
+                </div>
               ))}
             </div>
           </CardContent>
@@ -291,9 +263,8 @@ export function CaseIntakeForm() {
               </div>
             </div>
             <p className="text-sm leading-7 text-primary-foreground/80">
-              We scaffold structured intake JSON, citizen summary, admin summary,
-              urgency, and a missing-documents checklist for future Gemini
-              integration.
+              Structured intake, summaries, urgency, and missing-document hints
+              are persisted with the case so a later AI layer can use them.
             </p>
           </CardContent>
         </Card>
@@ -316,8 +287,8 @@ export function CaseIntakeForm() {
               </div>
             ))}
             <div className="rounded-[20px] bg-accent/65 p-4 text-sm leading-6 text-accent-foreground">
-              Uploaded files will map cleanly into Firestore metadata and
-              Firebase Storage paths once the project credentials are connected.
+              Submitting creates the case, appends the initial event, and then
+              associates evidence metadata with the saved record.
             </div>
             <Button
               type="submit"

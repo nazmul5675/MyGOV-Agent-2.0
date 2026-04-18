@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   Bell,
-  BriefcaseBusiness,
   LayoutDashboard,
   Settings2,
   ShieldCheck,
@@ -17,13 +16,12 @@ const roleNav = {
   citizen: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/cases/new", label: "Create Case", icon: Sparkles },
-    { href: "/cases/case-1001", label: "Case Tracking", icon: BriefcaseBusiness },
     { href: "/notifications", label: "Notifications", icon: Bell },
     { href: "/profile", label: "Profile", icon: UserRound },
   ],
   admin: [
     { href: "/admin", label: "Case Queue", icon: LayoutDashboard },
-    { href: "/admin/cases/case-1001", label: "Review Center", icon: ShieldCheck },
+    { href: "/admin", label: "Review Center", icon: ShieldCheck },
     { href: "/admin", label: "Operations", icon: Settings2 },
   ],
 };

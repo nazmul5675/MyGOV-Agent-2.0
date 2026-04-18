@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/session";
-import { getCitizenCase } from "@/lib/demo-data";
+import { getCitizenCaseById } from "@/lib/repositories/cases";
 import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Timeline } from "@/components/common/timeline";
@@ -27,7 +27,7 @@ export default async function CitizenCaseDetailPage({
   const session = await requireRole("citizen");
   const { id } = await params;
   const query = await searchParams;
-  const item = getCitizenCase(id, session.uid);
+  const item = await getCitizenCaseById(session.uid, id);
 
   if (!item) notFound();
 

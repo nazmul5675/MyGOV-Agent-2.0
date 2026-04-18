@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NewCasePage() {
-  await requireRole("citizen");
+  const session = await requireRole("citizen");
 
   return (
     <div className="space-y-6">
@@ -18,7 +18,7 @@ export default async function NewCasePage() {
         title="Create a structured case in one guided flow"
         description="This intake keeps the citizen experience simple while preparing clean JSON, summaries, evidence metadata, and future-ready AI fields behind the scenes."
       />
-      <CaseIntakeForm />
+      <CaseIntakeForm userId={session.uid} />
     </div>
   );
 }
