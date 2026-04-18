@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sovereign State - Case #FR-9021</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#f3f4f5",
+                      "on-secondary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-background": "#191c1d",
+                      "error": "#ba1a1a",
+                      "inverse-on-surface": "#f0f1f2",
+                      "surface": "#f8f9fa",
+                      "on-tertiary-fixed-variant": "#93000e",
+                      "on-error-container": "#93000a",
+                      "outline": "#737780",
+                      "tertiary-fixed-dim": "#ffb4ac",
+                      "primary-fixed-dim": "#a7c8ff",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed": "#221b00",
+                      "on-error": "#ffffff",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-tertiary": "#ffffff",
+                      "surface-variant": "#e1e3e4",
+                      "tertiary": "#460003",
+                      "surface-container": "#edeeef",
+                      "surface-container-high": "#e7e8e9",
+                      "secondary": "#6f5d00",
+                      "inverse-surface": "#2e3132",
+                      "primary-fixed": "#d5e3ff",
+                      "outline-variant": "#c3c6d1",
+                      "on-primary-container": "#799dd6",
+                      "on-tertiary-container": "#ff6d63",
+                      "surface-tint": "#3a5f94",
+                      "surface-dim": "#d9dadb",
+                      "on-surface-variant": "#43474f",
+                      "tertiary-container": "#6e0008",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed": "#001b3c",
+                      "primary": "#001e40",
+                      "on-primary-fixed-variant": "#1f477b",
+                      "on-tertiary-fixed": "#410003",
+                      "secondary-container": "#fedb41",
+                      "primary-container": "#003366",
+                      "inverse-primary": "#a7c8ff",
+                      "surface-bright": "#f8f9fa",
+                      "background": "#f8f9fa",
+                      "on-surface": "#191c1d",
+                      "on-secondary-fixed-variant": "#544600",
+                      "on-secondary-container": "#726000",
+                      "tertiary-fixed": "#ffdad6",
+                      "secondary-fixed": "#ffe16b",
+                      "secondary-fixed-dim": "#e6c429"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Public Sans"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .headline { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #e1e3e4; border-radius: 10px; }
+      </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary p-2 hover:bg-slate-100 rounded-full transition-colors">menu</button>
+<span class="text-xl font-bold text-blue-900 dark:text-blue-50 font-['Public_Sans'] tracking-tight">Sovereign State</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center gap-6">
+<a class="text-blue-900 dark:text-blue-50 font-bold hover:bg-slate-100 transition-colors px-3 py-1 rounded-lg" href="#">Home</a>
+<a class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 transition-colors px-3 py-1 rounded-lg" href="#">Services</a>
+<a class="text-blue-900 dark:text-blue-50 font-bold border-b-2 border-primary" href="#">Active Cases</a>
+<a class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 transition-colors px-3 py-1 rounded-lg" href="#">Inbox</a>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-900 dark:text-blue-100 p-2 hover:bg-slate-100 rounded-full transition-colors">notifications</span>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img class="w-full h-full object-cover" data-alt="professional male officer portrait with neutral expression in a government office setting with soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-sadqbqfV4EuGL9xUDpem7JUljXcQx9ndhN5w8EEbdcsKa-q--ipasMUDGrd3crQzODwmG3SxsKPE0nCU-FW1EVR62_o5sGmmhshczMbI3bJwnnz0xDzXA1R88ONFS3p9OZpYRRVEIg67KC1F8O-fuXMLP7GZCvt5zZyRTFLsSaf_D0-sCjdWG0LWex8meZn6xPR0DPyVPAqICFJk3cp4VJzGosOpUby2TP0ej4mr--a366w2dQze-B1zI3Eqs9unp7n8EYnzQEA"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Separation Logic Line -->
+<div class="fixed top-[72px] w-full bg-slate-200/50 dark:bg-slate-800/50 h-[1px] z-40"></div>
+<div class="flex pt-[73px] h-screen overflow-hidden">
+<!-- NavigationDrawer (Hidden on mobile for focus) -->
+<aside class="hidden lg:flex flex-col h-full w-80 bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 py-8 px-4 flex-shrink-0">
+<div class="flex items-center gap-4 mb-10 px-2">
+<div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-on-primary font-bold text-xl">R</div>
+<div>
+<h3 class="font-['Public_Sans'] font-bold text-blue-900 dark:text-blue-100 leading-tight">Officer Rahman</h3>
+<p class="text-xs text-slate-500">Ministry of Federal Affairs</p>
+<span class="text-[10px] uppercase tracking-widest font-bold text-secondary mt-1 block">Level 4 Access</span>
+</div>
+</div>
+<nav class="space-y-2 flex-grow">
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-medium">Officer Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-medium">Policy Library</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 border-r-4 border-yellow-600 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="font-medium">Case Queue</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">hub</span>
+<span class="font-medium">Resource Allocation</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+</nav>
+<div class="mt-auto p-4 bg-surface-container-low rounded-2xl">
+<p class="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-tighter">System Status</p>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+<span class="text-sm font-medium text-blue-900">Secure Uplink Active</span>
+</div>
+</div>
+</aside>
+<!-- MAIN DASHBOARD AREA -->
+<main class="flex-grow flex flex-col md:flex-row overflow-hidden bg-background">
+<!-- Left Sidebar: Evidence -->
+<section class="w-full md:w-72 border-r border-outline-variant/20 flex flex-col sidebar-scroll overflow-y-auto bg-surface-container-low/30">
+<div class="p-6">
+<h2 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Case Evidence</h2>
+<div class="space-y-6">
+<!-- MyKad OCR -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary text-sm">id_card</span>
+<span class="text-xs font-bold text-primary uppercase">MyKad OCR Data</span>
+</div>
+<div class="space-y-2">
+<div>
+<p class="text-[10px] text-slate-400 uppercase">Name</p>
+<p class="text-sm font-semibold text-on-surface">AHMAD BIN ISMAIL</p>
+</div>
+<div>
+<p class="text-[10px] text-slate-400 uppercase">IC Number</p>
+<p class="text-sm font-semibold text-on-surface">850412-14-5567</p>
+</div>
+<div class="pt-2 flex items-center gap-1 text-green-600">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="text-[10px] font-bold">BIO-VERIFIED</span>
+</div>
+</div>
+</div>
+<!-- Photo Evidence -->
+<div class="space-y-3">
+<p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Site Photos (4)</p>
+<div class="grid grid-cols-2 gap-2">
+<div class="aspect-square rounded-lg overflow-hidden bg-slate-200 relative group cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="residential street in Malaysia submerged in flood water with debris floating and damaged cars parked on the side" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABpHwL2_m3JbmiZ6EEuzbtSoC9UDxViwVGLv3Sax4F8qbFvYfqD-8MVo45UaCpJY5H11PWiDcXWhhqKmzm4QCm--gxBSclE48kCh80kkoLaYoZ0j4Sabjg2XiKvKKFVkXltM3-t8KqJTM2dr7lNrPga9Ktehw4shhtdlmi5vo-hmLHt9baXIakKE5WdL6n-CVytc9I-GJb01WTV0DW-9cCE6aKwb_y05mvqfu8VmmqShkMtz0wrOcxgwZGjJp5Uian1DCL2T4mVTQ"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden bg-slate-200 relative group cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="interior of a humble home with water marks on the walls and mud covering the floor after a flood event" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAj63E5lmHLtXkr9pNggtEoltNKptPAUg1S0XyzQyS4DNWhGVFPgYulz_XqRLFP0TX5EMneQ9amyYNBiPYC2d1O_YK2tqAFSDDiRl-YvZl0A10VpyHSFIyvF6ZC_Y6n01Lfhvqjb_PujxFoa6UNGaoOyHjza4smKUlBg2IVYN32wfnuwOeezVXNauX81EjhTYwjyyt0JFJC7UqYhMJFZccmtPo8qA5k729dC6UlDkqCsj4ER8BNeXnq0oHnGK3qkptnvhAtNZaxZis"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden bg-slate-200 relative group cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="close up of a water damaged wooden door and furniture showing structural decay from moisture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4F1yZMGj5INh0LVx_zWsS0n0IHUSjz72eh-g1s0FTt4_VzV10s9dl6ni8rBWBLNZTjSbR161DOmI976bQOAFVPPIfA8VdF9EycgDukMm3N-M7RA_oszgSx9KdQvZwjQYP0IeKVkbxNLLBiTOetyI1v5LOPmH0h860lR5bKwWGVaf5x77suZ7IuK3V_anOFI4HLsP0GCJQqj0KnIbqBJjDLimhsQBnVexg17FNp8gwQuEIXQ_wWUb8h8_mXVbCie8_NDNXRu0ENuE"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<div class="bg-surface-container-high flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-outline-variant">
+<span class="material-symbols-outlined text-slate-400">add</span>
+<span class="text-[10px] text-slate-500 font-bold">ADD</span>
+</div>
+</div>
+</div>
+<!-- Geo-Tagging -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm border-l-4 border-secondary">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-secondary uppercase">Geo-Verification</span>
+<span class="material-symbols-outlined text-secondary text-sm">location_on</span>
+</div>
+<p class="text-xs font-medium text-on-surface">Taman Sri Muda, Shah Alam</p>
+<p class="text-[10px] text-slate-400">Match Accuracy: 98.4%</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Center Content: AI Summary -->
+<section class="flex-grow overflow-y-auto sidebar-scroll p-8 bg-surface">
+<!-- Case Header -->
+<div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<nav class="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+<span>Claims</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span>Natural Disaster</span>
+</nav>
+<h1 class="text-4xl font-extrabold text-primary tracking-tighter">Flood Relief Claim #FR-9021</h1>
+<p class="text-slate-500 mt-2 font-medium">Submitted by Ahmad Ismail • 14 Oct 2023, 09:42 AM</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="px-4 py-2 bg-blue-50 text-blue-900 rounded-full text-sm font-bold border border-blue-100">
+                            IN REVIEW
+                        </div>
+<div class="px-4 py-2 bg-secondary-fixed text-on-secondary-fixed rounded-full text-sm font-bold">
+                            PRIORITY
+                        </div>
+</div>
+</div>
+<!-- AI Analysis Card -->
+<div class="bg-primary text-white rounded-[2rem] p-10 relative overflow-hidden shadow-2xl">
+<!-- Decor logic -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+<div class="absolute bottom-0 left-0 w-32 h-32 bg-secondary/20 rounded-full -ml-10 -mb-10 blur-2xl"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md">
+<span class="material-symbols-outlined text-secondary-container" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<h2 class="text-2xl font-bold font-['Public_Sans']">Gemini Case Intelligence</h2>
+</div>
+<div class="grid md:grid-cols-2 gap-10">
+<div>
+<h3 class="text-secondary-container text-xs font-black uppercase tracking-widest mb-4">Executive Summary</h3>
+<ul class="space-y-4">
+<li class="flex gap-3">
+<span class="material-symbols-outlined text-secondary-container mt-1 text-sm">check_circle</span>
+<p class="text-sm leading-relaxed text-blue-100">Claimant resides in a designated Red Zone (Shah Alam) impacted by the Oct 12 flash flood event.</p>
+</li>
+<li class="flex gap-3">
+<span class="material-symbols-outlined text-secondary-container mt-1 text-sm">check_circle</span>
+<p class="text-sm leading-relaxed text-blue-100">Visual evidence confirms 1.2m water level marks on interior walls, consistent with meteorological data.</p>
+</li>
+<li class="flex gap-3">
+<span class="material-symbols-outlined text-secondary-container mt-1 text-sm">check_circle</span>
+<p class="text-sm leading-relaxed text-blue-100">No previous claims filed in the last 24 months. Clean history profile.</p>
+</li>
+</ul>
+</div>
+<div class="space-y-6">
+<div class="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10">
+<h3 class="text-white/60 text-xs font-black uppercase tracking-widest mb-4">Risk &amp; Eligibility</h3>
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm">Risk Assessment</span>
+<span class="text-sm font-bold text-green-400">LOW RISK (4%)</span>
+</div>
+<div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+<div class="bg-green-400 h-full w-[4%]"></div>
+</div>
+<div class="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
+<div>
+<p class="text-[10px] text-white/50 uppercase">Eligible Amount</p>
+<p class="text-2xl font-black text-secondary-container">RM 5,000.00</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-white/50 uppercase">Confidence Score</p>
+<p class="text-lg font-bold">99.2%</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Details -->
+<div class="grid md:grid-cols-3 gap-6 mt-8">
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] md:col-span-2">
+<h3 class="text-primary font-bold mb-4">Citizen Impact Assessment</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed mb-4">
+                            The claimant reports total loss of ground-floor electrical appliances and severe structural damage to kitchen cabinetry. Secondary analysis of satellite imagery from the date of occurrence confirms heavy inundation in the specific lot area. Household consists of 4 members including 2 elderly dependents.
+                        </p>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-highest text-primary font-bold text-[10px] rounded-full uppercase">Elderly Support +</span>
+<span class="px-3 py-1 bg-surface-container-highest text-primary font-bold text-[10px] rounded-full uppercase">Priority Payout</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] flex flex-col justify-center items-center text-center">
+<div class="w-16 h-16 bg-primary-container rounded-full flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-on-primary-container text-3xl">verified_user</span>
+</div>
+<h3 class="font-bold text-primary">Pre-Approved</h3>
+<p class="text-xs text-slate-500 mt-2">Meets all automated criteria for immediate relief disbursement.</p>
+</div>
+</div>
+</section>
+<!-- Right Sidebar: RAG Policy Grounding -->
+<section class="w-full md:w-80 border-l border-outline-variant/20 flex flex-col sidebar-scroll overflow-y-auto bg-surface-container-low/30">
+<div class="p-6">
+<h2 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Policy Grounding (RAG)</h2>
+<div class="space-y-4">
+<!-- RAG Snippet 1 -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary text-sm">description</span>
+<span class="text-[10px] font-black text-primary uppercase">NAP-2023 / Section 4.1</span>
+</div>
+<p class="text-xs italic text-on-surface-variant leading-relaxed">
+                                "...relief funds are applicable to all households within the B40 category residing in gazetted flood zones who experience interior water levels exceeding 0.5 meters."
+                            </p>
+<div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
+<span class="text-[10px] text-green-600 font-bold">MATCH DETECTED</span>
+<button class="text-[10px] font-bold text-primary hover:underline">VIEW PDF</button>
+</div>
+</div>
+<!-- RAG Snippet 2 -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary text-sm">description</span>
+<span class="text-[10px] font-black text-primary uppercase">MOF-CIRCULAR-09</span>
+</div>
+<p class="text-xs italic text-on-surface-variant leading-relaxed">
+                                "Immediate relief of RM2,500 - RM5,000 shall be processed for cases verified via NADMA satellite imagery and local district office confirmation."
+                            </p>
+<div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
+<span class="text-[10px] text-green-600 font-bold">MATCH DETECTED</span>
+<button class="text-[10px] font-bold text-primary hover:underline">VIEW PDF</button>
+</div>
+</div>
+<!-- Officer Notes -->
+<div class="mt-10">
+<h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Internal Discussion</h3>
+<div class="space-y-4">
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-300 flex-shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="professional female government official with corporate attire in a modern glass office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPaHSypPXTkwGXSySvW8NpIU8YFJOuK5rLFY07kB5xfVFBvO15J52JtNJvbMXqwfSD-b0Ub4RrUDbxwmgYrW9x890lyNYoIgxyW-D-ln9hTPLQhm9OiMUVDXC-odZZUq1jvvIg0ifVrPIg47mE83HKY4M4sjBAbTFMZji7LCpy6ZU7pXA7AI6jnuDfysKv36M7o174N1-iuXGqTFVqatQQgW-xw0LjAQ2u0nBqvngVFusmI6IT8gf5TJhv5cEaXYXiWAz_RBKFB-Q"/>
+</div>
+<div class="bg-slate-200/50 p-3 rounded-tr-xl rounded-br-xl rounded-bl-xl">
+<p class="text-[10px] font-bold text-primary mb-1">Supervisor Wong</p>
+<p class="text-[11px] text-on-surface">Gemini summary looks solid. Proceed to final check.</p>
+</div>
+</div>
+</div>
+<div class="mt-4 relative">
+<textarea class="w-full bg-surface-container-high border-none rounded-xl text-xs p-4 focus:ring-1 focus:ring-primary h-24" placeholder="Add a private note..."></textarea>
+<button class="absolute bottom-2 right-2 text-primary p-2">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Bottom Action Bar -->
+<footer class="fixed bottom-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl z-50 flex flex-col md:flex-row justify-between items-center px-8 py-4 border-t border-slate-100 dark:border-slate-800 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
+<div class="hidden md:flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="text-xs font-bold text-slate-500">Case Sync Active</span>
+</div>
+<div class="h-4 w-[1px] bg-slate-200"></div>
+<p class="text-xs text-slate-400">Decision Lock: 04:59s remaining</p>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto">
+<button class="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-error font-bold text-xs hover:bg-error/5 transition-colors">
+<span class="material-symbols-outlined text-sm">report</span>
+                Flag for Review
+            </button>
+<button class="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-surface-container-high text-primary font-bold text-xs hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-sm">help</span>
+                Request Clarification
+            </button>
+<button class="flex-1 md:flex-none flex items-center justify-center gap-2 px-10 py-3 rounded-lg bg-primary text-white font-bold text-xs hover:bg-primary-container transition-colors shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-sm">verified</span>
+                Approve
+            </button>
+</div>
+</footer>
+</body></html>

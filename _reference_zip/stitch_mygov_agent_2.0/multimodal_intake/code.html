@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MyGOV Agent 2.0 - Intake</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f3f4f5",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#191c1d",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface": "#f8f9fa",
+                        "on-tertiary-fixed-variant": "#93000e",
+                        "on-error-container": "#93000a",
+                        "outline": "#737780",
+                        "tertiary-fixed-dim": "#ffb4ac",
+                        "primary-fixed-dim": "#a7c8ff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#221b00",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e1e3e4",
+                        "tertiary": "#460003",
+                        "surface-container": "#edeeef",
+                        "surface-container-high": "#e7e8e9",
+                        "secondary": "#6f5d00",
+                        "inverse-surface": "#2e3132",
+                        "primary-fixed": "#d5e3ff",
+                        "outline-variant": "#c3c6d1",
+                        "on-primary-container": "#799dd6",
+                        "on-tertiary-container": "#ff6d63",
+                        "surface-tint": "#3a5f94",
+                        "surface-dim": "#d9dadb",
+                        "on-surface-variant": "#43474f",
+                        "tertiary-container": "#6e0008",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001b3c",
+                        "primary": "#001e40",
+                        "on-primary-fixed-variant": "#1f477b",
+                        "on-tertiary-fixed": "#410003",
+                        "secondary-container": "#fedb41",
+                        "primary-container": "#003366",
+                        "inverse-primary": "#a7c8ff",
+                        "surface-bright": "#f8f9fa",
+                        "background": "#f8f9fa",
+                        "on-surface": "#191c1d",
+                        "on-secondary-fixed-variant": "#544600",
+                        "on-secondary-container": "#726000",
+                        "tertiary-fixed": "#ffdad6",
+                        "secondary-fixed": "#ffe16b",
+                        "secondary-fixed-dim": "#e6c429"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Public Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .mic-pulse {
+            position: relative;
+        }
+        .mic-pulse::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            background: rgba(0, 30, 64, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-primary-container">
+<img alt="Citizen profile photo" class="w-full h-full object-cover" data-alt="Professional headshot of a citizen for profile identification, clean studio lighting, neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoReG93xmVxznK1M5FFmvvgNSV3Iu9PVFQpcjzeAmKoqlZAAiE9qyPlEq0gSALZmjys-s294zb2D1Myn_L_-_GoL9Wq4zSsQeSJFZhvPYiaFyB97Fduou5kn0XydpuCaUoCHBut5oDjGYzkSJ0w2Llos-gQCCIEQPq3PtZEbRT2e7CQ-eB5k0ljKwPlFvlshWSFeE90FvknlVJt6mT88ks5N4zrhLpMU_jPFvcDsWW97DmVHPwfGdw__LX8Uoko7jQDni3c_g1Npo"/>
+</div>
+<span class="text-xl font-bold text-blue-900 font-headline tracking-tight">Sovereign State</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-100 transition-colors active:scale-95 duration-150 rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-24 pb-32 px-6 max-w-4xl mx-auto w-full flex flex-col gap-8">
+<!-- Hero Voice Section -->
+<section class="flex flex-col items-center justify-center py-12 text-center">
+<h1 class="font-headline font-extrabold text-4xl md:text-5xl text-primary tracking-tight mb-4">How can I assist you today?</h1>
+<p class="text-on-surface-variant max-w-md mx-auto mb-10">Speak naturally to report issues, track applications, or access services.</p>
+<!-- Giant Microphone Button -->
+<div class="relative group">
+<div class="absolute -inset-6 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all"></div>
+<button class="relative w-32 h-32 md:w-40 md:h-40 bg-primary rounded-full flex items-center justify-center text-white shadow-2xl active:scale-95 transition-transform duration-300">
+<span class="material-symbols-outlined !text-6xl" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+<div class="mt-6 font-headline font-bold text-primary tracking-widest text-sm">SPEAK TO MYGOV AGENT</div>
+</div>
+</section>
+<!-- Multimodal Upload Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Photo & Document Header (Spans 2 cols) -->
+<div class="md:col-span-2 flex items-center justify-between mb-2">
+<h2 class="font-headline font-bold text-xl text-primary">Photo &amp; Document Upload</h2>
+<button class="text-sm font-semibold text-secondary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+                    Add more
+                </button>
+</div>
+<!-- Upload Card 1: Flood Damage -->
+<div class="bg-white rounded-full p-1 border border-transparent hover:border-outline-variant transition-all cursor-pointer group shadow-sm flex items-center gap-4">
+<div class="w-20 h-20 rounded-full bg-surface-container-low overflow-hidden flex-shrink-0">
+<img alt="Flood Damage Photo" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" data-alt="Close up of residential street flood damage with debris and murky water, daylight, high detail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-9DAj7NeZN1T0pJqve5fwCjegQn02TIvgVYUxjZGQ9mavQT2YDVGVBQJJZp3fWbIJwVvSieDR-BcqeIr8sDEoL5yMZSDG-QDpbeyJyHTeTZat5cpuYcHx2W4wy8NyY0QPMjzS36S0abOmkgBV9bS1H26bQR2wiGFkfGIqYhAws61YFuoIraLWFNYtQqiYwrWqjnoSyhEqNOmHJ-srzHwggAgAG29RtzgDggSSAQKXPvTFqzOc7Cgu3BLtbSfCExUICODl3bHqo24"/>
+</div>
+<div class="flex flex-col pr-6">
+<span class="font-bold text-primary">Flood Damage Photo</span>
+<span class="text-xs text-on-surface-variant">Tap to retake or edit</span>
+</div>
+<div class="ml-auto pr-4">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<!-- Upload Card 2: MyKad OCR -->
+<div class="bg-surface-container-low rounded-full p-1 border-2 border-dashed border-outline-variant hover:bg-white transition-all cursor-pointer group flex items-center gap-4">
+<div class="w-20 h-20 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-outline">
+<span class="material-symbols-outlined !text-3xl">badge</span>
+</div>
+<div class="flex flex-col pr-6">
+<span class="font-bold text-on-surface-variant">MyKad OCR</span>
+<span class="text-xs text-on-surface-variant">Place ID in frame</span>
+</div>
+<div class="ml-auto pr-4">
+<span class="material-symbols-outlined text-outline">camera_enhance</span>
+</div>
+</div>
+</section>
+<!-- Real-time Transcription Canvas -->
+<section class="mt-4">
+<div class="bg-primary-container rounded-3xl p-8 relative overflow-hidden">
+<!-- Background Decorative Pattern -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+<div class="flex items-center gap-3 mb-6">
+<div class="flex gap-1">
+<div class="w-1.5 h-6 bg-on-primary-container rounded-full opacity-40"></div>
+<div class="w-1.5 h-8 bg-on-primary-container rounded-full"></div>
+<div class="w-1.5 h-5 bg-on-primary-container rounded-full opacity-60"></div>
+</div>
+<span class="text-xs font-bold text-on-primary-container/80 uppercase tracking-widest font-label">Processing Voice Input</span>
+</div>
+<div class="relative z-10">
+<p class="font-headline text-2xl md:text-3xl text-white font-medium leading-tight">
+                        “I want to report a <span class="text-secondary-container underline underline-offset-8">pothole</span> and a <span class="text-secondary-container underline underline-offset-8">broken streetlamp</span> near SS2...”
+                    </p>
+</div>
+<div class="mt-8 flex gap-3">
+<div class="px-4 py-1.5 bg-white/10 rounded-full border border-white/20 text-xs font-semibold text-white/90">Location: Petaling Jaya</div>
+<div class="px-4 py-1.5 bg-white/10 rounded-full border border-white/20 text-xs font-semibold text-white/90">Category: Infrastructure</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 backdrop-blur-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.04)] rounded-t-3xl border-t border-slate-100">
+<a class="flex flex-col items-center justify-center text-slate-400 px-5 py-2 hover:text-blue-700 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] text-[11px] font-semibold">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-5 py-2 hover:text-blue-700 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-['Inter'] text-[11px] font-semibold">Services</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-blue-50 text-blue-900 rounded-2xl px-5 py-2 scale-110" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">assignment</span>
+<span class="font-['Inter'] text-[11px] font-semibold">Active Cases</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-5 py-2 hover:text-blue-700 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span class="font-['Inter'] text-[11px] font-semibold">Inbox</span>
+</a>
+</nav>
+</body></html>
