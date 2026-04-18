@@ -7,6 +7,13 @@ export const caseTypeSchema = z.enum([
 ]);
 
 export const evidenceKindSchema = z.enum(["photo", "document", "voice_note"]);
+export const fileReviewStatusSchema = z.enum([
+  "uploaded",
+  "under_review",
+  "accepted",
+  "needs_replacement",
+  "rejected",
+]);
 
 export const createCaseSchema = z.object({
   title: z.string().min(8, "Add a clear case title."),
@@ -62,6 +69,28 @@ export const adminActionSchema = z.object({
     context.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Add a short operational note so the timeline stays useful.",
+      path: ["note"],
+    });
+  }
+});
+
+export const assistantMessageSchema = z.object({
+  body: z.string().trim().min(4, "Ask a more specific question so the assistant can help."),
+  caseId: z.string().trim().optional(),
+});
+
+export const fileReviewSchema = z.object({
+  fileId: z.string().min(2, "A valid file is required."),
+  status: fileReviewStatusSchema,
+  note: z.string().trim().max(2000).optional(),
+}).superRefine((value, context) => {
+  if (
+    ["needs_replacement", "rejected"].includes(value.status) &&
+    (!value.note || value.note.trim().length < 12)
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Add a short review note so the citizen understands the file issue.",
       path: ["note"],
     });
   }

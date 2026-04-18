@@ -45,3 +45,37 @@ export async function attachEvidenceAction(caseId: string, files: EvidencePayloa
 export async function applyAdminAction(caseId: string, payload: AdminActionInput) {
   return postJson<{ ok: boolean }>(`/api/admin/cases/${caseId}/actions`, payload);
 }
+
+export async function sendAssistantMessage(payload: {
+  body: string;
+  caseId?: string;
+}) {
+  return postJson<{
+    userMessage: { id: string; body: string; createdAt: string };
+    assistantMessage: { id: string; body: string; createdAt: string; attachments?: string[] };
+  }>("/api/assistant/messages", payload);
+}
+
+export async function updateFileReviewAction(
+  caseId: string,
+  payload: {
+    fileId: string;
+    status: "uploaded" | "under_review" | "accepted" | "needs_replacement" | "rejected";
+    note?: string;
+  }
+) {
+  const response = await fetch(`/api/admin/cases/${caseId}/files`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+    throw new Error(body?.error || "Request failed.");
+  }
+
+  return response.json() as Promise<{ ok: boolean }>;
+}

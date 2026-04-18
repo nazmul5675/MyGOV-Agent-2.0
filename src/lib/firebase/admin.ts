@@ -46,3 +46,13 @@ export async function getUserRole(uid: string): Promise<UserRole | null> {
   const role = normalizeUserRole(snapshot.data()?.role);
   return role;
 }
+
+export async function getUserProfileRecord(uid: string) {
+  const db = getAdminDb();
+  if (!db) return null;
+
+  const snapshot = await db.collection("users").doc(uid).get();
+  if (!snapshot.exists) return null;
+
+  return snapshot.data() || null;
+}

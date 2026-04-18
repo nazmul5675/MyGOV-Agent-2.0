@@ -1,6 +1,7 @@
 import type {
   AdminDashboardData,
   AppSession,
+  AssistantMessage,
   CaseEvent,
   CaseItem,
   CaseStatus,
@@ -25,6 +26,50 @@ function mapCaseWithTimeline(base: CaseItem, events?: CaseEvent[]) {
     ...base,
     timeline: sortEvents(events || base.timeline),
   };
+}
+
+function normaliseEvidenceFile(caseId: string, ownerUid: string, raw: Partial<EvidenceFile>) {
+  return {
+    id: String(raw.id || ""),
+    caseId,
+    ownerUid,
+    name: String(raw.name || "Untitled file"),
+    kind: raw.kind || "document",
+    sizeLabel: String(raw.sizeLabel || formatFileSize(Number(raw.sizeBytes || 0))),
+    sizeBytes: raw.sizeBytes ? Number(raw.sizeBytes) : 0,
+    uploadedAt: String(raw.uploadedAt || isoNow()),
+    status: raw.status || "uploaded",
+    category: raw.category ? String(raw.category) : undefined,
+    reviewedAt: raw.reviewedAt ? String(raw.reviewedAt) : undefined,
+    reviewedBy: raw.reviewedBy ? String(raw.reviewedBy) : undefined,
+    notes: raw.notes ? String(raw.notes) : undefined,
+    downloadUrl: raw.downloadUrl ? String(raw.downloadUrl) : undefined,
+    storagePath: raw.storagePath ? String(raw.storagePath) : undefined,
+    contentType: raw.contentType ? String(raw.contentType) : undefined,
+  } satisfies EvidenceFile;
+}
+
+async function fetchCaseFiles(caseId: string, citizenId: string, fallback?: EvidenceFile[]) {
+  const db = requireDb();
+  const snapshot = await db
+    .collection("cases")
+    .doc(caseId)
+    .collection("files")
+    .orderBy("uploadedAt", "desc")
+    .get();
+
+  if (!snapshot.empty) {
+    return snapshot.docs.map((doc) =>
+      normaliseEvidenceFile(caseId, citizenId, {
+        id: doc.id,
+        ...(doc.data() as Partial<EvidenceFile>),
+      })
+    );
+  }
+
+  return Array.isArray(fallback)
+    ? fallback.map((item) => normaliseEvidenceFile(caseId, citizenId, item))
+    : [];
 }
 
 async function fetchCaseEvents(caseId: string) {
@@ -100,12 +145,17 @@ async function getCasesCollectionForUser(userId: string) {
     snapshot.docs.map(async (doc) => {
       const data = doc.data() as Omit<CaseItem, "id" | "timeline">;
       const events = await fetchCaseEvents(doc.id);
+      const evidence = await fetchCaseFiles(
+        doc.id,
+        data.citizenId,
+        Array.isArray(data.evidence) ? data.evidence : []
+      );
 
       return mapCaseWithTimeline(
         {
           ...data,
           id: doc.id,
-          evidence: Array.isArray(data.evidence) ? data.evidence : [],
+          evidence,
           reminders: Array.isArray(data.reminders) ? data.reminders : [],
           timeline: [],
         } as CaseItem,
@@ -123,12 +173,17 @@ async function getAllCases() {
     snapshot.docs.map(async (doc) => {
       const data = doc.data() as Omit<CaseItem, "id" | "timeline">;
       const events = await fetchCaseEvents(doc.id);
+      const evidence = await fetchCaseFiles(
+        doc.id,
+        data.citizenId,
+        Array.isArray(data.evidence) ? data.evidence : []
+      );
 
       return mapCaseWithTimeline(
         {
           ...data,
           id: doc.id,
-          evidence: Array.isArray(data.evidence) ? data.evidence : [],
+          evidence,
           reminders: Array.isArray(data.reminders) ? data.reminders : [],
           timeline: [],
         } as CaseItem,
@@ -142,6 +197,20 @@ export async function getCitizenDashboardData(
   session: AppSession
 ): Promise<CitizenDashboardData> {
   const cases = await getCasesCollectionForUser(session.uid);
+  const activeCase =
+    cases.find((item) =>
+      ["submitted", "reviewing", "need_more_docs", "routed", "in_progress"].includes(
+        item.status
+      )
+    ) || null;
+  const recentFiles = cases
+    .flatMap((item) => item.evidence)
+    .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
+    .slice(0, 6);
+  const recentActivity = cases
+    .flatMap((item) => item.timeline.map((event) => ({ ...event, caseId: item.id })))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 6);
   const reminders: NotificationItem[] = cases
     .flatMap((item) =>
       item.reminders.map((reminder, index) => {
@@ -160,11 +229,28 @@ export async function getCitizenDashboardData(
       })
     )
     .slice(0, 4);
+  const missingDocuments = Array.from(
+    new Set(cases.flatMap((item) => item.intake.missingDocuments))
+  ).slice(0, 4);
+  const recommendedActions = [
+    activeCase ? `Check the latest update for ${activeCase.title}.` : "Start your first case.",
+    recentFiles.length
+      ? "Ask the assistant to summarize your uploaded evidence before submission."
+      : "Upload at least one supporting document or photo for stronger review context.",
+    ...(missingDocuments.length
+      ? [`Prepare these missing items: ${missingDocuments.join(", ")}.`]
+      : ["No missing documents are currently flagged by the workflow."]),
+  ];
 
   return {
     stats: computeCitizenStats(cases),
     cases,
     reminders,
+    activeCase,
+    recentFiles,
+    recentActivity,
+    recommendedActions,
+    profileNeedsAttention: !session.name || session.name === session.email,
   };
 }
 
@@ -180,12 +266,17 @@ export async function getCitizenCaseById(citizenId: string, caseId: string) {
   const data = snapshot.data() as Omit<CaseItem, "id" | "timeline">;
   if (data.citizenId !== citizenId) return null;
   const events = await fetchCaseEvents(caseId);
+  const evidence = await fetchCaseFiles(
+    caseId,
+    data.citizenId,
+    Array.isArray(data.evidence) ? data.evidence : []
+  );
 
   return mapCaseWithTimeline(
     {
       ...data,
       id: snapshot.id,
-      evidence: Array.isArray(data.evidence) ? data.evidence : [],
+      evidence,
       reminders: Array.isArray(data.reminders) ? data.reminders : [],
       timeline: [],
     } as CaseItem,
@@ -195,9 +286,25 @@ export async function getCitizenCaseById(citizenId: string, caseId: string) {
 
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   const queue = await getAllCases();
+  const filesNeedingReview = queue
+    .flatMap((item) => item.evidence)
+    .filter((file) => ["uploaded", "under_review", "needs_replacement"].includes(file.status))
+    .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
+    .slice(0, 8);
+  const recentActivity = queue
+    .flatMap((item) => item.timeline.map((event) => ({ ...event, caseId: item.id })))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 8);
   return {
     stats: computeAdminStats(queue),
     queue,
+    filesNeedingReview,
+    recentActivity,
+    suggestedActions: [
+      "Review newly uploaded files before moving a case to in progress.",
+      "Use request more documents for blurred or incomplete evidence.",
+      "Check AI-ready summaries for clearer citizen-facing follow-up notes.",
+    ],
   };
 }
 
@@ -208,12 +315,17 @@ export async function getAdminCaseById(caseId: string) {
 
   const data = snapshot.data() as Omit<CaseItem, "id" | "timeline">;
   const events = await fetchCaseEvents(caseId);
+  const evidence = await fetchCaseFiles(
+    caseId,
+    data.citizenId,
+    Array.isArray(data.evidence) ? data.evidence : []
+  );
 
   return mapCaseWithTimeline(
     {
       ...data,
       id: snapshot.id,
-      evidence: Array.isArray(data.evidence) ? data.evidence : [],
+      evidence,
       reminders: Array.isArray(data.reminders) ? data.reminders : [],
       timeline: [],
     } as CaseItem,
@@ -292,6 +404,13 @@ export async function createCaseRecord(payload: CreateCasePayload) {
 
   const docRef = db.collection("cases").doc(payload.id);
   await docRef.set(caseData);
+  if (evidence.length) {
+    await Promise.all(
+      evidence.map((item) =>
+        docRef.collection("files").doc(item.id).set(item)
+      )
+    );
+  }
   await appendCaseEvent(docRef.id, {
     type: "status",
     title: "Case submitted",
@@ -350,6 +469,15 @@ export async function addEvidenceToCase(
     evidence: merged,
     updatedAt: isoNow(),
   });
+
+  await Promise.all(
+    evidence.map((item) =>
+      docRef.collection("files").doc(item.id).set({
+        ...item,
+        caseId,
+      })
+    )
+  );
 
   for (const item of evidence) {
     await appendCaseEvent(caseId, {
@@ -451,6 +579,161 @@ export async function applyAdminCaseAction(payload: AdminCaseActionPayload) {
   });
 
   return { ok: true };
+}
+
+export async function updateEvidenceReviewStatus(input: {
+  caseId: string;
+  fileId: string;
+  status: EvidenceFile["status"];
+  note?: string;
+  actorName: string;
+  actorId: string;
+}) {
+  const db = requireDb();
+  const fileRef = db.collection("cases").doc(input.caseId).collection("files").doc(input.fileId);
+  const fileSnapshot = await fileRef.get();
+
+  if (!fileSnapshot.exists) {
+    throw new Error("File record not found.");
+  }
+
+  const now = isoNow();
+  await fileRef.update({
+    status: input.status,
+    notes: input.note || "",
+    reviewedAt: now,
+    reviewedBy: input.actorId,
+  });
+
+  const caseRef = db.collection("cases").doc(input.caseId);
+  const caseSnapshot = await caseRef.get();
+  if (caseSnapshot.exists) {
+    const caseData = caseSnapshot.data() as CaseItem;
+    const mergedEvidence = await fetchCaseFiles(
+      input.caseId,
+      caseData.citizenId,
+      Array.isArray(caseData.evidence) ? caseData.evidence : []
+    );
+
+    await caseRef.update({
+      evidence: mergedEvidence,
+      updatedAt: now,
+      updatedBy: input.actorId,
+    });
+  }
+
+  await appendCaseEvent(input.caseId, {
+    type: "note",
+    title: "File review updated",
+    description: input.note
+      ? `File ${input.fileId} marked as ${input.status}: ${input.note}`
+      : `File ${input.fileId} marked as ${input.status}.`,
+    createdAt: now,
+    actor: input.actorName,
+    actorId: input.actorId,
+  });
+
+  return { ok: true };
+}
+
+export async function listCaseAssistantMessages(caseId: string): Promise<AssistantMessage[]> {
+  const db = requireDb();
+  const snapshot = await db
+    .collection("cases")
+    .doc(caseId)
+    .collection("chat")
+    .orderBy("createdAt", "asc")
+    .get();
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    role: (doc.data().role as AssistantMessage["role"]) || "assistant",
+    body: String(doc.data().body || ""),
+    createdAt: String(doc.data().createdAt || ""),
+    caseId,
+    threadKey: String(doc.data().threadKey || `case:${caseId}`),
+    attachments: Array.isArray(doc.data().attachments)
+      ? (doc.data().attachments as string[])
+      : [],
+  }));
+}
+
+export async function listDashboardAssistantMessages(userId: string): Promise<AssistantMessage[]> {
+  const db = requireDb();
+  const snapshot = await db
+    .collection("users")
+    .doc(userId)
+    .collection("assistantThreads")
+    .doc("dashboard")
+    .collection("messages")
+    .orderBy("createdAt", "asc")
+    .get();
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    role: (doc.data().role as AssistantMessage["role"]) || "assistant",
+    body: String(doc.data().body || ""),
+    createdAt: String(doc.data().createdAt || ""),
+    threadKey: "dashboard",
+    attachments: Array.isArray(doc.data().attachments)
+      ? (doc.data().attachments as string[])
+      : [],
+  }));
+}
+
+export async function appendAssistantMessage(input: {
+  userId: string;
+  role: AssistantMessage["role"];
+  body: string;
+  caseId?: string;
+  attachments?: string[];
+}) {
+  const db = requireDb();
+  const createdAt = isoNow();
+  if (input.caseId) {
+    const ref = await db.collection("cases").doc(input.caseId).collection("chat").add({
+      role: input.role,
+      body: input.body,
+      createdAt,
+      threadKey: `case:${input.caseId}`,
+      attachments: input.attachments || [],
+      userId: input.userId,
+    });
+
+    return {
+      id: ref.id,
+      role: input.role,
+      body: input.body,
+      createdAt,
+      caseId: input.caseId,
+      threadKey: `case:${input.caseId}`,
+      attachments: input.attachments || [],
+    } satisfies AssistantMessage;
+  }
+
+  const ref = await db
+    .collection("users")
+    .doc(input.userId)
+    .collection("assistantThreads")
+    .doc("dashboard")
+    .collection("messages")
+    .add({
+      role: input.role,
+      body: input.body,
+      createdAt,
+      threadKey: "dashboard",
+      attachments: input.attachments || [],
+      userId: input.userId,
+    });
+
+  return {
+    id: ref.id,
+    role: input.role,
+    body: input.body,
+    createdAt,
+    threadKey: "dashboard",
+    attachments: input.attachments || [],
+  } satisfies AssistantMessage;
 }
 
 export function buildEvidenceFile(input: {

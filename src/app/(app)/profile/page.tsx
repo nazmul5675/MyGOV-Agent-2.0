@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, UserRound } from "lucide-react";
 
+import { ProfileBasicsForm } from "@/components/forms/profile-basics-form";
 import { LiveDataState } from "@/components/common/live-data-state";
 import { PageHeader } from "@/components/common/page-header";
-import { requireRole } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/session";
 import { getProfileCards } from "@/lib/content/profile";
 import { getUserProfile } from "@/lib/repositories/users";
 import { buttonVariants } from "@/components/ui/button";
@@ -14,8 +15,13 @@ export const metadata: Metadata = {
   title: "Profile",
 };
 
-export default async function ProfilePage() {
-  const session = await requireRole("citizen");
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ welcome?: string }>;
+}) {
+  const session = await requireSession();
+  const query = searchParams ? await searchParams : undefined;
   let profile: Awaited<ReturnType<typeof getUserProfile>> | null = null;
   let errorMessage: string | null = null;
 
@@ -63,8 +69,8 @@ export default async function ProfilePage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Profile"
-        title="Citizen profile and identity readiness"
-        description="This optional page rounds out the demo with a calm profile surface for identity, stored document readiness, and future settings work."
+        title="Profile and identity readiness"
+        description="Profile details beyond login credentials live in Firestore, so the product can stay simple at sign-up and still support richer citizen context later."
       />
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -74,12 +80,14 @@ export default async function ProfilePage() {
               <UserRound className="size-7" />
             </div>
             <div>
-              <p className="font-heading text-3xl font-bold tracking-tight">{profile.name}</p>
+              <p className="font-heading text-3xl font-bold tracking-tight">{profile.fullName}</p>
               <p className="text-sm text-primary-foreground/75">{profile.email}</p>
             </div>
           </div>
           <p className="mt-6 max-w-xl text-sm leading-7 text-primary-foreground/82">
-            Profile-level data can support guardian reminders, saved evidence, and faster future submissions without making the product feel cluttered.
+            Full name is collected during registration. Date of birth, phone number,
+            and location details are stored here in Firestore so onboarding stays
+            lightweight while age-aware and contact-aware flows remain possible later.
           </p>
         </div>
 
@@ -99,6 +107,16 @@ export default async function ProfilePage() {
           })}
         </div>
       </section>
+
+      <ProfileBasicsForm
+        showWelcome={query?.welcome === "1"}
+        defaultValues={{
+          fullName: profile.fullName,
+          dateOfBirth: profile.dateOfBirth || "",
+          phoneNumber: profile.phoneNumber || "",
+          addressText: profile.addressText || "",
+        }}
+      />
     </div>
   );
 }

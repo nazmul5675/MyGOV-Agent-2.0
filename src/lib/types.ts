@@ -12,6 +12,12 @@ export type CaseStatus =
 export type CaseType = "flood_relief" | "public_complaint" | "reminder_renewal";
 
 export type EvidenceKind = "photo" | "document" | "voice_note";
+export type FileReviewStatus =
+  | "uploaded"
+  | "under_review"
+  | "accepted"
+  | "needs_replacement"
+  | "rejected";
 
 export interface AppSession {
   uid: string;
@@ -25,10 +31,11 @@ export interface UserProfile {
   id: string;
   uid: string;
   email: string;
-  name: string;
+  fullName: string;
   role: UserRole;
-  phone?: string;
-  location?: string;
+  dateOfBirth?: string;
+  phoneNumber?: string;
+  addressText?: string;
   documents?: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -56,15 +63,31 @@ export interface CaseEvent {
 
 export interface EvidenceFile {
   id: string;
+  caseId?: string;
+  ownerUid?: string;
   name: string;
   kind: EvidenceKind;
   sizeLabel: string;
   sizeBytes?: number;
   uploadedAt: string;
-  status: "uploaded" | "processing" | "flagged";
+  status: FileReviewStatus;
+  category?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  notes?: string;
   downloadUrl?: string;
   storagePath?: string;
   contentType?: string;
+}
+
+export interface AssistantMessage {
+  id: string;
+  role: "user" | "assistant";
+  body: string;
+  createdAt: string;
+  caseId?: string;
+  threadKey: string;
+  attachments?: string[];
 }
 
 export interface IntakeSummary {
@@ -108,9 +131,17 @@ export interface CitizenDashboardData {
   stats: DashboardStat[];
   cases: CaseItem[];
   reminders: NotificationItem[];
+  activeCase: CaseItem | null;
+  recentFiles: EvidenceFile[];
+  recentActivity: CaseEvent[];
+  recommendedActions: string[];
+  profileNeedsAttention: boolean;
 }
 
 export interface AdminDashboardData {
   stats: DashboardStat[];
   queue: CaseItem[];
+  filesNeedingReview: EvidenceFile[];
+  recentActivity: CaseEvent[];
+  suggestedActions: string[];
 }

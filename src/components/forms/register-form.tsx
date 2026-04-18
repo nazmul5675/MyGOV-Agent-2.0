@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { LoaderCircle, LockKeyhole } from "lucide-react";
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signOut,
+} from "firebase/auth";
+import { LoaderCircle, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -18,9 +22,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
-import { loginSchema } from "@/lib/validation/auth";
+import { registerSchema } from "@/lib/validation/auth";
 
-type LoginValues = z.infer<typeof loginSchema>;
+type RegisterValues = z.infer<typeof registerSchema>;
 
 async function postJson(path: string, payload: unknown) {
   const response = await fetch(path, {
@@ -33,29 +37,28 @@ async function postJson(path: string, payload: unknown) {
     const body = (await response.json().catch(() => null)) as
       | { error?: string }
       | null;
-    throw new Error(body?.error || "Authentication failed.");
+    throw new Error(body?.error || "Unable to create account.");
   }
 
   return response.json().catch(() => null);
 }
 
-export function LoginForm() {
+export function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const missingClientVars = getMissingFirebaseClientVars();
-  const form = useForm<LoginValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RegisterValues>({
+    resolver: zodResolver(registerSchema),
     mode: "onChange",
     defaultValues: {
+      fullName: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
-  const nextPath = useMemo(() => searchParams.get("next"), [searchParams]);
-
-  const handleFirebaseLogin = async (values: LoginValues) => {
+  const onSubmit = (values: RegisterValues) => {
     const auth = firebaseAuth;
 
     if (!auth) {
@@ -66,29 +69,38 @@ export function LoginForm() {
     }
 
     startTransition(async () => {
+      let createdUser:
+        | Awaited<ReturnType<typeof createUserWithEmailAndPassword>>
+        | undefined;
+
       try {
-        const credential = await signInWithEmailAndPassword(
+        createdUser = await createUserWithEmailAndPassword(
           auth,
           values.email,
           values.password
         );
-        const idToken = await credential.user.getIdToken(true);
-        const response = (await postJson("/api/auth/login", {
-          idToken,
-        })) as { role?: "citizen" | "admin" } | null;
-        const resolvedRole = response?.role === "admin" ? "admin" : "citizen";
 
-        toast.success("Signed in successfully", {
-          description: "Your secure workspace is ready.",
+        const idToken = await createdUser.user.getIdToken(true);
+        await postJson("/api/auth/register", {
+          idToken,
+          fullName: values.fullName,
         });
-        router.push(nextPath || (resolvedRole === "admin" ? "/admin" : "/dashboard"));
+
+        toast.success("Account created", {
+          description: "Your citizen workspace is ready. You can complete your profile next.",
+        });
+        router.push("/profile?welcome=1");
         router.refresh();
       } catch (error) {
+        if (createdUser?.user) {
+          await deleteUser(createdUser.user).catch(() => undefined);
+        }
+        await signOut(auth).catch(() => undefined);
+
         toast.error(
-          error instanceof Error ? error.message : "Unable to sign in right now.",
+          error instanceof Error ? error.message : "Unable to create your account.",
           {
-            description:
-              "Double-check your email, password, and Firebase account role setup.",
+            description: "Try again after checking your Firebase project setup.",
           }
         );
       }
@@ -99,18 +111,27 @@ export function LoginForm() {
     <Card className="surface-panel border-white/50 bg-white/82">
       <CardHeader className="space-y-2">
         <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
-          Sign in securely
+          Create your citizen account
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
-          Use your Firebase account to enter the citizen or admin workspace with
-          a server-issued session cookie.
+          Start with the essentials. We collect your full name now, then let you
+          complete profile details later so sign-up stays friendly and fast.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form
-          className="space-y-4"
-          onSubmit={form.handleSubmit(handleFirebaseLogin)}
-        >
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="grid gap-2">
+            <Label htmlFor="fullName">Full name</Label>
+            <Input
+              id="fullName"
+              placeholder="Nur Aisyah Rahman"
+              autoComplete="name"
+              className="h-12 rounded-2xl border-white/40 bg-white/80"
+              {...form.register("fullName")}
+            />
+            <FormMessage message={form.formState.errors.fullName?.message} />
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="email">Email address</Label>
             <Input
@@ -125,22 +146,29 @@ export function LoginForm() {
           </div>
 
           <div className="grid gap-2">
-            <div className="flex items-center justify-between gap-3">
-              <Label htmlFor="password">Password</Label>
-              <Link
-                href="/forgot-password"
-                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
+            <Label htmlFor="password">Password</Label>
             <PasswordInput
               id="password"
-              placeholder="Enter your password"
-              autoComplete="current-password"
+              placeholder="Create a password"
+              autoComplete="new-password"
               {...form.register("password")}
             />
             <FormMessage message={form.formState.errors.password?.message} />
+            <FormMessage
+              tone="muted"
+              message="Use at least 8 characters, including one letter and one number."
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <PasswordInput
+              id="confirmPassword"
+              placeholder="Re-enter your password"
+              autoComplete="new-password"
+              {...form.register("confirmPassword")}
+            />
+            <FormMessage message={form.formState.errors.confirmPassword?.message} />
           </div>
 
           <Button
@@ -150,33 +178,29 @@ export function LoginForm() {
             disabled={!form.formState.isValid || isPending}
           >
             {isPending ? <LoaderCircle className="size-4 animate-spin" /> : null}
-            Sign in
+            Create account
           </Button>
         </form>
 
         <div className="rounded-[24px] border border-border/60 bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
           <div className="flex items-center gap-2 font-medium text-foreground">
-            <LockKeyhole className="size-4 text-primary" />
-            Firebase-only login
+            <ShieldCheck className="size-4 text-primary" />
+            Profile data stays in Firestore
           </div>
           <p className="mt-2">
-            Role access comes from Firebase custom claims or the Firestore
-            `users/{'{uid}'}.role` field. Admin access is never self-selected.
+            We store `fullName`, `dateOfBirth`, `phoneNumber`, and `addressText`
+            in the Firestore profile document. Firebase Auth is used only for
+            authentication credentials.
           </p>
-          {missingClientVars.length ? (
-            <FormMessage
-              message={`Missing client env vars: ${missingClientVars.join(", ")}`}
-            />
-          ) : null}
         </div>
 
         <p className="text-sm text-muted-foreground">
-          New to MyGOV Agent 2.0?{" "}
+          Already registered?{" "}
           <Link
-            href="/register"
+            href="/login"
             className="font-semibold text-primary underline-offset-4 hover:underline"
           >
-            Create a citizen account
+            Sign in here
           </Link>
         </p>
       </CardContent>
