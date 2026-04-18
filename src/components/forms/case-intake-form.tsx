@@ -4,12 +4,14 @@ import { useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ArrowRight,
   CheckCircle2,
   FileAudio2,
   FileText,
   ImagePlus,
   LoaderCircle,
   Mic,
+  Trash2,
   Sparkles,
   Upload,
 } from "lucide-react";
@@ -21,6 +23,7 @@ import { createCaseAction } from "@/lib/actions/cases";
 import { useFileUploads } from "@/hooks/use-file-uploads";
 import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { createCaseSchema } from "@/lib/validation/cases";
+import { AssistantPanel } from "@/components/common/assistant-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,6 +50,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
   const {
     uploads,
     queueFiles,
+    removeQueuedUpload,
     uploadForCase,
     cleanupUploadedFiles,
     resetUploads,
@@ -107,7 +111,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
-      className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"
+      className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]"
     >
       <div className="space-y-6">
         <Card className="surface-panel">
@@ -244,7 +248,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                     <div>
                       <p className="font-semibold text-foreground">{item.name}</p>
                       <p className="text-muted-foreground">
-                        {item.kind.replace("_", " ")}
+                        {item.kind.replace("_", " ")} · {(item.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -257,6 +261,16 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                         </span>
                       ) : null}
                       <span className="font-semibold text-primary">{item.progress}%</span>
+                      {item.status === "queued" ? (
+                        <button
+                          type="button"
+                          onClick={() => removeQueuedUpload(item.id)}
+                          className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          aria-label={`Remove ${item.name}`}
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                   <Progress value={item.progress} />
@@ -265,9 +279,40 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="surface-panel">
+          <CardHeader>
+            <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
+              Submission path
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-3">
+            {[
+              "Describe the issue in plain language so AI and staff can read the same summary.",
+              "Upload the strongest supporting file first, then add any extra proof or voice note.",
+              "Submit once the checklist is covered and track the live timeline immediately after.",
+            ].map((item, index) => (
+              <div key={item} className="rounded-[22px] bg-muted/75 p-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold">
+                    {index + 1}
+                  </span>
+                  <ArrowRight className="size-4" />
+                </div>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{item}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="space-y-6">
+        <AssistantPanel
+          initialMessages={[]}
+          title="Guided AI helper"
+          subtitle="Use the assistant while you prepare your submission. It can explain what files to add, help tighten your case summary, and check whether anything important is missing."
+        />
+
         <Card className="hero-gradient rounded-[32px] border-none text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)]">
           <CardContent className="space-y-4 p-7">
             <div className="flex items-center gap-3">

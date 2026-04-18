@@ -172,6 +172,10 @@ export function useFileUploads() {
   return {
     uploads,
     queueFiles,
+    removeQueuedUpload: (uploadId: string) => {
+      delete queuedFilesRef.current[uploadId];
+      setUploads((current) => current.filter((item) => item.id !== uploadId));
+    },
     uploadForCase,
     cleanupUploadedFiles: async (files: EvidenceFile[]) => {
       const storage = firebaseStorage;
