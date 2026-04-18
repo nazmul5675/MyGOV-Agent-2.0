@@ -167,3 +167,9 @@ This MVP does not yet call Gemini directly. It prepares the product for later AI
 - Add Firebase Admin secrets in project environment settings.
 - Set `NEXT_PUBLIC_APP_URL` to the deployed origin.
 - Use HTTPS in production so secure cookies work correctly.
+
+## Build Progress
+
+- `chore: initialize next.js app shell`
+- `feat: add auth, RBAC, and core citizen-admin app flows`
+- `feat: add profile and notification center scaffolds`
