@@ -1,14 +1,28 @@
 import type { NotificationItem } from "@/lib/types";
 import { requireDb } from "@/lib/repositories/firestore-helpers";
 
+export async function createNotificationForUser(
+  userId: string,
+  notification: Omit<NotificationItem, "id">
+) {
+  const db = requireDb();
+
+  await db
+    .collection("users")
+    .doc(userId)
+    .collection("notifications")
+    .add(notification);
+}
+
 export async function listNotificationsForUser(
   userId: string
 ): Promise<NotificationItem[]> {
   const db = requireDb();
 
   const snapshot = await db
+    .collection("users")
+    .doc(userId)
     .collection("notifications")
-    .where("userId", "==", userId)
     .orderBy("createdAt", "desc")
     .limit(24)
     .get();
@@ -17,7 +31,6 @@ export async function listNotificationsForUser(
     const data = doc.data();
     return {
       id: doc.id,
-      userId: String(data.userId || userId),
       title: String(data.title || "Notification"),
       body: String(data.body || ""),
       createdAt: String(data.createdAt || ""),

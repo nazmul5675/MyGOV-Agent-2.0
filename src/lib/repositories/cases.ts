@@ -14,6 +14,7 @@ import {
   isoNow,
   requireDb,
 } from "@/lib/repositories/firestore-helpers";
+import { createNotificationForUser } from "@/lib/repositories/notifications";
 
 function sortEvents(events: CaseEvent[]) {
   return events.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -219,12 +220,22 @@ export async function getAdminCaseById(caseId: string) {
 }
 
 export interface CreateCasePayload {
+  id: string;
   title: string;
   type: CaseItem["type"];
   location: string;
   summary: string;
   citizenId: string;
   citizenName: string;
+  evidence: Array<{
+    id: string;
+    name: string;
+    kind: EvidenceFile["kind"];
+    size: number;
+    downloadUrl?: string;
+    storagePath?: string;
+    contentType?: string;
+  }>;
 }
 
 export async function createCaseRecord(payload: CreateCasePayload) {
@@ -233,6 +244,18 @@ export async function createCaseRecord(payload: CreateCasePayload) {
   const reference = `MYGOV-${createdAt.slice(0, 4)}-${Math.random()
     .toString()
     .slice(2, 6)}`;
+  const evidence = payload.evidence.map((item) =>
+    buildEvidenceFile({
+      id: item.id,
+      name: item.name,
+      kind: item.kind,
+      size: item.size,
+      uploadedAt: createdAt,
+      downloadUrl: item.downloadUrl,
+      storagePath: item.storagePath,
+      contentType: item.contentType,
+    })
+  );
 
   const caseData: Omit<CaseItem, "id" | "timeline"> = {
     reference,
@@ -246,9 +269,9 @@ export async function createCaseRecord(payload: CreateCasePayload) {
     citizenId: payload.citizenId,
     citizenName: payload.citizenName,
     assignedUnit: "MyGOV Triage Desk",
-    progress: 18,
+    progress: evidence.length ? 22 : 18,
     reminders: ["Keep notifications enabled for follow-up requests."],
-    evidence: [],
+    evidence,
     intake: {
       citizenSummary: payload.summary,
       adminSummary: payload.summary,
@@ -256,14 +279,16 @@ export async function createCaseRecord(payload: CreateCasePayload) {
       urgency: "medium",
       missingDocuments: [],
       structuredIntake: {
-        channels: ["text"],
+        channels: evidence.length
+          ? Array.from(new Set(["text", ...evidence.map((item) => item.kind)]))
+          : ["text"],
       },
     },
     latestInternalNote: "",
     updatedBy: payload.citizenId,
   };
 
-  const docRef = db.collection("cases").doc();
+  const docRef = db.collection("cases").doc(payload.id);
   await docRef.set(caseData);
   await appendCaseEvent(docRef.id, {
     type: "status",
@@ -273,8 +298,18 @@ export async function createCaseRecord(payload: CreateCasePayload) {
     actor: payload.citizenName,
     actorId: payload.citizenId,
   });
-  await db.collection("notifications").add({
-    userId: payload.citizenId,
+  for (const item of evidence) {
+    await appendCaseEvent(docRef.id, {
+      type: "upload",
+      title: "Evidence uploaded",
+      description: `${item.name} was attached during case submission.`,
+      createdAt,
+      actor: payload.citizenName,
+      actorId: payload.citizenId,
+    });
+  }
+
+  await createNotificationForUser(payload.citizenId, {
     title: "Case submitted",
     body: `${payload.title} was created and entered the review queue.`,
     createdAt,
@@ -399,8 +434,7 @@ export async function applyAdminCaseAction(payload: AdminCaseActionPayload) {
     actor: payload.actorName,
     actorId: payload.actorId,
   });
-  await db.collection("notifications").add({
-    userId: caseData.citizenId,
+  await createNotificationForUser(caseData.citizenId, {
     title: config.title,
     body: payload.note || `${caseData.title} was updated by the review team.`,
     createdAt: now,
@@ -432,6 +466,7 @@ export function buildEvidenceFile(input: {
     name: input.name,
     kind: input.kind,
     sizeLabel: formatFileSize(input.size),
+    sizeBytes: input.size,
     uploadedAt: input.uploadedAt || isoNow(),
     status: "uploaded",
     downloadUrl: input.downloadUrl,

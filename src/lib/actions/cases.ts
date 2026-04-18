@@ -1,8 +1,8 @@
 import type { EvidenceFile } from "@/lib/types";
-import { adminActionSchema, createCaseSchema } from "@/lib/validation/cases";
+import { adminActionSchema, createCaseRequestSchema } from "@/lib/validation/cases";
 import type { z } from "zod";
 
-type CreateCaseInput = z.infer<typeof createCaseSchema>;
+type CreateCaseInput = z.infer<typeof createCaseRequestSchema>;
 type AdminActionInput = z.infer<typeof adminActionSchema>;
 
 interface EvidencePayload {

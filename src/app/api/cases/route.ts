@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { readSession } from "@/lib/auth/session";
 import { createCaseRecord } from "@/lib/repositories/cases";
-import { createCaseSchema } from "@/lib/validation/cases";
+import { createCaseRequestSchema } from "@/lib/validation/cases";
 
 export async function POST(request: Request) {
   const session = await readSession();
@@ -12,15 +12,17 @@ export async function POST(request: Request) {
   if (session.role !== "citizen") {
     return NextResponse.json({ error: "Only citizens can create cases." }, { status: 403 });
   }
-  const body = createCaseSchema.parse(await request.json());
+  const body = createCaseRequestSchema.parse(await request.json());
 
   const created = await createCaseRecord({
+    id: body.caseId,
     title: body.title,
     type: body.caseType,
     location: body.location,
     summary: body.description,
     citizenId: session.uid,
     citizenName: session.name,
+    evidence: body.files,
   });
 
   return NextResponse.json({

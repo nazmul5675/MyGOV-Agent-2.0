@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 
 import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { firebaseStorage } from "@/lib/firebase/client";
@@ -152,6 +152,7 @@ export function useFileUploads() {
               name: entry.name,
               kind: entry.kind,
               sizeLabel: formatFileSize(entry.size),
+              sizeBytes: entry.size,
               uploadedAt: new Date().toISOString(),
               status: "uploaded",
               downloadUrl,
@@ -172,6 +173,19 @@ export function useFileUploads() {
     uploads,
     queueFiles,
     uploadForCase,
+    cleanupUploadedFiles: async (files: EvidenceFile[]) => {
+      const storage = firebaseStorage;
+      if (!storage) return;
+
+      await Promise.all(
+        files
+          .map((file) => file.storagePath)
+          .filter((path): path is string => Boolean(path))
+          .map(async (path) => {
+            await deleteObject(ref(storage, path)).catch(() => undefined);
+          })
+      );
+    },
     resetUploads: () => {
       queuedFilesRef.current = {};
       setUploads([]);

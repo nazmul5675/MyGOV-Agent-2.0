@@ -36,7 +36,6 @@ export interface UserProfile {
 
 export interface NotificationItem {
   id: string;
-  userId?: string;
   title: string;
   body: string;
   createdAt: string;
@@ -60,6 +59,7 @@ export interface EvidenceFile {
   name: string;
   kind: EvidenceKind;
   sizeLabel: string;
+  sizeBytes?: number;
   uploadedAt: string;
   status: "uploaded" | "processing" | "flagged";
   downloadUrl?: string;

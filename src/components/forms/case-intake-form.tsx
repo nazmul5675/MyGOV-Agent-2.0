@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { attachEvidenceAction, createCaseAction } from "@/lib/actions/cases";
+import { createCaseAction } from "@/lib/actions/cases";
 import { useFileUploads } from "@/hooks/use-file-uploads";
 import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { createCaseSchema } from "@/lib/validation/cases";
@@ -44,7 +44,13 @@ interface CaseIntakeFormProps {
 export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { uploads, queueFiles, uploadForCase, resetUploads } = useFileUploads();
+  const {
+    uploads,
+    queueFiles,
+    uploadForCase,
+    cleanupUploadedFiles,
+    resetUploads,
+  } = useFileUploads();
   const missingClientVars = getMissingFirebaseClientVars();
   const form = useForm<FormValues>({
     resolver: zodResolver(createCaseSchema),
@@ -64,26 +70,24 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
-      try {
-        const created = await createCaseAction(values);
-        const uploadedEvidence = await uploadForCase(created.caseId, userId);
+      let uploadedEvidence: Awaited<ReturnType<typeof uploadForCase>> = [];
 
-        if (uploadedEvidence.length) {
-          await attachEvidenceAction(
-            created.caseId,
-            uploadedEvidence.map((item) => ({
-              id: item.id,
-              name: item.name,
-              kind: item.kind,
-              size:
-                parseFloat(item.sizeLabel) *
-                (item.sizeLabel.includes("MB") ? 1024 * 1024 : 1024),
-              downloadUrl: item.downloadUrl,
-              storagePath: item.storagePath,
-              contentType: item.contentType,
-            }))
-          );
-        }
+      try {
+        const caseId = crypto.randomUUID();
+        uploadedEvidence = await uploadForCase(caseId, userId);
+        const created = await createCaseAction({
+          ...values,
+          caseId,
+          files: uploadedEvidence.map((item) => ({
+            id: item.id,
+            name: item.name,
+            kind: item.kind,
+            size: item.sizeBytes || 0,
+            downloadUrl: item.downloadUrl,
+            storagePath: item.storagePath,
+            contentType: item.contentType,
+          })),
+        });
 
         toast.success("Case submitted", {
           description: `${values.title} was saved and routed successfully.`,
@@ -92,6 +96,9 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
         router.push(`/cases/${created.caseId}?submitted=1`);
         router.refresh();
       } catch (error) {
+        if (uploadedEvidence.length) {
+          await cleanupUploadedFiles(uploadedEvidence);
+        }
         toast.error(error instanceof Error ? error.message : "Unable to submit case");
       }
     });
@@ -190,7 +197,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                   Drop files or browse from device
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  JPG, PDF, DOC, and M4A supported
+                  JPG, PDF, and M4A supported
                 </p>
               </div>
               <Input
@@ -301,8 +308,8 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               </div>
             ))}
             <div className="rounded-[20px] bg-accent/65 p-4 text-sm leading-6 text-accent-foreground">
-              Submitting creates the case, appends the initial event, and then
-              associates evidence metadata with the saved record.
+              Submitting uploads evidence first, then creates the live case,
+              writes the initial event timeline, and saves evidence metadata in Firestore.
             </div>
             <Button
               type="submit"

@@ -29,6 +29,11 @@ export const evidenceMetadataSchema = z.object({
   ),
 });
 
+export const createCaseRequestSchema = createCaseSchema.extend({
+  caseId: z.string().min(8, "A valid case id is required."),
+  files: evidenceMetadataSchema.shape.files.default([]),
+});
+
 export const adminActionSchema = z.object({
   action: z.enum([
     "approve",
