@@ -74,15 +74,17 @@ function computeAdminStats(cases: CaseItem[]): DashboardStat[] {
   const needsReview = cases.filter((item) =>
     ["submitted", "reviewing", "need_more_docs"].includes(item.status)
   ).length;
+  const inProgress = cases.filter((item) => item.status === "in_progress").length;
   const resolvedToday = cases.filter((item) => {
     return item.status === "resolved" && item.updatedAt.slice(0, 10) === isoNow().slice(0, 10);
   }).length;
 
   return [
     { label: "Total queue", value: String(total), change: "Open and recent cases" },
-    { label: "Urgent items", value: String(urgent), change: "High-priority packets" },
     { label: "Needs review", value: String(needsReview), change: "Pending decisions" },
+    { label: "In progress", value: String(inProgress), change: "Already assigned" },
     { label: "Resolved today", value: String(resolvedToday), change: "Completed today" },
+    { label: "Urgent items", value: String(urgent), change: "High-priority packets" },
   ];
 }
 

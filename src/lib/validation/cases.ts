@@ -45,4 +45,24 @@ export const adminActionSchema = z.object({
     "internal_note",
   ]),
   note: z.string().trim().max(2000).optional(),
+}).superRefine((value, context) => {
+  const requiresNote = [
+    "reject",
+    "request_more_documents",
+    "route",
+    "internal_note",
+  ] as const;
+
+  if (
+    requiresNote.includes(
+      value.action as (typeof requiresNote)[number]
+    ) &&
+    (!value.note || value.note.trim().length < 12)
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Add a short operational note so the timeline stays useful.",
+      path: ["note"],
+    });
+  }
 });

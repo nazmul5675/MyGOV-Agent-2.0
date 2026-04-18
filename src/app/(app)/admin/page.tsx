@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ClipboardCheck, Clock3, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ClipboardCheck, Clock3, ShieldAlert, ShieldCheck } from "lucide-react";
 
 import { AdminQueueBoard } from "@/components/admin/admin-queue-board";
 import { LiveDataState } from "@/components/common/live-data-state";
@@ -59,6 +59,13 @@ export default async function AdminDashboardPage() {
   }
 
   const { stats, queue } = data;
+  const statIcons = [
+    <ClipboardCheck className="size-5" key="total" />,
+    <ShieldCheck className="size-5" key="review" />,
+    <Clock3 className="size-5" key="progress" />,
+    <ClipboardCheck className="size-5" key="resolved" />,
+    <ShieldAlert className="size-5" key="urgent" />,
+  ];
 
   return (
     <div className="space-y-6">
@@ -69,11 +76,10 @@ export default async function AdminDashboardPage() {
       />
 
       <Reveal>
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard {...stats[0]} icon={<ClipboardCheck className="size-5" />} />
-          <StatCard {...stats[1]} icon={<ShieldCheck className="size-5" />} />
-          <StatCard {...stats[2]} icon={<Clock3 className="size-5" />} />
-          <StatCard {...stats[3]} icon={<Clock3 className="size-5" />} />
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+          {stats.map((stat, index) => (
+            <StatCard key={stat.label} {...stat} icon={statIcons[index]} />
+          ))}
         </div>
       </Reveal>
 

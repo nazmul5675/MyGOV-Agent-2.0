@@ -3,28 +3,56 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
-import type { CaseItem, CaseStatus } from "@/lib/types";
+import type { CaseItem } from "@/lib/types";
 import { CaseCard } from "@/components/common/case-card";
 import { EmptyState } from "@/components/common/empty-state";
 import { Input } from "@/components/ui/input";
 
-const filters: Array<{ label: string; value: "all" | CaseStatus }> = [
+type AdminQueueFilter = "all" | "needs_review" | "need_more_docs" | "in_progress" | "resolved";
+
+const filters: Array<{ label: string; value: AdminQueueFilter }> = [
   { label: "All", value: "all" },
-  { label: "Reviewing", value: "reviewing" },
+  { label: "Needs review", value: "needs_review" },
   { label: "Need docs", value: "need_more_docs" },
   { label: "In progress", value: "in_progress" },
+  { label: "Resolved", value: "resolved" },
 ];
+
+const filterCountsConfig = {
+  all: 0,
+  needs_review: 0,
+  need_more_docs: 0,
+  in_progress: 0,
+  resolved: 0,
+};
 
 export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | CaseStatus>("all");
+  const [filter, setFilter] = useState<AdminQueueFilter>("all");
   const deferredQuery = useDeferredValue(query);
+  const filterCounts = useMemo(() => {
+    return {
+      ...filterCountsConfig,
+      all: cases.length,
+      needs_review: cases.filter((item) =>
+        ["submitted", "reviewing", "need_more_docs"].includes(item.status)
+      ).length,
+      need_more_docs: cases.filter((item) => item.status === "need_more_docs").length,
+      in_progress: cases.filter((item) => item.status === "in_progress").length,
+      resolved: cases.filter((item) => item.status === "resolved").length,
+    };
+  }, [cases]);
 
   const filteredCases = useMemo(() => {
     const normalizedQuery = deferredQuery.trim().toLowerCase();
 
     return cases.filter((item) => {
-      const matchesFilter = filter === "all" ? true : item.status === filter;
+      const matchesFilter =
+        filter === "all"
+          ? true
+          : filter === "needs_review"
+            ? ["submitted", "reviewing", "need_more_docs"].includes(item.status)
+            : item.status === filter;
       const matchesQuery = normalizedQuery
         ? [item.title, item.reference, item.location, item.citizenName]
             .join(" ")
@@ -61,7 +89,7 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
                     : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 }`}
               >
-                {item.label}
+                {item.label} ({filterCounts[item.value]})
               </button>
             ))}
           </div>
