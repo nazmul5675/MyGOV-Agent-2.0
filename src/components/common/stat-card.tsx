@@ -12,7 +12,7 @@ export function StatCard({
   icon: ReactNode;
 }) {
   return (
-    <div className="surface-panel relative overflow-hidden p-6">
+    <div className="surface-panel interactive-lift relative overflow-hidden p-6 transition-transform duration-300">
       <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/5 blur-2xl" />
       <div className="relative flex items-start justify-between gap-5">
         <div className="space-y-3">

@@ -46,7 +46,7 @@ export function CaseCard({
         </div>
         <div className="h-2 rounded-full bg-muted">
           <div
-            className="h-2 rounded-full bg-primary transition-[width]"
+            className="h-2 rounded-full bg-primary transition-[width] duration-500 ease-out"
             style={{ width: `${item.progress}%` }}
           />
         </div>
