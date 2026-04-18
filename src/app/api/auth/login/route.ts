@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { getAdminAuth, getUserRole, getUserRoleFromAuth } from "@/lib/firebase/admin";
@@ -36,9 +35,12 @@ export async function POST(request: Request) {
 
   const expiresIn = 60 * 60 * 24 * 5 * 1000;
   const sessionCookie = await adminAuth.createSessionCookie(body.idToken, { expiresIn });
-
-  const cookieStore = await cookies();
-  cookieStore.set(sessionCookieName, sessionCookie, {
+  const response = NextResponse.json({
+    ok: true,
+    role,
+    redirectTo: role === "admin" ? "/admin" : "/dashboard",
+  });
+  response.cookies.set(sessionCookieName, sessionCookie, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -46,9 +48,5 @@ export async function POST(request: Request) {
     maxAge: expiresIn / 1000,
   });
 
-  return NextResponse.json({
-    ok: true,
-    role,
-    redirectTo: role === "admin" ? "/admin" : "/dashboard",
-  });
+  return response;
 }

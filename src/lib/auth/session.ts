@@ -23,20 +23,23 @@ export async function readSession() {
     const decoded = await adminAuth.verifySessionCookie(firebaseToken, true);
     const roleFromClaims =
       typeof decoded.role === "string" ? (decoded.role as UserRole) : null;
-    const authUser = await getAuthUserRecord(decoded.uid);
-    const profileRecord = await getUserProfileRecord(decoded.uid);
+    const authUser = await getAuthUserRecord(decoded.uid).catch(() => null);
+    const profileRecord = await getUserProfileRecord(decoded.uid).catch(() => null);
     const role =
       roleFromClaims ||
-      (await getUserRoleFromAuth(decoded.uid)) ||
+      (await getUserRoleFromAuth(decoded.uid).catch(() => null)) ||
       (profileRecord && typeof profileRecord.role === "string"
         ? (profileRecord.role as UserRole)
-        : await getUserRole(decoded.uid));
+        : await getUserRole(decoded.uid).catch(() => null));
 
     if (!role) return null;
 
     return {
       uid: decoded.uid,
-      email: decoded.email || String(profileRecord?.email || ""),
+      email:
+        decoded.email ||
+        authUser?.email ||
+        String(profileRecord?.email || ""),
       name:
         (typeof profileRecord?.fullName === "string" && profileRecord.fullName) ||
         authUser?.displayName ||
