@@ -29,11 +29,43 @@ export async function POST(request: Request) {
       );
     }
 
-    await upsertUserProfile(decoded.uid, {
-      fullName: body.fullName,
-      email,
-      role: "citizen",
-    });
+    const authUser = await adminAuth.getUser(decoded.uid);
+    const existingClaims =
+      authUser.customClaims && typeof authUser.customClaims === "object"
+        ? authUser.customClaims
+        : {};
+    const claimRole =
+      typeof existingClaims.role === "string" ? existingClaims.role : null;
+
+    if (claimRole !== "admin" && claimRole !== "citizen") {
+      await adminAuth.setCustomUserClaims(decoded.uid, {
+        ...existingClaims,
+        role: "citizen",
+      });
+    }
+
+    if (!authUser.displayName || authUser.displayName !== body.fullName) {
+      await adminAuth.updateUser(decoded.uid, {
+        displayName: body.fullName,
+      });
+    }
+
+    let profileCreated = false;
+    let warning: string | undefined;
+
+    try {
+      await upsertUserProfile(decoded.uid, {
+        fullName: body.fullName,
+        email,
+        role: "citizen",
+      });
+      profileCreated = true;
+    } catch (profileError) {
+      warning =
+        profileError instanceof Error
+          ? profileError.message
+          : "Firestore profile bootstrap was skipped.";
+    }
 
     const expiresIn = 60 * 60 * 24 * 5 * 1000;
     const sessionCookie = await adminAuth.createSessionCookie(body.idToken, { expiresIn });
@@ -47,7 +79,12 @@ export async function POST(request: Request) {
       maxAge: expiresIn / 1000,
     });
 
-    return NextResponse.json({ ok: true, role: "citizen" });
+    return NextResponse.json({
+      ok: true,
+      role: "citizen",
+      profileCreated,
+      warning,
+    });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

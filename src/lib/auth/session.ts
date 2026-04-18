@@ -2,7 +2,13 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { sessionCookieName } from "@/lib/constants";
-import { getAdminAuth, getUserProfileRecord, getUserRole } from "@/lib/firebase/admin";
+import {
+  getAdminAuth,
+  getAuthUserRecord,
+  getUserProfileRecord,
+  getUserRole,
+  getUserRoleFromAuth,
+} from "@/lib/firebase/admin";
 import type { AppSession, UserRole } from "@/lib/types";
 
 export async function readSession() {
@@ -17,9 +23,11 @@ export async function readSession() {
     const decoded = await adminAuth.verifySessionCookie(firebaseToken, true);
     const roleFromClaims =
       typeof decoded.role === "string" ? (decoded.role as UserRole) : null;
+    const authUser = await getAuthUserRecord(decoded.uid);
     const profileRecord = await getUserProfileRecord(decoded.uid);
     const role =
       roleFromClaims ||
+      (await getUserRoleFromAuth(decoded.uid)) ||
       (profileRecord && typeof profileRecord.role === "string"
         ? (profileRecord.role as UserRole)
         : await getUserRole(decoded.uid));
@@ -31,6 +39,7 @@ export async function readSession() {
       email: decoded.email || String(profileRecord?.email || ""),
       name:
         (typeof profileRecord?.fullName === "string" && profileRecord.fullName) ||
+        authUser?.displayName ||
         decoded.name ||
         "MyGOV User",
       role,

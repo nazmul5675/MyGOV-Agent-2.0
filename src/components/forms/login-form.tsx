@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { LoaderCircle, LockKeyhole } from "lucide-react";
@@ -40,7 +40,6 @@ async function postJson(path: string, payload: unknown) {
 }
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const missingClientVars = getMissingFirebaseClientVars();
@@ -75,14 +74,32 @@ export function LoginForm() {
         const idToken = await credential.user.getIdToken(true);
         const response = (await postJson("/api/auth/login", {
           idToken,
-        })) as { role?: "citizen" | "admin" } | null;
-        const resolvedRole = response?.role === "admin" ? "admin" : "citizen";
+        })) as
+          | {
+              role?: "citizen" | "admin";
+              redirectTo?: string;
+            }
+          | null;
+        const resolvedRole = response?.role;
+        const destination =
+          nextPath ||
+          response?.redirectTo ||
+          (resolvedRole === "admin"
+            ? "/admin"
+            : resolvedRole === "citizen"
+              ? "/dashboard"
+              : null);
+
+        if (!destination) {
+          throw new Error(
+            "Your account signed in, but no workspace could be resolved. Check the account role configuration."
+          );
+        }
 
         toast.success("Signed in successfully", {
           description: "Your secure workspace is ready.",
         });
-        router.push(nextPath || (resolvedRole === "admin" ? "/admin" : "/dashboard"));
-        router.refresh();
+        window.location.replace(destination);
       } catch (error) {
         toast.error(
           error instanceof Error ? error.message : "Unable to sign in right now.",

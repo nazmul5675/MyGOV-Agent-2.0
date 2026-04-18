@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { getAdminAuth, getUserRole } from "@/lib/firebase/admin";
+import { getAdminAuth, getUserRole, getUserRoleFromAuth } from "@/lib/firebase/admin";
 import { sessionCookieName } from "@/lib/constants";
 import { sessionExchangeSchema } from "@/lib/validation/auth";
 
@@ -19,7 +19,10 @@ export async function POST(request: Request) {
   const decoded = await adminAuth.verifyIdToken(body.idToken, true);
   const roleFromClaims =
     typeof decoded.role === "string" ? decoded.role : null;
-  const role = roleFromClaims || (await getUserRole(decoded.uid));
+  const role =
+    roleFromClaims ||
+    (await getUserRoleFromAuth(decoded.uid)) ||
+    (await getUserRole(decoded.uid));
 
   if (role !== "citizen" && role !== "admin") {
     return NextResponse.json(
@@ -43,5 +46,9 @@ export async function POST(request: Request) {
     maxAge: expiresIn / 1000,
   });
 
-  return NextResponse.json({ ok: true, role });
+  return NextResponse.json({
+    ok: true,
+    role,
+    redirectTo: role === "admin" ? "/admin" : "/dashboard",
+  });
 }

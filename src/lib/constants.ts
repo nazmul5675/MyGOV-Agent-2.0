@@ -3,7 +3,13 @@ import type { CaseStatus, CaseType } from "@/lib/types";
 export const APP_NAME = "MyGOV Agent 2.0";
 export const USER_ROLES = ["citizen", "admin"] as const;
 
-export const protectedPrefixes = ["/dashboard", "/cases", "/admin"];
+export const protectedPrefixes = [
+  "/dashboard",
+  "/cases",
+  "/notifications",
+  "/profile",
+  "/admin",
+];
 
 export const statusLabelMap: Record<CaseStatus, string> = {
   submitted: "Submitted",

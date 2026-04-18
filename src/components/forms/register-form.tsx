@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createUserWithEmailAndPassword,
@@ -44,7 +43,6 @@ async function postJson(path: string, payload: unknown) {
 }
 
 export function RegisterForm() {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const missingClientVars = getMissingFirebaseClientVars();
   const form = useForm<RegisterValues>({
@@ -81,28 +79,37 @@ export function RegisterForm() {
         );
 
         const idToken = await createdUser.user.getIdToken(true);
-        await postJson("/api/auth/register", {
+        const result = (await postJson("/api/auth/register", {
           idToken,
           fullName: values.fullName,
-        });
+        })) as
+          | {
+              ok?: boolean;
+              role?: "citizen" | "admin";
+              profileCreated?: boolean;
+              warning?: string;
+            }
+          | null;
 
-        toast.success("Account created", {
-          description: "Your citizen workspace is ready. You can complete your profile next.",
-        });
-        router.push("/profile?welcome=1");
-        router.refresh();
+        if (result?.profileCreated === false) {
+          toast.warning("Account created, but profile sync is pending", {
+            description:
+              result.warning ||
+              "Firebase Auth succeeded, but Firestore profile setup is not ready yet.",
+          });
+        } else {
+          toast.success("Account created", {
+            description: "Your citizen workspace is ready. You can complete your profile next.",
+          });
+        }
+        window.location.assign("/profile?welcome=1");
       } catch (error) {
         if (createdUser?.user) {
           await deleteUser(createdUser.user).catch(() => undefined);
         }
         await signOut(auth).catch(() => undefined);
 
-        toast.error(
-          error instanceof Error ? error.message : "Unable to create your account.",
-          {
-            description: "Try again after checking your Firebase project setup.",
-          }
-        );
+        toast.error(error instanceof Error ? error.message : "Unable to create your account.");
       }
     });
   };

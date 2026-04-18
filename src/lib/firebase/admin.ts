@@ -47,6 +47,14 @@ export async function getUserRole(uid: string): Promise<UserRole | null> {
   return role;
 }
 
+export async function getUserRoleFromAuth(uid: string): Promise<UserRole | null> {
+  const auth = getAdminAuth();
+  if (!auth) return null;
+
+  const user = await auth.getUser(uid);
+  return normalizeUserRole(user.customClaims?.role);
+}
+
 export async function getUserProfileRecord(uid: string) {
   const db = getAdminDb();
   if (!db) return null;
@@ -55,4 +63,11 @@ export async function getUserProfileRecord(uid: string) {
   if (!snapshot.exists) return null;
 
   return snapshot.data() || null;
+}
+
+export async function getAuthUserRecord(uid: string) {
+  const auth = getAdminAuth();
+  if (!auth) return null;
+
+  return auth.getUser(uid);
 }
