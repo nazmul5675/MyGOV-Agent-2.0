@@ -11,6 +11,8 @@ export function FormMessage({
 
   return (
     <p
+      aria-live={tone === "error" ? "polite" : undefined}
+      role={tone === "error" ? "alert" : undefined}
       className={cn("text-sm leading-6", {
         "text-destructive": tone === "error",
         "text-muted-foreground": tone === "muted",
