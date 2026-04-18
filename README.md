@@ -58,7 +58,7 @@ Admin includes officer capabilities. All internal review surfaces are protected 
 - `src/lib/firebase`
   Firebase client, admin, and role helpers
 - `src/lib/repositories`
-  Firestore-backed reads and writes with documented fallback behavior
+  Firestore-backed reads and writes with explicit live-data setup and error handling
 - `src/lib/validation`
   Zod validation schemas
 - `src/hooks`
@@ -115,7 +115,9 @@ No secrets are hardcoded in the application source. Firebase config is read from
 ## Firebase Setup
 
 1. Enable Email/Password sign-in in Firebase Authentication.
-2. Create Firestore user documents in `users/{uid}` with at least:
+2. Enable the Cloud Firestore API for the Firebase project.
+3. Provision the Firebase Storage bucket referenced by `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`.
+4. Create Firestore user documents in `users/{uid}` with at least:
 
 ```json
 {
@@ -131,9 +133,9 @@ No secrets are hardcoded in the application source. Firebase config is read from
 }
 ```
 
-3. Optionally mirror the role into Firebase custom claims for faster downstream rule checks.
-4. Apply `firestore.rules` and `storage.rules`.
-5. Add matching test accounts in Firebase Authentication.
+5. Optionally mirror the role into Firebase custom claims for faster downstream rule checks.
+6. Apply `firestore.rules`, `storage.rules`, and `firestore.indexes.json`.
+7. Add matching test accounts in Firebase Authentication.
 
 ## Local Development
 

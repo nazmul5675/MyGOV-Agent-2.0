@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, FileText, Layers3, UserRound } from "lucide-react";
 
-import { requireRole } from "@/lib/auth/session";
-import { getAdminCaseById } from "@/lib/repositories/cases";
-import { AdminReviewPanel } from "@/components/forms/admin-review-panel";
+import { EmptyState } from "@/components/common/empty-state";
+import { LiveDataState } from "@/components/common/live-data-state";
 import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Timeline } from "@/components/common/timeline";
+import { AdminReviewPanel } from "@/components/forms/admin-review-panel";
+import { requireRole } from "@/lib/auth/session";
+import { getAdminCaseById } from "@/lib/repositories/cases";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Admin Case Review",
@@ -20,7 +25,43 @@ export default async function AdminCaseDetailPage({
 }) {
   await requireRole("admin");
   const { id } = await params;
-  const item = await getAdminCaseById(id);
+  let item: Awaited<ReturnType<typeof getAdminCaseById>> | null = null;
+  let errorMessage: string | null = null;
+
+  try {
+    item = await getAdminCaseById(id);
+  } catch (error) {
+    errorMessage =
+      error instanceof Error
+        ? error.message
+        : "The admin case detail page could not load live Firebase data.";
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Admin review"
+          title="Live case review unavailable"
+          description="This page reads directly from Firestore for the case packet, evidence, and event history."
+        />
+        <LiveDataState
+          tone="setup"
+          title="This admin case could not be loaded"
+          description={errorMessage}
+          action={
+            <Link
+              href={`/admin/cases/${id}`}
+              className={cn(buttonVariants({ size: "default" }), "gap-2 px-5")}
+            >
+              <AlertTriangle className="size-4" />
+              Retry case review
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
   if (!item) notFound();
 
@@ -57,7 +98,7 @@ export default async function AdminCaseDetailPage({
               Evidence
             </p>
             <div className="mt-4 space-y-3">
-              {item.evidence.map((evidence) => (
+              {item.evidence.length ? item.evidence.map((evidence) => (
                 <div
                   key={evidence.id}
                   className="rounded-[22px] bg-muted/80 p-4 transition-colors hover:bg-accent/55"
@@ -69,10 +110,16 @@ export default async function AdminCaseDetailPage({
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {evidence.kind.replace("_", " ")} • {evidence.sizeLabel}
+                    {evidence.kind.replace("_", " ")} - {evidence.sizeLabel}
                   </p>
                 </div>
-              ))}
+              )) : (
+                <EmptyState
+                  icon={<FileText className="size-5" />}
+                  title="No evidence attached"
+                  description="This live case does not have any Storage-backed evidence metadata yet."
+                />
+              )}
             </div>
           </div>
         </aside>
@@ -131,7 +178,15 @@ export default async function AdminCaseDetailPage({
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
               Activity timeline
             </p>
-            <Timeline events={item.timeline} />
+            {item.timeline.length ? (
+              <Timeline events={item.timeline} />
+            ) : (
+              <EmptyState
+                icon={<AlertTriangle className="size-5" />}
+                title="No live events yet"
+                description="Admin timeline entries from the case events subcollection will appear here as the review flow advances."
+              />
+            )}
           </div>
         </div>
 

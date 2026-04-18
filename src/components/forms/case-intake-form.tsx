@@ -19,6 +19,7 @@ import { z } from "zod";
 
 import { attachEvidenceAction, createCaseAction } from "@/lib/actions/cases";
 import { useFileUploads } from "@/hooks/use-file-uploads";
+import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { createCaseSchema } from "@/lib/validation/cases";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +45,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const { uploads, queueFiles, uploadForCase, resetUploads } = useFileUploads();
+  const missingClientVars = getMissingFirebaseClientVars();
   const form = useForm<FormValues>({
     resolver: zodResolver(createCaseSchema),
     defaultValues: {
@@ -199,6 +201,13 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 onChange={(event) => queueFiles(event.target.files)}
               />
             </label>
+            {missingClientVars.length ? (
+              <div className="rounded-[24px] border border-destructive/20 bg-[#fff1ed] p-4 text-sm leading-7 text-[#9a3b2f]">
+                Live uploads require Firebase client config. Missing:
+                {" "}
+                {missingClientVars.join(", ")}
+              </div>
+            ) : null}
 
             <div className="grid gap-3 md:grid-cols-3">
               {[
@@ -234,6 +243,11 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                     <div className="flex items-center gap-2">
                       {item.progress === 100 ? (
                         <CheckCircle2 className="size-4 text-[#1d7d49]" />
+                      ) : null}
+                      {item.status === "error" ? (
+                        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-destructive">
+                          Failed
+                        </span>
                       ) : null}
                       <span className="font-semibold text-primary">{item.progress}%</span>
                     </div>

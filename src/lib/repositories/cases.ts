@@ -1,7 +1,3 @@
-import {
-  demoCases,
-  getUpcomingReminders,
-} from "@/lib/demo-data";
 import type {
   AdminDashboardData,
   AppSession,
@@ -15,9 +11,8 @@ import type {
 } from "@/lib/types";
 import {
   formatFileSize,
-  getDb,
   isoNow,
-  isFirestoreAvailable,
+  requireDb,
 } from "@/lib/repositories/firestore-helpers";
 
 function sortEvents(events: CaseEvent[]) {
@@ -32,9 +27,7 @@ function mapCaseWithTimeline(base: CaseItem, events?: CaseEvent[]) {
 }
 
 async function fetchCaseEvents(caseId: string) {
-  const db = getDb();
-  if (!db) return [];
-
+  const db = requireDb();
   const snapshot = await db
     .collection("cases")
     .doc(caseId)
@@ -80,52 +73,27 @@ function computeAdminStats(cases: CaseItem[]): DashboardStat[] {
   const needsReview = cases.filter((item) =>
     ["submitted", "reviewing", "need_more_docs"].includes(item.status)
   ).length;
-  const inProgress = cases.filter((item) => item.status === "in_progress").length;
+  const resolvedToday = cases.filter((item) => {
+    return item.status === "resolved" && item.updatedAt.slice(0, 10) === isoNow().slice(0, 10);
+  }).length;
 
   return [
     { label: "Total queue", value: String(total), change: "Open and recent cases" },
     { label: "Urgent items", value: String(urgent), change: "High-priority packets" },
     { label: "Needs review", value: String(needsReview), change: "Pending decisions" },
-    { label: "In progress", value: String(inProgress), change: "Already assigned" },
+    { label: "Resolved today", value: String(resolvedToday), change: "Completed today" },
   ];
 }
 
-function fallbackCitizenDashboard(citizenId: string): CitizenDashboardData {
-  const cases = demoCases.filter((item) => item.citizenId === citizenId);
-  const reminders = getUpcomingReminders().map((item) => ({
-    id: item.id,
-    title: item.title,
-    body: item.description,
-    createdAt: isoNow(),
-    read: false,
-    tone: item.dueLabel === "Due today" ? "warning" : "info",
-  })) as NotificationItem[];
-
-  return {
-    stats: computeCitizenStats(cases),
-    cases,
-    reminders,
-  };
-}
-
-function fallbackAdminDashboard(): AdminDashboardData {
-  return {
-    stats: computeAdminStats(demoCases),
-    queue: demoCases,
-  };
-}
-
 async function getCasesCollectionForUser(userId: string) {
-  const db = getDb();
-  if (!db) return [];
-
+  const db = requireDb();
   const snapshot = await db
     .collection("cases")
     .where("citizenId", "==", userId)
     .orderBy("updatedAt", "desc")
     .get();
 
-  const items = await Promise.all(
+  return Promise.all(
     snapshot.docs.map(async (doc) => {
       const data = doc.data() as Omit<CaseItem, "id" | "timeline">;
       const events = await fetchCaseEvents(doc.id);
@@ -142,19 +110,17 @@ async function getCasesCollectionForUser(userId: string) {
       );
     })
   );
-
-  return items;
 }
 
 async function getAllCases() {
-  const db = getDb();
-  if (!db) return [];
-
+  const db = requireDb();
   const snapshot = await db.collection("cases").orderBy("updatedAt", "desc").get();
+
   return Promise.all(
     snapshot.docs.map(async (doc) => {
       const data = doc.data() as Omit<CaseItem, "id" | "timeline">;
       const events = await fetchCaseEvents(doc.id);
+
       return mapCaseWithTimeline(
         {
           ...data,
@@ -172,8 +138,6 @@ async function getAllCases() {
 export async function getCitizenDashboardData(
   session: AppSession
 ): Promise<CitizenDashboardData> {
-  if (!isFirestoreAvailable()) return fallbackCitizenDashboard(session.uid);
-
   const cases = await getCasesCollectionForUser(session.uid);
   const reminders: NotificationItem[] = cases
     .flatMap((item) =>
@@ -202,21 +166,14 @@ export async function getCitizenDashboardData(
 }
 
 export async function listCitizenCases(citizenId: string) {
-  if (!isFirestoreAvailable()) {
-    return demoCases.filter((item) => item.citizenId === citizenId);
-  }
   return getCasesCollectionForUser(citizenId);
 }
 
 export async function getCitizenCaseById(citizenId: string, caseId: string) {
-  if (!isFirestoreAvailable()) {
-    return demoCases.find((item) => item.citizenId === citizenId && item.id === caseId) || null;
-  }
-
-  const db = getDb();
-  if (!db) return null;
+  const db = requireDb();
   const snapshot = await db.collection("cases").doc(caseId).get();
   if (!snapshot.exists) return null;
+
   const data = snapshot.data() as Omit<CaseItem, "id" | "timeline">;
   if (data.citizenId !== citizenId) return null;
   const events = await fetchCaseEvents(caseId);
@@ -234,8 +191,6 @@ export async function getCitizenCaseById(citizenId: string, caseId: string) {
 }
 
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
-  if (!isFirestoreAvailable()) return fallbackAdminDashboard();
-
   const queue = await getAllCases();
   return {
     stats: computeAdminStats(queue),
@@ -244,14 +199,10 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 }
 
 export async function getAdminCaseById(caseId: string) {
-  if (!isFirestoreAvailable()) {
-    return demoCases.find((item) => item.id === caseId) || null;
-  }
-
-  const db = getDb();
-  if (!db) return null;
+  const db = requireDb();
   const snapshot = await db.collection("cases").doc(caseId).get();
   if (!snapshot.exists) return null;
+
   const data = snapshot.data() as Omit<CaseItem, "id" | "timeline">;
   const events = await fetchCaseEvents(caseId);
 
@@ -277,7 +228,7 @@ export interface CreateCasePayload {
 }
 
 export async function createCaseRecord(payload: CreateCasePayload) {
-  const db = getDb();
+  const db = requireDb();
   const createdAt = isoNow();
   const reference = `MYGOV-${createdAt.slice(0, 4)}-${Math.random()
     .toString()
@@ -312,25 +263,6 @@ export async function createCaseRecord(payload: CreateCasePayload) {
     updatedBy: payload.citizenId,
   };
 
-  if (!isFirestoreAvailable() || !db) {
-    const id = `case-${Date.now()}`;
-    return {
-      ...caseData,
-      id,
-      timeline: [
-        {
-          id: `event-${Date.now()}`,
-          type: "status",
-          title: "Case submitted",
-          description: "Initial case packet created from citizen intake.",
-          createdAt,
-          actor: payload.citizenName,
-          actorId: payload.citizenId,
-        },
-      ],
-    } satisfies CaseItem;
-  }
-
   const docRef = db.collection("cases").doc();
   await docRef.set(caseData);
   await appendCaseEvent(docRef.id, {
@@ -360,9 +292,7 @@ export async function appendCaseEvent(
   caseId: string,
   event: Omit<CaseEvent, "id">
 ) {
-  const db = getDb();
-  if (!isFirestoreAvailable() || !db) return;
-
+  const db = requireDb();
   await db.collection("cases").doc(caseId).collection("events").add(event);
 }
 
@@ -370,11 +300,10 @@ export async function addEvidenceToCase(
   caseId: string,
   evidence: EvidenceFile[]
 ) {
-  const db = getDb();
-  if (!isFirestoreAvailable() || !db) return;
-
+  const db = requireDb();
   const docRef = db.collection("cases").doc(caseId);
   const snapshot = await docRef.get();
+
   if (!snapshot.exists) throw new Error("Case not found.");
 
   const existing = snapshot.data()?.evidence;
@@ -435,19 +364,12 @@ const actionConfig: Record<
 };
 
 export async function applyAdminCaseAction(payload: AdminCaseActionPayload) {
-  const db = getDb();
+  const db = requireDb();
   const config = actionConfig[payload.action];
   const now = isoNow();
-
-  if (!isFirestoreAvailable() || !db) {
-    return {
-      ok: true,
-      fallback: true,
-    };
-  }
-
   const docRef = db.collection("cases").doc(payload.caseId);
   const snapshot = await docRef.get();
+
   if (!snapshot.exists) throw new Error("Case not found.");
 
   const updates: Record<string, unknown> = {

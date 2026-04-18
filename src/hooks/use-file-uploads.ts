@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 
+import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { firebaseStorage } from "@/lib/firebase/client";
 import type { EvidenceFile } from "@/lib/types";
 
@@ -83,28 +84,24 @@ export function useFileUploads() {
 
     const results: EvidenceFile[] = [];
 
+    if (!storage) {
+      const missingVars = getMissingFirebaseClientVars();
+
+      setUploads((current) =>
+        current.map((item) => ({
+          ...item,
+          status: "error",
+        }))
+      );
+
+      throw new Error(
+        `Firebase Storage is not configured for live uploads. Missing client env vars: ${missingVars.join(", ")}`
+      );
+    }
+
     for (const entry of queued) {
       const file =
         "file" in entry && entry.file instanceof File ? entry.file : null;
-      if (!storage) {
-        setUploads((current) =>
-          current.map((item) =>
-            item.id === entry.id ? { ...item, progress: 100, status: "uploaded" } : item
-          )
-        );
-
-        results.push({
-          id: entry.id,
-          name: entry.name,
-          kind: entry.kind,
-          sizeLabel: formatFileSize(entry.size),
-          uploadedAt: new Date().toISOString(),
-          status: "uploaded",
-          contentType: entry.contentType,
-        });
-        continue;
-      }
-
       const storagePath = `cases/${userId}/${caseId}/${entry.id}-${entry.name}`;
       const storageRef = ref(storage, storagePath);
       if (!file) continue;

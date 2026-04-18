@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  AlertTriangle,
   CheckCircle2,
   FileText,
   MapPin,
   MessageSquareQuote,
 } from "lucide-react";
 
-import { requireRole } from "@/lib/auth/session";
-import { getCitizenCaseById } from "@/lib/repositories/cases";
+import { EmptyState } from "@/components/common/empty-state";
+import { LiveDataState } from "@/components/common/live-data-state";
 import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Timeline } from "@/components/common/timeline";
+import { requireRole } from "@/lib/auth/session";
+import { getCitizenCaseById } from "@/lib/repositories/cases";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Case Detail",
@@ -27,7 +33,43 @@ export default async function CitizenCaseDetailPage({
   const session = await requireRole("citizen");
   const { id } = await params;
   const query = await searchParams;
-  const item = await getCitizenCaseById(session.uid, id);
+  let item: Awaited<ReturnType<typeof getCitizenCaseById>> | null = null;
+  let errorMessage: string | null = null;
+
+  try {
+    item = await getCitizenCaseById(session.uid, id);
+  } catch (error) {
+    errorMessage =
+      error instanceof Error
+        ? error.message
+        : "The case detail page could not load live Firebase data.";
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Case detail"
+          title="Live case detail unavailable"
+          description="This page reads directly from Firestore and the case events subcollection."
+        />
+        <LiveDataState
+          tone="setup"
+          title="This case could not be loaded"
+          description={errorMessage}
+          action={
+            <Link
+              href={`/cases/${id}`}
+              className={cn(buttonVariants({ size: "default" }), "gap-2 px-5")}
+            >
+              <AlertTriangle className="size-4" />
+              Retry case detail
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
   if (!item) notFound();
 
@@ -111,7 +153,7 @@ export default async function CitizenCaseDetailPage({
               Evidence preview
             </p>
             <div className="mt-5 grid gap-3">
-              {item.evidence.map((evidence) => (
+              {item.evidence.length ? item.evidence.map((evidence) => (
                 <div
                   key={evidence.id}
                   className="rounded-[24px] bg-muted/80 p-4 transition-colors hover:bg-accent/55"
@@ -123,10 +165,16 @@ export default async function CitizenCaseDetailPage({
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {evidence.kind.replace("_", " ")} • {evidence.status}
+                    {evidence.kind.replace("_", " ")} - {evidence.status}
                   </p>
                 </div>
-              ))}
+              )) : (
+                <EmptyState
+                  icon={<FileText className="size-5" />}
+                  title="No evidence uploaded yet"
+                  description="This live case does not have any Storage-backed evidence records yet."
+                />
+              )}
             </div>
           </div>
           <div className="surface-panel p-6">
@@ -134,14 +182,20 @@ export default async function CitizenCaseDetailPage({
               Reminders
             </p>
             <div className="mt-4 space-y-3">
-              {item.reminders.map((reminder) => (
+              {item.reminders.length ? item.reminders.map((reminder) => (
                 <div
                   key={reminder}
                   className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground"
                 >
                   {reminder}
                 </div>
-              ))}
+              )) : (
+                <EmptyState
+                  icon={<MessageSquareQuote className="size-5" />}
+                  title="No reminders attached"
+                  description="Live reminder messages will appear here when the case needs a citizen follow-up."
+                />
+              )}
             </div>
           </div>
         </div>
@@ -151,7 +205,15 @@ export default async function CitizenCaseDetailPage({
         <p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
           Timeline
         </p>
-        <Timeline events={item.timeline} />
+        {item.timeline.length ? (
+          <Timeline events={item.timeline} />
+        ) : (
+          <EmptyState
+            icon={<CheckCircle2 className="size-5" />}
+            title="No timeline events yet"
+            description="Case events from cases/{caseId}/events will appear here as the live workflow progresses."
+          />
+        )}
       </section>
     </div>
   );

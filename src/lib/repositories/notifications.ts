@@ -1,19 +1,10 @@
-import { demoNotifications } from "@/lib/demo-data";
 import type { NotificationItem } from "@/lib/types";
-import { getDb, isFirestoreAvailable } from "@/lib/repositories/firestore-helpers";
+import { requireDb } from "@/lib/repositories/firestore-helpers";
 
 export async function listNotificationsForUser(
   userId: string
 ): Promise<NotificationItem[]> {
-  if (!isFirestoreAvailable()) {
-    return demoNotifications.map((item) => ({
-      ...item,
-      userId,
-    }));
-  }
-
-  const db = getDb();
-  if (!db) return [];
+  const db = requireDb();
 
   const snapshot = await db
     .collection("notifications")

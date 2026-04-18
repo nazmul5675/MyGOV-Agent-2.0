@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { BadgeCheck, FileCheck2, UserRound } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, UserRound } from "lucide-react";
 
-import { requireRole } from "@/lib/auth/session";
+import { LiveDataState } from "@/components/common/live-data-state";
 import { PageHeader } from "@/components/common/page-header";
+import { requireRole } from "@/lib/auth/session";
+import { getProfileCards } from "@/lib/content/profile";
 import { getUserProfile } from "@/lib/repositories/users";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -11,7 +16,48 @@ export const metadata: Metadata = {
 
 export default async function ProfilePage() {
   const session = await requireRole("citizen");
-  const profile = await getUserProfile(session);
+  let profile: Awaited<ReturnType<typeof getUserProfile>> | null = null;
+  let errorMessage: string | null = null;
+
+  try {
+    profile = await getUserProfile(session);
+  } catch (error) {
+    errorMessage =
+      error instanceof Error
+        ? error.message
+        : "The profile page could not load the Firestore user document.";
+  }
+
+  if (errorMessage || !profile) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Profile"
+          title="Citizen profile and identity readiness"
+          description="This optional page rounds out the demo with a calm profile surface for identity, stored document readiness, and future settings work."
+        />
+        <LiveDataState
+          tone="setup"
+          title="Live profile data is unavailable"
+          description={errorMessage || "The profile page could not load the Firestore user document."}
+          action={
+            <Link
+              href="/profile"
+              className={cn(buttonVariants({ size: "default" }), "gap-2 px-5")}
+            >
+              <AlertTriangle className="size-4" />
+              Retry profile
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
+  const profileCards = getProfileCards({
+    role: profile.role,
+    documents: profile.documents ?? [],
+  });
 
   return (
     <div className="space-y-6">
@@ -38,21 +84,9 @@ export default async function ProfilePage() {
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
-          {[
-            {
-              icon: BadgeCheck,
-              title: "Identity health",
-              body: `${profile.role === "citizen" ? "Citizen" : "Admin"} account verified and ready for assisted service workflows.`,
-            },
-            {
-              icon: FileCheck2,
-              title: "Stored documents",
-              body: profile.documents?.length
-                ? profile.documents.join(", ")
-                : "MyKad, proof of address, and renewal references can be surfaced here later.",
-            },
-          ].map((item) => {
+          {profileCards.map((item) => {
             const Icon = item.icon;
+
             return (
               <div key={item.title} className="surface-panel p-6">
                 <Icon className="size-5 text-primary" />

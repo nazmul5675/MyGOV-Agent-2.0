@@ -17,7 +17,9 @@ export async function readSession() {
     const decoded = await adminAuth.verifySessionCookie(firebaseToken, true);
     const roleFromClaims =
       typeof decoded.role === "string" ? (decoded.role as UserRole) : null;
-    const role = roleFromClaims || (await getUserRole(decoded.uid)) || "citizen";
+    const role = roleFromClaims || (await getUserRole(decoded.uid));
+
+    if (!role) return null;
 
     return {
       uid: decoded.uid,

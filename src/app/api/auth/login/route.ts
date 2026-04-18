@@ -19,11 +19,14 @@ export async function POST(request: Request) {
   const decoded = await adminAuth.verifyIdToken(body.idToken, true);
   const roleFromClaims =
     typeof decoded.role === "string" ? decoded.role : null;
-  const role = roleFromClaims || (await getUserRole(decoded.uid)) || "citizen";
+  const role = roleFromClaims || (await getUserRole(decoded.uid));
 
   if (role !== "citizen" && role !== "admin") {
     return NextResponse.json(
-      { error: "This account does not have an allowed application role." },
+      {
+        error:
+          "This account does not have an allowed application role. Add a role custom claim or set users/{uid}.role to citizen or admin.",
+      },
       { status: 403 }
     );
   }
