@@ -21,6 +21,7 @@ import { z } from "zod";
 
 import { createCaseAction } from "@/lib/actions/cases";
 import { useFileUploads } from "@/hooks/use-file-uploads";
+import { isPrototypeMode } from "@/lib/config/app-mode";
 import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { createCaseSchema } from "@/lib/validation/cases";
 import { AssistantPanel } from "@/components/common/assistant-panel";
@@ -56,6 +57,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
     resetUploads,
   } = useFileUploads();
   const missingClientVars = getMissingFirebaseClientVars();
+  const prototypeMode = isPrototypeMode();
   const form = useForm<FormValues>({
     resolver: zodResolver(createCaseSchema),
     defaultValues: {
@@ -185,8 +187,9 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 Evidence and uploads
               </CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                Photos, documents, and voice notes upload into Firebase Storage
-                when credentials are connected, with metadata saved against the case.
+                {prototypeMode
+                  ? "Photos, documents, and voice notes upload into the polished prototype file flow with realistic progress, status, and metadata."
+                  : "Photos, documents, and voice notes upload into Firebase Storage when credentials are connected, with metadata saved against the case."}
               </p>
             </div>
             <div className="rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -214,7 +217,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 onChange={(event) => queueFiles(event.target.files)}
               />
             </label>
-            {missingClientVars.length ? (
+            {missingClientVars.length && !prototypeMode ? (
               <div className="rounded-[24px] border border-destructive/20 bg-[#fff1ed] p-4 text-sm leading-7 text-[#9a3b2f]">
                 Live uploads require Firebase client config. Missing:{" "}
                 {missingClientVars.join(", ")}
@@ -335,7 +338,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             </div>
             <p className="text-sm leading-7 text-primary-foreground/80">
               Structured intake, summaries, urgency, and missing-document hints
-              are persisted with the case so a later AI layer can use them.
+              stay attached to the case so the assistant can respond with relevant guidance throughout the demo flow.
             </p>
           </CardContent>
         </Card>
@@ -358,8 +361,8 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               </div>
             ))}
             <div className="rounded-[20px] bg-accent/65 p-4 text-sm leading-6 text-accent-foreground">
-              Submitting uploads evidence first, then creates the live case,
-              writes the initial event timeline, and saves evidence metadata in Firestore.
+              Submitting uploads evidence first, then creates the case packet,
+              writes the initial timeline, and keeps file metadata ready for citizen and admin review.
             </div>
             <Button
               type="submit"

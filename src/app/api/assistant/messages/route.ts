@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { generateGeminiAssistantReply, hasGeminiKey } from "@/lib/ai/gemini";
 import { readSession } from "@/lib/auth/session";
 import { buildAssistantReply } from "@/lib/assistant";
 import {
   appendAssistantMessage,
   getAdminCaseById,
   getCitizenCaseById,
+  listCaseAssistantMessages,
+  listDashboardAssistantMessages,
 } from "@/lib/repositories/cases";
 import { assistantMessageSchema } from "@/lib/validation/cases";
 
@@ -35,11 +38,32 @@ export async function POST(request: Request) {
       caseId: body.caseId,
     });
 
-    const reply = buildAssistantReply({
-      prompt: body.body,
-      caseItem,
-      citizenName: session.name,
-    });
+    const history = body.caseId
+      ? await listCaseAssistantMessages(body.caseId)
+      : await listDashboardAssistantMessages(session.uid);
+
+    let reply: string;
+    try {
+      reply = hasGeminiKey()
+        ? await generateGeminiAssistantReply({
+            prompt: body.body,
+            role: session.role,
+            citizenName: session.name,
+            caseItem,
+            history,
+          })
+        : buildAssistantReply({
+            prompt: body.body,
+            caseItem,
+            citizenName: session.name,
+          });
+    } catch {
+      reply = buildAssistantReply({
+        prompt: body.body,
+        caseItem,
+        citizenName: session.name,
+      });
+    }
 
     const assistantMessage = await appendAssistantMessage({
       userId: session.uid,

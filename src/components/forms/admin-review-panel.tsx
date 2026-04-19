@@ -99,8 +99,8 @@ export function AdminReviewPanel({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-[22px] bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
-          Actions update Firestore, append case events, and keep citizen/admin
-          views in sync.
+          Actions update the shared case state, append timeline events, and keep
+          citizen and admin views in sync.
         </div>
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
           Notes are required for rejections, routing, and document requests.

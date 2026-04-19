@@ -74,7 +74,7 @@ export function ProfileBasicsForm({
       try {
         await patchJson("/api/profile", values);
         toast.success("Profile updated", {
-          description: "Your personal details are saved in Firestore.",
+          description: "Your profile details are saved for the demo workspace.",
         });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Unable to update profile.");
@@ -90,7 +90,7 @@ export function ProfileBasicsForm({
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
           We store `dateOfBirth` instead of raw age so your age can be derived
-          later without becoming stale.
+          when needed without becoming stale.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -122,7 +122,7 @@ export function ProfileBasicsForm({
             />
             <FormMessage
               tone="muted"
-              message={liveAge !== null ? `Computed age: ${liveAge}` : "Optional, but useful for age-based assistance flows later."}
+              message={liveAge !== null ? `Computed age: ${liveAge}` : "Optional, but useful for age-aware assistance and service guidance."}
             />
             <FormMessage message={form.formState.errors.dateOfBirth?.message} />
           </div>

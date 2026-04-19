@@ -13,7 +13,7 @@ export default function LoginPage() {
     <AuthShell
       badge="Secure authentication"
       title="Sign in to your MyGOV workspace."
-      description="Access live case tracking, notifications, and protected admin review using Firebase authentication with secure server-side sessions."
+      description="Enter the citizen or admin workspace with a reliable session flow designed for smooth demo handoff and immediate protected routing."
       sideContent={
         <>
           <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70">
@@ -21,8 +21,8 @@ export default function LoginPage() {
           </p>
           <ul className="mt-4 space-y-3 text-sm leading-7 text-primary-foreground/80">
             <li>Cookie-based sessions for server-side route protection</li>
-            <li>Citizen and admin access driven by Firebase role resolution</li>
-            <li>Trust-first onboarding that keeps profile data in Firestore</li>
+            <li>Citizen and admin access driven by the same seeded role model used across the prototype</li>
+            <li>Immediate handoff into the correct workspace after sign-in</li>
           </ul>
         </>
       }

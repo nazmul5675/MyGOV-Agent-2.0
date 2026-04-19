@@ -132,7 +132,7 @@ export default function LandingPage() {
                   { icon: Waves, title: "Flood relief", text: "High-confidence household intake with image and document support." },
                   { icon: FileStack, title: "Public complaint", text: "No-wrong-door routing with cleaner location and evidence capture." },
                   { icon: BellRing, title: "Reminder and renewal", text: "Proactive case starts for licenses, taxes, or benefit renewals." },
-                  { icon: ArrowRight, title: "Scalable workflow", text: "Route handlers, session cookies, and Firebase-ready data modules." },
+                  { icon: ArrowRight, title: "Scalable workflow", text: "Route handlers, session cookies, prototype data modules, and AI-ready service boundaries." },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -165,7 +165,7 @@ export default function LandingPage() {
                 <div className="grid gap-4">
                   {[
                     "Protected routes and server-first session checks",
-                    "Firestore and Storage integration points with secure env naming",
+                    "Prototype data controls with a clean path back to live integrations later",
                     "Reusable UI system for dashboards, case tracking, and review flows",
                   ].map((item) => (
                     <div key={item} className="rounded-[24px] border border-white/10 bg-white/8 p-4 text-sm leading-7 text-primary-foreground/80">

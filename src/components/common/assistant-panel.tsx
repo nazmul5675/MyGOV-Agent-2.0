@@ -120,7 +120,7 @@ export function AssistantPanel({
             </div>
             <p className="mt-4 font-semibold text-foreground">Start with guided help</p>
             <p className="mt-2 max-w-md text-sm leading-7 text-muted-foreground">
-              This assistant is already wired to live case data and file context, so it can grow into Gemini-powered intake, summaries, and document readiness checks later.
+              This assistant uses the current case, file, and dashboard context to generate guided help, cleaner summaries, and next-step recommendations.
             </p>
           </div>
         ) : (
@@ -218,7 +218,7 @@ export function AssistantPanel({
         />
         <div className="mt-3 flex items-center justify-between gap-4">
           <p className="text-xs leading-6 text-muted-foreground">
-            The current assistant uses live case and file context, with the backend ready for Gemini and document extraction later.
+            The assistant uses case and file context from the prototype data layer and upgrades to live Gemini responses whenever the API key is configured.
           </p>
           <Button
             type="button"

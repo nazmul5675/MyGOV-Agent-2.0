@@ -12,7 +12,7 @@ export function Footer() {
         <div className="flex gap-6">
           <span>Privacy-first</span>
           <span>RBAC ready</span>
-          <span>Firebase enabled</span>
+          <span>Gemini ready</span>
         </div>
       </div>
     </footer>
