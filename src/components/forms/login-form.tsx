@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LoaderCircle, LockKeyhole } from "lucide-react";
+import { Copy, LoaderCircle, LockKeyhole, ShieldCheck, UserRound } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -21,6 +21,21 @@ import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { loginSchema } from "@/lib/validation/auth";
 
 type LoginValues = z.infer<typeof loginSchema>;
+
+const demoAccounts = [
+  {
+    role: "Citizen",
+    icon: UserRound,
+    email: "aisyah.rahman@mygov-demo.my",
+    password: "DemoCitizen123",
+  },
+  {
+    role: "Admin",
+    icon: ShieldCheck,
+    email: "amir.fauzi@mygov-demo.my",
+    password: "DemoAdmin123",
+  },
+] as const;
 
 async function postJson(path: string, payload: unknown) {
   const response = await fetch(path, {
@@ -53,6 +68,25 @@ export function LoginForm() {
   });
 
   const nextPath = useMemo(() => searchParams.get("next"), [searchParams]);
+
+  const fillDemoCredentials = (email: string, password: string) => {
+    form.setValue("email", email, { shouldDirty: true, shouldValidate: true });
+    form.setValue("password", password, { shouldDirty: true, shouldValidate: true });
+    toast.success("Demo credentials loaded", {
+      description: "You can sign in immediately with the seeded account.",
+    });
+  };
+
+  const copyDemoCredentials = async (email: string, password: string) => {
+    try {
+      await navigator.clipboard.writeText(`Email: ${email}\nPassword: ${password}`);
+      toast.success("Demo credentials copied", {
+        description: "Paste them into the login form for the live demo.",
+      });
+    } catch {
+      toast.error("Unable to copy credentials right now.");
+    }
+  };
 
   const handleLogin = async (values: LoginValues) => {
     startTransition(async () => {
@@ -206,6 +240,65 @@ export function LoginForm() {
             />
           ) : null}
         </div>
+
+        {isPrototypeMode() ? (
+          <div className="rounded-[28px] border border-primary/12 bg-white/80 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Demo credentials</p>
+                <p className="text-xs leading-6 text-muted-foreground">
+                  Use these seeded accounts so judges can copy, paste, and enter the workspace without setup friction.
+                </p>
+              </div>
+              <span className="rounded-full bg-accent px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent-foreground">
+                Ready
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              {demoAccounts.map((account) => {
+                const Icon = account.icon;
+
+                return (
+                  <div
+                    key={account.email}
+                    className="rounded-[24px] border border-border/60 bg-muted/55 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                          <Icon className="size-4" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">{account.role}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{account.email}</p>
+                          <p className="text-sm text-muted-foreground">{account.password}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => fillDemoCredentials(account.email, account.password)}
+                          className="rounded-full bg-primary px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary-foreground transition-transform hover:-translate-y-0.5"
+                        >
+                          Use
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void copyDemoCredentials(account.email, account.password)}
+                          className="rounded-full border border-border/70 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-foreground transition-transform hover:-translate-y-0.5"
+                          aria-label={`Copy ${account.role} demo credentials`}
+                        >
+                          <Copy className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <p className="text-sm text-muted-foreground">
           New to MyGOV Agent 2.0?{" "}
