@@ -1,33 +1,37 @@
 # MyGOV Agent 2.0
 
-MyGOV Agent 2.0 is a live Firebase-backed GovTech platform built for a Citizens First hackathon demo. It combines AI-assisted guidance, structured case intake, document management, citizen-facing tracking, and an admin operations console in one polished Next.js application.
+MyGOV Agent 2.0 is a polished GovTech prototype built for hackathon demos. The product centers on four pillars:
 
-The core product story is simple and memorable:
+- AI helping chat
+- file and document management
+- citizen dashboard command center
+- admin operations dashboard
 
-1. A citizen signs in or creates an account.
-2. The citizen uploads evidence, asks the embedded assistant what is missing, and submits a real case.
-3. Firestore stores the case, file metadata, notifications, chat history, and event timeline.
-4. The citizen tracks the same live case from the dashboard and case workspace.
-5. An admin opens the same record, reviews files, updates status, adds notes, and appends live events.
+The app is intentionally optimized for demo reliability:
+
+- prototype JSON data powers the main workflows
+- Gemini powers the assistant when `GEMINI_API_KEY` is configured
+- the UI stays premium, responsive, and presentation-safe
+- auth and navigation are tuned for immediate workspace entry
 
 ## Problem Statement
 
-Citizen service journeys are often fragmented across multiple portals, agencies, and document requests. That creates:
+Citizen service journeys are often fragmented across multiple forms, agencies, and document requests. That creates:
 
 - repeated submissions
-- unclear case ownership
-- poor visibility into status updates
-- weak document handling
-- avoidable friction for both citizens and officers
+- weak visibility into case status
+- poor document handling
+- unclear next steps for citizens
+- slow review cycles for officers and admins
 
-MyGOV Agent 2.0 focuses on one trusted entry point with clearer guidance, cleaner evidence handling, and a more operational admin experience.
+MyGOV Agent 2.0 presents one trusted entry point where citizens can submit evidence, ask for AI guidance, track progress, and receive clearer follow-up. Admins see the same case as an operational workspace instead of a disconnected backlog.
 
 ## Why This Matters for GovTech
 
-- Citizens need a no-wrong-door experience, not a maze of forms.
-- Officers need structured intake, visible documents, and clearer next-step cues.
-- AI should support real workflows, not sit beside them as a novelty.
-- Document handling and case tracking should feel like one system.
+- Citizens need a no-wrong-door service entry, not a maze.
+- Public-sector teams need better intake quality and faster triage.
+- Document handling and status tracking should feel like one system.
+- AI should support real service workflows, not sit beside them as a gimmick.
 
 ## Roles
 
@@ -36,111 +40,157 @@ MyGOV Agent 2.0 focuses on one trusted entry point with clearer guidance, cleane
 
 Admin includes officer-style capabilities. There is no third role.
 
-## Product Pillars
+## Demo Story
 
-- AI helping chat box
-- File and document management
-- Citizen dashboard command center
-- Admin operations dashboard and review workspace
+1. A citizen signs in with a stable prototype account.
+2. The citizen lands on `/dashboard` and sees active cases, files, reminders, and AI guidance.
+3. The citizen asks Gemini what documents are needed.
+4. The citizen creates a case, uploads files through the polished prototype upload flow, and submits.
+5. The citizen opens `/cases/[id]` to track status, timeline events, reminders, and missing documents.
+6. An admin signs in, opens `/admin`, and reviews the same packet.
+7. The admin updates file review states, requests more documents, routes the case, or resolves it.
+8. The citizen view reflects the updated status and activity trail.
 
 ## Major Features
 
-- Premium landing page and protected app shell
-- Firebase email/password authentication
-- Registration, forgot-password, password visibility toggles, and profile basics
-- Server-issued session cookies for protected routes
-- Strict RBAC for `citizen` and `admin`
-- Live Firestore-backed dashboards, profiles, notifications, cases, files, timelines, and chat messages
-- Firebase Storage uploads with progress, cleanup, and real failure states
-- Citizen case creation with real evidence metadata persistence
-- Case-linked and dashboard-level assistant chat scaffolding
-- Admin queue, decision actions, internal notes, and evidence review tools
-- Timeline rendering from `cases/{caseId}/events/{eventId}`
-- Loading, empty, setup-error, and success states across live routes
+- premium landing page and protected app shell
+- prototype JSON-backed dashboards, cases, files, notifications, reminders, and chat seeds
+- stable citizen and admin login flow with server-checked sessions
+- registration, forgot-password, password visibility toggles, and profile basics
+- citizen dashboard with active-case context, uploaded files, reminders, next actions, and AI help
+- case workspace with status, timeline, files, reminders, and contextual assistant chat
+- admin dashboard with queue visibility, file review focus, recent activity, and AI-ready guidance
+- admin case review workspace with evidence states, internal notes, action controls, and timeline
+- Gemini-backed assistant route when `GEMINI_API_KEY` is present
+- graceful assistant fallback when Gemini is not configured
 
-## Hero Demo Flow
+## Product Pillars
 
-1. Register a citizen account.
-2. Sign in and land on `/dashboard`.
-3. Ask the AI helper what documents are needed.
-4. Start `/cases/new`, upload evidence, and submit a live case.
-5. Open `/cases/[id]` to show files, reminders, assistant context, and timeline.
-6. Sign in as an admin and open `/admin`.
-7. Review the same case in `/admin/cases/[id]`.
-8. Mark files, add notes, request more documents, route, or resolve.
-9. Return to the citizen view and show the updated live history.
+### AI Helping Chat
+
+- reusable assistant panel on dashboard and case detail
+- suggested prompts
+- context-aware replies using selected case and file metadata
+- citizen-friendly and admin-friendly guidance
+- real Gemini integration through `src/lib/ai/gemini.ts`
+
+### File and Document Management
+
+- upload queue with progress
+- file cards with kind, status, size, and time
+- admin evidence review states
+- missing-document visibility
+- evidence manager reused across citizen and admin surfaces
+
+### Citizen Dashboard
+
+- greeting and active-case overview
+- create case CTA
+- AI helping chat
+- uploaded files overview
+- next actions
+- reminders and notifications
+- recent timeline activity
+
+### Admin Dashboard
+
+- queue overview
+- pending review signals
+- file review block
+- recent operations activity
+- action-ready case cards
+- AI-ready operational guidance
 
 ## Route Map
 
 ### Public
 
 - `/`
-  Marketing landing page
 - `/login`
-  Firebase login
 - `/register`
-  Citizen registration
 - `/forgot-password`
-  Firebase password reset flow
 
 ### Citizen
 
 - `/dashboard`
-  Live citizen command center with stats, files, reminders, activity, and AI help
 - `/cases/new`
-  Guided live case intake with uploads
 - `/cases/[id]`
-  Citizen case workspace with status, files, timeline, reminders, and assistant chat
 - `/notifications`
-  Live notification center
 - `/profile`
-  Firestore-backed profile basics and onboarding completion
 
 ### Admin
 
 - `/admin`
-  Operations dashboard with queue, file review signals, and recent activity
 - `/admin/cases/[id]`
-  Admin review workspace with evidence tools, status actions, notes, timeline, and assistant help
+
+## Prototype Data Strategy
+
+Runtime product data now comes from centralized JSON files under `src/data/prototype`:
+
+- `users.json`
+- `cases.json`
+- `case-events.json`
+- `files.json`
+- `notifications.json`
+- `reminders.json`
+- `chat-seeds.json`
+
+This data is loaded into an in-memory prototype store at server startup through:
+
+- `src/lib/prototype/store.ts`
+
+The store is intentionally presentation-focused:
+
+- consistent across dashboard, case detail, files, notifications, and admin review
+- realistic Malaysian GovTech-style content
+- supports a clean judge-friendly end-to-end flow
+- resets when the server restarts
+
+## Demo Accounts
+
+Seeded prototype accounts:
+
+- Citizen: `aisyah.rahman@mygov-demo.my` / `DemoCitizen123`
+- Citizen: `farid.hassan@mygov-demo.my` / `DemoCitizen123`
+- Citizen: `siti.zulaikha@mygov-demo.my` / `DemoCitizen123`
+- Admin: `amir.fauzi@mygov-demo.my` / `DemoAdmin123`
+
+These accounts live in `src/data/prototype/users.json`.
 
 ## Architecture Summary
 
 - `src/app/(marketing)`
-  Public product and positioning shell
+  Public product shell
 - `src/app/(auth)`
   Login, register, forgot-password
 - `src/app/(app)`
   Protected citizen and admin routes
 - `src/app/api/auth`
-  Login, logout, registration session exchange
+  Demo-safe auth/session routes
 - `src/app/api/cases`
-  Live case creation and evidence metadata APIs
+  Case creation and evidence attachment APIs
 - `src/app/api/admin`
-  Admin actions and file review APIs
+  Admin case actions and file review APIs
 - `src/app/api/assistant`
-  Assistant chat message persistence and response scaffold
-- `src/components/auth`
-  Reusable auth shell and field helpers
-- `src/components/common`
-  Shared dashboard, evidence, assistant, timeline, and skeleton components
-- `src/components/admin`
-  Queue and evidence-review admin surfaces
-- `src/components/forms`
-  Case intake, login, register, forgot-password, profile, and review forms
-- `src/lib/auth`
-  Session reading and route protection
-- `src/lib/firebase`
-  Firebase client/admin setup
+  Assistant message handling
+- `src/data/prototype`
+  Centralized prototype JSON data
+- `src/lib/prototype`
+  In-memory prototype store
 - `src/lib/repositories`
-  Firestore reads and writes
-- `src/lib/actions`
-  Client API wrappers
+  Data access layer
+- `src/lib/ai`
+  Gemini integration
+- `src/lib/auth`
+  Session helpers and route protection
 - `src/lib/validation`
   Zod schemas
-- `src/hooks`
-  Live upload state handling
-- `scripts`
-  Seed utility
+- `src/components/common`
+  Shared assistant, evidence, status, timeline, and layout building blocks
+- `src/components/admin`
+  Admin queue and evidence review modules
+- `src/components/forms`
+  Auth, profile, intake, and admin action forms
 
 ## Stack
 
@@ -150,104 +200,115 @@ Admin includes officer-style capabilities. There is no third role.
 - Tailwind CSS v4
 - shadcn/ui primitives
 - Framer Motion
-- Firebase Auth
-- Firebase Admin
-- Cloud Firestore
-- Firebase Storage
-- React Hook Form
 - Zod
+- React Hook Form
 - Lucide React
 - Sonner
+- Jose
+- optional Firebase client/admin configuration still available for future live mode
+- Gemini API for the assistant layer
 
-## Live Data Model
+## Session and Auth Mode
 
-Primary collections and subcollections:
+The current default mode is:
 
-- `users/{uid}`
-- `users/{uid}/notifications/{notificationId}`
-- `users/{uid}/assistantThreads/dashboard/messages/{messageId}`
-- `cases/{caseId}`
-- `cases/{caseId}/events/{eventId}`
-- `cases/{caseId}/files/{fileId}`
-- `cases/{caseId}/chat/{messageId}`
-- `cases/{caseId}/subtasks/{subtaskId}` reserved for future use
+- `NEXT_PUBLIC_APP_MODE=prototype`
 
-### Auth Fields vs Profile Fields
+In prototype mode:
 
-Firebase Auth stores only authentication credentials:
+- login uses seeded credentials from the prototype store
+- register creates a new in-memory citizen account for the running session
+- forgot-password uses a clean simulated recovery flow
+- session cookies are still server-checked
+- citizen users land on `/dashboard`
+- admin users land on `/admin`
 
-- email
-- password
+The mode switch lives in:
 
-Firestore `users/{uid}` stores product profile data:
+- `src/lib/config/app-mode.ts`
 
-- `uid`
-- `fullName`
-- `email`
-- `role`
-- `dateOfBirth`
-- `phoneNumber`
-- `addressText`
-- `createdAt`
-- `updatedAt`
+## AI Assistant
 
-`dateOfBirth` is stored instead of raw age because age changes over time and would become stale.
+The assistant route lives at:
 
-### Case Shape
+- `src/app/api/assistant/messages/route.ts`
 
-Case documents currently include:
+Gemini integration lives at:
 
-- reference
-- title
-- type
-- status
-- location
-- summary
-- citizen identity fields
-- progress
+- `src/lib/ai/gemini.ts`
+
+Current behavior:
+
+- if `GEMINI_API_KEY` exists, the assistant sends real context-aware requests to Gemini
+- if `GEMINI_API_KEY` is missing, the UI still works and falls back to a local guidance layer
+- case context includes status, summaries, missing documents, and file metadata
+- dashboard context uses seeded history and current user context
+
+Suggested prompt starters:
+
+- What documents do I need?
+- Help me explain my issue
+- Summarize my uploads
+- What should I do next?
+- Why is my case still under review?
+- Draft an officer summary for this case
+
+## File Management
+
+Citizen-side file handling includes:
+
+- upload queue
+- progress transitions
+- file kind and size
+- upload/remove before submission
+- evidence organization in dashboard and case detail
+
+Admin-side file handling includes:
+
+- evidence review panel
+- file review state updates
+- better-copy and more-documents workflow support
+- grouped evidence visibility inside the case workspace
+
+In prototype mode, file uploads use a polished simulated upload path so the demo remains stable while still feeling like a real file-management experience.
+
+## Data Model Shape
+
+Primary product entities:
+
+- users
+- cases
+- case events
+- files
+- notifications
 - reminders
+- assistant messages
+
+Prototype case records preserve the same practical shape we would use in live mode:
+
+- case summary
+- status
 - intake summaries
+- urgency
+- missing documents
+- assigned unit
 - latest internal note
-
-### File Metadata Shape
-
-File records and mirrored evidence summaries include fields such as:
-
-- `id`
-- `caseId`
-- `ownerUid`
-- `storagePath`
-- `name`
-- `kind`
-- `contentType`
-- `sizeBytes`
-- `uploadedAt`
-- `status`
-- `category`
-- `notes`
-
-## AI-Assisted Workflow Shape
-
-The current assistant is intentionally practical and transparent:
-
-- dashboard-level assistant chat persists to Firestore
-- case-linked assistant chat persists to Firestore
-- responses are scaffolded and context-aware
-- the UI and data model are ready for future model integration
-
-Planned integration path:
-
-- Gemini 2.5 Flash-Lite for intake extraction and lightweight guidance
-- Gemini 2.5 Flash for reasoning and summaries
-- Document AI for document extraction
-- Maps/Geocoding for location normalization
-- RAG for grounded policy responses
+- evidence metadata
+- event timeline
 
 ## Environment Setup
 
-Copy `.env.local.example` to `.env.local` and fill in real values.
+Copy `.env.local.example` to `.env.local`.
 
-Required client variables:
+Prototype-first variables:
+
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_APP_MODE`
+- `APP_SESSION_SECRET`
+- `GEMINI_API_KEY`
+- `GEMINI_MODEL`
+
+Optional Firebase variables for future live mode:
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
@@ -255,68 +316,34 @@ Required client variables:
 - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
-- `NEXT_PUBLIC_APP_URL`
-
-Required server variables:
-
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
 - `SESSION_COOKIE_NAME`
 
-How to fill them:
+### Recommended Local Prototype Values
 
-1. Open Firebase Console.
-2. Go to Project settings -> General -> Your apps.
-3. Copy the Firebase web app config into the `NEXT_PUBLIC_*` variables.
-4. Go to Project settings -> Service accounts.
-5. Copy the service account `project_id`, `client_email`, and `private_key`.
-6. Keep `FIREBASE_PRIVATE_KEY` wrapped in quotes and preserve `\n` line breaks.
-7. Set `NEXT_PUBLIC_APP_URL` to `http://localhost:3000` locally.
-
-Reference files:
-
-- `.env.example`
-- `.env.local.example`
-
-## Firebase Console Setup
-
-1. Enable Email/Password sign-in in Firebase Authentication.
-2. Enable the Cloud Firestore API.
-3. Create the Firebase Storage bucket referenced by the web config.
-4. Add real Firebase Auth users.
-5. Ensure matching `users/{uid}` docs exist with:
-
-```json
-{
-  "fullName": "Aisyah Rahman",
-  "email": "citizen@example.com",
-  "role": "citizen"
-}
+```env
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_MODE=prototype
+APP_SESSION_SECRET=replace-with-a-long-random-string
+GEMINI_API_KEY=replace-with-your-gemini-api-key
+GEMINI_MODEL=gemini-2.5-flash-lite
+SESSION_COOKIE_NAME=mygov_session
 ```
 
-```json
-{
-  "fullName": "Farid Hakim",
-  "email": "admin@example.com",
-  "role": "admin"
-}
-```
+## Gemini Setup
 
-6. Optionally mirror the role into Firebase custom claims.
-7. Deploy:
-   - `firestore.rules`
-   - `storage.rules`
-   - `firestore.indexes.json`
+1. Create a Gemini API key in Google AI Studio.
+2. Add it to `.env.local` as `GEMINI_API_KEY`.
+3. Keep `GEMINI_MODEL=gemini-2.5-flash-lite` unless you intentionally want a different model.
+4. Restart the dev server.
 
-## Important Live Setup Notes
+Current local status in this workspace:
 
-The app no longer silently falls back to demo data. If Firebase services are unavailable, the UI now shows explicit setup or error states.
+- `GEMINI_API_KEY` is not configured yet
 
-During live verification against the configured Firebase project, these console blockers were found:
-
-- Cloud Firestore API was disabled for `mygov-d48ef`
-- The configured Storage bucket did not yet exist
+That means the assistant is implemented, but it is currently using the local fallback response path instead of real Gemini.
 
 ## Local Development
 
@@ -348,81 +375,35 @@ npm run typecheck
 npm run build
 ```
 
-Note: `npm run typecheck` may depend on Next-generated route types in `.next/types`, so a recent `next build` or `next dev` keeps that stable.
+## README Notes for Judges and Reviewers
 
-## File and Storage Notes
+This build is intentionally a polished prototype:
 
-- Files are uploaded to Firebase Storage
-- File metadata is stored in Firestore
-- Upload failures do not pretend success
-- Admin file review writes back to Firestore and appends case events
-- Citizens and admins see the same live evidence trail from different surfaces
-
-## Registration and Account Onboarding
-
-The auth experience now supports:
-
-- citizen registration
-- secure login
-- forgot password
-- password visibility toggles
-- profile completion on `/profile`
-
-Registration flow:
-
-1. Create Firebase Auth email/password account.
-2. Exchange the ID token with the server.
-3. Create `users/{uid}` in Firestore with role `citizen`.
-4. Issue a secure session cookie.
-5. Redirect to profile completion.
-
-Forgot password flow:
-
-- Uses Firebase Auth password reset email
-- Shows explicit success and error states
-- Does not expose role or profile details
-
-## Seed Support
-
-If you need starter Firebase user documents:
-
-```bash
-npm run seed
-```
-
-Seed data is a setup utility only. It is not used as runtime fallback.
+- the product experience is stable and presentation-ready
+- the UI and flows behave like a real service platform
+- the core data is seeded from structured JSON for reliability
+- Gemini is the live intelligence layer once the key is configured
+- the architecture is still organized so live integrations can be swapped back in later
 
 ## AI Usage Disclosure
 
-The current build does not claim to run Gemini or Document AI in production. The assistant is a live, persisted, AI-ready scaffold with case and file context, designed to plug into future model workflows cleanly.
+- prototype case, file, timeline, notification, and reminder data are seeded
+- assistant prompts and context are real
+- Gemini responses are real when `GEMINI_API_KEY` is configured
+- if Gemini is not configured, the app falls back gracefully to a local guidance responder so the demo does not break
+- the app does not claim production deployment of Document AI, grounding, or full policy automation yet
 
 ## Deployment Notes
 
-- Vercel is a practical host for the Next.js app
-- Add all Firebase client and admin environment variables
-- Add the deployed domain to Firebase Authentication authorized domains
-- Use HTTPS in production for secure session cookies
-- Confirm Firestore API, Storage bucket, and rules deployment before demo day
+- Vercel is a practical deployment target
+- set `NEXT_PUBLIC_APP_MODE=prototype` for the presentation build
+- set `APP_SESSION_SECRET`
+- set `GEMINI_API_KEY`
+- do not ship `.env.local`, `.git`, `.next`, or `node_modules`
 
 ## Git Workflow Notes
 
-The repo is connected to GitHub and `main` is actively pushed after milestone work.
-
-Recent milestone commits:
-
-- `feat: add ai assistant and file management surfaces to citizen flow`
-- `feat: improve live case workspace with uploads chat and timeline`
-- `feat: upgrade admin dashboard and evidence management workflow`
-- `feat: polish auth basics forms and user-friendly interactions`
-
-## Demo Credentials
-
-Use real Firebase Auth users.
-
-Suggested placeholders:
-
-- Citizen: `citizen@your-project.test`
-- Admin: `admin@your-project.test`
+The repo is connected to GitHub and milestone work is committed and pushed incrementally.
 
 ## Screenshot Placeholders
 
