@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { sendPasswordResetEmail } from "firebase/auth";
 import { LoaderCircle, MailCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isPrototypeMode } from "@/lib/config/app-mode";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { forgotPasswordSchema } from "@/lib/validation/auth";
 
@@ -31,18 +31,20 @@ export function ForgotPasswordForm() {
   });
 
   const onSubmit = (values: ForgotPasswordValues) => {
-    const auth = firebaseAuth;
-
-    if (!auth) {
-      form.setError("email", {
-        type: "manual",
-        message: "Firebase client config is incomplete for password reset.",
-      });
-      return;
-    }
-
     startTransition(async () => {
       try {
+        if (isPrototypeMode()) {
+          setEmailSentTo(values.email);
+          return;
+        }
+
+        const auth = firebaseAuth;
+
+        if (!auth) {
+          throw new Error("Firebase client config is incomplete for password reset.");
+        }
+
+        const { sendPasswordResetEmail } = await import("firebase/auth");
         await sendPasswordResetEmail(auth, values.email);
         setEmailSentTo(values.email);
       } catch (error) {
@@ -64,8 +66,9 @@ export function ForgotPasswordForm() {
           Reset your password
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
-          Enter the email address linked to your account and we will send a
-          secure password reset link.
+          {isPrototypeMode()
+            ? "Enter the email address linked to your prototype account and we will simulate a reset handoff for the demo."
+            : "Enter the email address linked to your account and we will send a secure password reset link."}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">

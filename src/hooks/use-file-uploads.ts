@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 
+import { isPrototypeMode } from "@/lib/config/app-mode";
 import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { firebaseStorage } from "@/lib/firebase/client";
 import type { EvidenceFile } from "@/lib/types";
@@ -34,6 +35,7 @@ function formatFileSize(bytes: number) {
 export function useFileUploads() {
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const queuedFilesRef = useRef<Record<string, File>>({});
+  const objectUrlRef = useRef<Record<string, string>>({});
 
   const queueFiles = (files: FileList | null) => {
     if (!files) return [];
@@ -83,6 +85,60 @@ export function useFileUploads() {
     const storage = firebaseStorage;
 
     const results: EvidenceFile[] = [];
+
+    if (isPrototypeMode()) {
+      for (const entry of queued) {
+        const file = "file" in entry && entry.file instanceof File ? entry.file : null;
+        if (!file) continue;
+
+        setUploads((current) =>
+          current.map((item) =>
+            item.id === entry.id ? { ...item, status: "uploading", progress: 15 } : item
+          )
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 180));
+        setUploads((current) =>
+          current.map((item) =>
+            item.id === entry.id ? { ...item, progress: 56 } : item
+          )
+        );
+        await new Promise((resolve) => setTimeout(resolve, 220));
+
+        const previewUrl = URL.createObjectURL(file);
+        objectUrlRef.current[entry.id] = previewUrl;
+        const storagePath = `prototype/${userId}/${caseId}/${entry.id}-${entry.name}`;
+
+        setUploads((current) =>
+          current.map((item) =>
+            item.id === entry.id
+              ? {
+                  ...item,
+                  progress: 100,
+                  status: "uploaded",
+                  downloadUrl: previewUrl,
+                  storagePath,
+                }
+              : item
+          )
+        );
+
+        results.push({
+          id: entry.id,
+          name: entry.name,
+          kind: entry.kind,
+          sizeLabel: formatFileSize(entry.size),
+          sizeBytes: entry.size,
+          uploadedAt: new Date().toISOString(),
+          status: "uploaded",
+          downloadUrl: previewUrl,
+          storagePath,
+          contentType: entry.contentType,
+        });
+      }
+
+      return results;
+    }
 
     if (!storage) {
       const missingVars = getMissingFirebaseClientVars();
@@ -178,6 +234,16 @@ export function useFileUploads() {
     },
     uploadForCase,
     cleanupUploadedFiles: async (files: EvidenceFile[]) => {
+      if (isPrototypeMode()) {
+        files.forEach((file) => {
+          if (file.id && objectUrlRef.current[file.id]) {
+            URL.revokeObjectURL(objectUrlRef.current[file.id]);
+            delete objectUrlRef.current[file.id];
+          }
+        });
+        return;
+      }
+
       const storage = firebaseStorage;
       if (!storage) return;
 
@@ -191,6 +257,8 @@ export function useFileUploads() {
       );
     },
     resetUploads: () => {
+      Object.values(objectUrlRef.current).forEach((url) => URL.revokeObjectURL(url));
+      objectUrlRef.current = {};
       queuedFilesRef.current = {};
       setUploads([]);
     },

@@ -3,11 +3,6 @@
 import Link from "next/link";
 import { useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createUserWithEmailAndPassword,
-  deleteUser,
-  signOut,
-} from "firebase/auth";
 import { LoaderCircle, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -19,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isPrototypeMode } from "@/lib/config/app-mode";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { registerSchema } from "@/lib/validation/auth";
@@ -57,45 +53,70 @@ export function RegisterForm() {
   });
 
   const onSubmit = (values: RegisterValues) => {
-    const auth = firebaseAuth;
-
-    if (!auth) {
-      toast.error("Firebase client config is incomplete.", {
-        description: missingClientVars.join(", "),
-      });
-      return;
-    }
-
     startTransition(async () => {
-      let createdUser:
-        | Awaited<ReturnType<typeof createUserWithEmailAndPassword>>
-        | undefined;
-
       try {
-        createdUser = await createUserWithEmailAndPassword(
-          auth,
-          values.email,
-          values.password
-        );
-
-        const idToken = await createdUser.user.getIdToken(true);
-        const result = (await postJson("/api/auth/register", {
-          idToken,
-          fullName: values.fullName,
-        })) as
+        let result:
           | {
               ok?: boolean;
               role?: "citizen" | "admin";
               profileCreated?: boolean;
               warning?: string;
             }
-          | null;
+          | null = null;
+
+        if (isPrototypeMode()) {
+          result = (await postJson("/api/auth/register", values)) as {
+            ok?: boolean;
+            role?: "citizen" | "admin";
+            profileCreated?: boolean;
+            warning?: string;
+          } | null;
+        } else {
+          const auth = firebaseAuth;
+
+          if (!auth) {
+            throw new Error(
+              `Firebase client config is incomplete. Missing: ${missingClientVars.join(", ")}`
+            );
+          }
+
+          const { createUserWithEmailAndPassword, deleteUser, signOut } =
+            await import("firebase/auth");
+          let createdUser:
+            | Awaited<ReturnType<typeof createUserWithEmailAndPassword>>
+            | undefined;
+
+          try {
+            createdUser = await createUserWithEmailAndPassword(
+              auth,
+              values.email,
+              values.password
+            );
+
+            const idToken = await createdUser.user.getIdToken(true);
+            result = (await postJson("/api/auth/register", {
+              idToken,
+              fullName: values.fullName,
+            })) as {
+              ok?: boolean;
+              role?: "citizen" | "admin";
+              profileCreated?: boolean;
+              warning?: string;
+            } | null;
+          } catch (error) {
+            if (createdUser?.user) {
+              await deleteUser(createdUser.user).catch(() => undefined);
+            }
+            await signOut(auth).catch(() => undefined);
+            throw error;
+          }
+        }
 
         if (result?.profileCreated === false) {
           toast.warning("Account created, but profile sync is pending", {
             description:
               result.warning ||
-              "Firebase Auth succeeded, but Firestore profile setup is not ready yet.",
+              "The account was created, but profile setup still needs attention.",
           });
         } else {
           toast.success("Account created", {
@@ -104,11 +125,6 @@ export function RegisterForm() {
         }
         window.location.assign("/profile?welcome=1");
       } catch (error) {
-        if (createdUser?.user) {
-          await deleteUser(createdUser.user).catch(() => undefined);
-        }
-        await signOut(auth).catch(() => undefined);
-
         toast.error(error instanceof Error ? error.message : "Unable to create your account.");
       }
     });
@@ -122,7 +138,7 @@ export function RegisterForm() {
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
           Start with the essentials. We collect your full name now, then let you
-          complete profile details later so sign-up stays friendly and fast.
+          complete profile details next so sign-up stays friendly and fast.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -192,12 +208,12 @@ export function RegisterForm() {
         <div className="rounded-[24px] border border-border/60 bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
           <div className="flex items-center gap-2 font-medium text-foreground">
             <ShieldCheck className="size-4 text-primary" />
-            Profile data stays in Firestore
+            {isPrototypeMode() ? "Prototype profile setup" : "Profile data stays in Firestore"}
           </div>
           <p className="mt-2">
-            We store `fullName`, `dateOfBirth`, `phoneNumber`, and `addressText`
-            in the Firestore profile document. Firebase Auth is used only for
-            authentication credentials.
+            {isPrototypeMode()
+              ? "In prototype mode, registration creates a seeded citizen account in the in-memory demo store so the dashboard flow stays immediate and stable."
+              : "We store `fullName`, `dateOfBirth`, `phoneNumber`, and `addressText` in the Firestore profile document. Firebase Auth is used only for authentication credentials."}
           </p>
         </div>
 

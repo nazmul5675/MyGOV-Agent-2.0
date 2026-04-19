@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useMemo, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { LoaderCircle, LockKeyhole } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -16,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isPrototypeMode } from "@/lib/config/app-mode";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { loginSchema } from "@/lib/validation/auth";
@@ -54,32 +54,48 @@ export function LoginForm() {
 
   const nextPath = useMemo(() => searchParams.get("next"), [searchParams]);
 
-  const handleFirebaseLogin = async (values: LoginValues) => {
-    const auth = firebaseAuth;
-
-    if (!auth) {
-      toast.error("Firebase client config is incomplete.", {
-        description: missingClientVars.join(", "),
-      });
-      return;
-    }
-
+  const handleLogin = async (values: LoginValues) => {
     startTransition(async () => {
       try {
-        const credential = await signInWithEmailAndPassword(
-          auth,
-          values.email,
-          values.password
-        );
-        const idToken = await credential.user.getIdToken(true);
-        const response = (await postJson("/api/auth/login", {
-          idToken,
-        })) as
+        let response:
           | {
               role?: "citizen" | "admin";
               redirectTo?: string;
             }
-          | null;
+          | null = null;
+
+        if (isPrototypeMode()) {
+          response = (await postJson("/api/auth/login", {
+            email: values.email,
+            password: values.password,
+          })) as {
+            role?: "citizen" | "admin";
+            redirectTo?: string;
+          } | null;
+        } else {
+          const auth = firebaseAuth;
+
+          if (!auth) {
+            throw new Error(
+              `Firebase client config is incomplete. Missing: ${missingClientVars.join(", ")}`
+            );
+          }
+
+          const { signInWithEmailAndPassword } = await import("firebase/auth");
+          const credential = await signInWithEmailAndPassword(
+            auth,
+            values.email,
+            values.password
+          );
+          const idToken = await credential.user.getIdToken(true);
+          response = (await postJson("/api/auth/login", {
+            idToken,
+          })) as {
+            role?: "citizen" | "admin";
+            redirectTo?: string;
+          } | null;
+        }
+
         const resolvedRole = response?.role;
         const destination =
           nextPath ||
@@ -105,7 +121,9 @@ export function LoginForm() {
           error instanceof Error ? error.message : "Unable to sign in right now.",
           {
             description:
-              "Double-check your email, password, and Firebase account role setup.",
+              isPrototypeMode()
+                ? "Use one of the seeded demo accounts or create a new citizen account."
+                : "Double-check your email, password, and Firebase account role setup.",
           }
         );
       }
@@ -119,14 +137,15 @@ export function LoginForm() {
           Sign in securely
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
-          Use your Firebase account to enter the citizen or admin workspace with
-          a server-issued session cookie.
+          {isPrototypeMode()
+            ? "Use a seeded demo account or a newly registered citizen account to enter the workspace instantly."
+            : "Use your Firebase account to enter the citizen or admin workspace with a server-issued session cookie."}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
         <form
           className="space-y-4"
-          onSubmit={form.handleSubmit(handleFirebaseLogin)}
+          onSubmit={form.handleSubmit(handleLogin)}
         >
           <div className="grid gap-2">
             <Label htmlFor="email">Email address</Label>
@@ -174,13 +193,14 @@ export function LoginForm() {
         <div className="rounded-[24px] border border-border/60 bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
           <div className="flex items-center gap-2 font-medium text-foreground">
             <LockKeyhole className="size-4 text-primary" />
-            Firebase-only login
+            {isPrototypeMode() ? "Prototype demo login" : "Firebase-only login"}
           </div>
           <p className="mt-2">
-            Role access comes from Firebase custom claims or the Firestore
-            `users/{'{uid}'}.role` field. Admin access is never self-selected.
+            {isPrototypeMode()
+              ? "Use the seeded demo credentials to enter the citizen or admin workspace instantly with a stable prototype session."
+              : "Role access comes from Firebase custom claims or the Firestore `users/{uid}.role` field. Admin access is never self-selected."}
           </p>
-          {missingClientVars.length ? (
+          {missingClientVars.length && !isPrototypeMode() ? (
             <FormMessage
               message={`Missing client env vars: ${missingClientVars.join(", ")}`}
             />

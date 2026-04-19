@@ -1,0 +1,204 @@
+[
+  {
+    "id": "case-flood-shah-alam",
+    "reference": "MYGOV-2026-4102",
+    "title": "Flood relief request for damaged ground floor unit",
+    "type": "flood_relief",
+    "status": "need_more_docs",
+    "location": "Taman Sri Muda, Shah Alam, Selangor",
+    "createdAt": "2026-04-15T02:10:00.000Z",
+    "updatedAt": "2026-04-19T08:45:00.000Z",
+    "summary": "Household flood damage claim awaiting a clearer bank statement and one replacement photo of the damaged kitchen flooring.",
+    "citizenId": "citizen-nur-aisyah",
+    "citizenName": "Nur Aisyah Rahman",
+    "assignedUnit": "Selangor Relief Coordination Desk",
+    "progress": 58,
+    "intake": {
+      "citizenSummary": "My house was flooded after heavy rain and I need support for damaged appliances, flooring, and cleaning expenses.",
+      "adminSummary": "Citizen submitted a flood relief request with residence proof, photos, and a cost note. Packet is credible but one financial document and one clearer evidence image are still needed before routing.",
+      "category": "Disaster assistance",
+      "urgency": "high",
+      "missingDocuments": ["Latest bank statement", "Replacement kitchen damage photo"],
+      "structuredIntake": {
+        "channel": "self-service",
+        "affectedArea": "ground floor",
+        "householdSize": "4",
+        "incidentDate": "2026-04-13"
+      }
+    },
+    "latestInternalNote": "Citizen appears eligible. Waiting on clearer support documents before routing to finance.",
+    "updatedBy": "admin-amir"
+  },
+  {
+    "id": "case-streetlamp-bukit",
+    "reference": "MYGOV-2026-4120",
+    "title": "Broken streetlamp creating safety risk near pedestrian crossing",
+    "type": "public_complaint",
+    "status": "reviewing",
+    "location": "Bukit Bintang, Kuala Lumpur",
+    "createdAt": "2026-04-14T05:40:00.000Z",
+    "updatedAt": "2026-04-19T07:15:00.000Z",
+    "summary": "A nighttime safety complaint with strong location detail and photo proof is under municipal review.",
+    "citizenId": "citizen-nur-aisyah",
+    "citizenName": "Nur Aisyah Rahman",
+    "assignedUnit": "KL Smart City Maintenance Desk",
+    "progress": 44,
+    "intake": {
+      "citizenSummary": "The streetlamp beside the zebra crossing has been out for three nights and the area is dark for people walking home.",
+      "adminSummary": "Public lighting complaint includes geotagged photos and clear site description. Suitable for maintenance dispatch after routine validation.",
+      "category": "Public lighting",
+      "urgency": "medium",
+      "missingDocuments": [],
+      "structuredIntake": {
+        "channel": "mobile",
+        "landmark": "crossing beside MRT entrance",
+        "reportedAt": "2026-04-14T05:40:00.000Z"
+      }
+    },
+    "latestInternalNote": "Location clarity is excellent. Awaiting district confirmation.",
+    "updatedBy": "admin-amir"
+  },
+  {
+    "id": "case-road-pothole-kuantan",
+    "reference": "MYGOV-2026-4127",
+    "title": "Large pothole near school drop-off lane",
+    "type": "public_complaint",
+    "status": "submitted",
+    "location": "Jalan Kampung Pandan, Kuantan, Pahang",
+    "createdAt": "2026-04-18T01:20:00.000Z",
+    "updatedAt": "2026-04-20T03:00:00.000Z",
+    "summary": "A fresh complaint about road damage near a school access route has entered triage with strong photo evidence.",
+    "citizenId": "citizen-farid-hassan",
+    "citizenName": "Farid Hassan",
+    "assignedUnit": "Pahang Public Works Triage",
+    "progress": 18,
+    "intake": {
+      "citizenSummary": "A deep pothole is forming at the school drop-off area and drivers are swerving into the opposite lane to avoid it.",
+      "adminSummary": "Road hazard complaint received with two images and a short hazard explanation. Requires prioritization due to school traffic.",
+      "category": "Road maintenance",
+      "urgency": "high",
+      "missingDocuments": [],
+      "structuredIntake": {
+        "channel": "web",
+        "hazardType": "pothole",
+        "peakTraffic": "school drop-off"
+      }
+    },
+    "latestInternalNote": "New submission awaiting assignment.",
+    "updatedBy": "citizen-farid-hassan"
+  },
+  {
+    "id": "case-business-license-renewal",
+    "reference": "MYGOV-2026-4093",
+    "title": "Business licence renewal reminder and document verification",
+    "type": "reminder_renewal",
+    "status": "routed",
+    "location": "George Town, Pulau Pinang",
+    "createdAt": "2026-04-10T07:30:00.000Z",
+    "updatedAt": "2026-04-18T06:25:00.000Z",
+    "summary": "Renewal packet has been routed with licence copy, tax receipt, and a pending verification of the latest SSM extract.",
+    "citizenId": "citizen-siti-zulaikha",
+    "citizenName": "Siti Zulaikha Mohd Noor",
+    "assignedUnit": "Penang Licensing Review Unit",
+    "progress": 67,
+    "intake": {
+      "citizenSummary": "I am renewing my small business licence and want to confirm which documents are still missing before the deadline.",
+      "adminSummary": "Renewal case already has most mandatory records. Routing completed, with one corporate verification item still marked as pending.",
+      "category": "Licence renewal",
+      "urgency": "medium",
+      "missingDocuments": ["Latest SSM company extract"],
+      "structuredIntake": {
+        "channel": "web",
+        "renewalDeadline": "2026-04-30",
+        "businessType": "food kiosk"
+      }
+    },
+    "latestInternalNote": "Queued for licensing officer final verification.",
+    "updatedBy": "admin-amir"
+  },
+  {
+    "id": "case-ic-verification",
+    "reference": "MYGOV-2026-4077",
+    "title": "Identity document verification for aid enrolment",
+    "type": "flood_relief",
+    "status": "in_progress",
+    "location": "Pasir Gudang, Johor",
+    "createdAt": "2026-04-08T03:50:00.000Z",
+    "updatedAt": "2026-04-19T04:35:00.000Z",
+    "summary": "Identity verification is in progress with the operations team after the citizen supplied replacement scans.",
+    "citizenId": "citizen-farid-hassan",
+    "citizenName": "Farid Hassan",
+    "assignedUnit": "National Verification Operations",
+    "progress": 81,
+    "intake": {
+      "citizenSummary": "I need to verify my identity documents so my household assistance registration can move forward.",
+      "adminSummary": "Verification packet now includes replacement IC scan and address proof. Internal review is underway.",
+      "category": "Document verification",
+      "urgency": "medium",
+      "missingDocuments": [],
+      "structuredIntake": {
+        "channel": "assisted",
+        "documentType": "National ID and address proof"
+      }
+    },
+    "latestInternalNote": "Replacement scans look acceptable. Awaiting final officer sign-off.",
+    "updatedBy": "admin-amir"
+  },
+  {
+    "id": "case-drainage-complaint",
+    "reference": "MYGOV-2026-4058",
+    "title": "Blocked drainage causing repeated roadside flooding",
+    "type": "public_complaint",
+    "status": "resolved",
+    "location": "Bayan Lepas, Pulau Pinang",
+    "createdAt": "2026-04-05T08:15:00.000Z",
+    "updatedAt": "2026-04-20T01:05:00.000Z",
+    "summary": "Drainage maintenance issue has been resolved after field cleaning and citizen confirmation.",
+    "citizenId": "citizen-siti-zulaikha",
+    "citizenName": "Siti Zulaikha Mohd Noor",
+    "assignedUnit": "Penang Drainage Field Ops",
+    "progress": 100,
+    "intake": {
+      "citizenSummary": "The roadside drain overflows whenever it rains and water collects in front of our apartment entrance.",
+      "adminSummary": "Complaint verified and assigned to field team. Resolution confirmed after maintenance visit and photo update.",
+      "category": "Drainage maintenance",
+      "urgency": "medium",
+      "missingDocuments": [],
+      "structuredIntake": {
+        "channel": "mobile",
+        "recurrence": "Every heavy rain",
+        "nearbyLandmark": "Apartment entrance"
+      }
+    },
+    "latestInternalNote": "Resolved and acknowledged by citizen.",
+    "updatedBy": "admin-amir"
+  },
+  {
+    "id": "case-renewal-rejected",
+    "reference": "MYGOV-2026-4012",
+    "title": "Renewal support request with expired supporting certificate",
+    "type": "reminder_renewal",
+    "status": "rejected",
+    "location": "Cyberjaya, Selangor",
+    "createdAt": "2026-04-01T06:10:00.000Z",
+    "updatedAt": "2026-04-12T09:20:00.000Z",
+    "summary": "Renewal packet was rejected because the mandatory certification uploaded was already expired.",
+    "citizenId": "citizen-nur-aisyah",
+    "citizenName": "Nur Aisyah Rahman",
+    "assignedUnit": "Renewal Compliance Desk",
+    "progress": 100,
+    "intake": {
+      "citizenSummary": "I tried to renew my permit but I may have submitted the wrong supporting certificate.",
+      "adminSummary": "Supporting certificate expired before submission date. Request closed with instructions to reapply using current documentation.",
+      "category": "Permit renewal",
+      "urgency": "low",
+      "missingDocuments": ["Current certification document"],
+      "structuredIntake": {
+        "channel": "web",
+        "reason": "expired supporting document"
+      }
+    },
+    "latestInternalNote": "Closed with reapplication instructions.",
+    "updatedBy": "admin-amir"
+  }
+]

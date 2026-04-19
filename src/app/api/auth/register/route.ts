@@ -1,13 +1,44 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { createPrototypeSessionToken } from "@/lib/auth/prototype-session";
+import { isPrototypeMode } from "@/lib/config/app-mode";
 import { sessionCookieName } from "@/lib/constants";
 import { getAdminAuth } from "@/lib/firebase/admin";
-import { upsertUserProfile } from "@/lib/repositories/users";
-import { registerProfileSchema } from "@/lib/validation/auth";
+import { createPrototypeUser, upsertUserProfile } from "@/lib/repositories/users";
+import { registerProfileSchema, registerSchema } from "@/lib/validation/auth";
 
 export async function POST(request: Request) {
   try {
+    if (isPrototypeMode()) {
+      const body = registerSchema.parse(await request.json());
+      const user = await createPrototypeUser({
+        fullName: body.fullName,
+        email: body.email,
+        password: body.password,
+      });
+      const sessionToken = await createPrototypeSessionToken({
+        uid: user.uid,
+        email: user.email,
+        name: user.fullName,
+        role: user.role,
+      });
+      const response = NextResponse.json({
+        ok: true,
+        role: user.role,
+        profileCreated: true,
+        warning: null,
+      });
+      response.cookies.set(sessionCookieName, sessionToken, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 5,
+      });
+      return response;
+    }
+
     const body = registerProfileSchema.parse(await request.json());
     const adminAuth = getAdminAuth();
 

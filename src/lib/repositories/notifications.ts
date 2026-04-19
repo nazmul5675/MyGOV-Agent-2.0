@@ -1,43 +1,33 @@
 import type { NotificationItem } from "@/lib/types";
-import { requireDb } from "@/lib/repositories/firestore-helpers";
+import { getPrototypeStore } from "@/lib/prototype/store";
 
 export async function createNotificationForUser(
   userId: string,
   notification: Omit<NotificationItem, "id">
 ) {
-  const db = requireDb();
-
-  await db
-    .collection("users")
-    .doc(userId)
-    .collection("notifications")
-    .add(notification);
+  const store = getPrototypeStore();
+  store.notifications.unshift({
+    id: `notif-${Math.random().toString(36).slice(2, 10)}`,
+    userId,
+    ...notification,
+  });
 }
 
 export async function listNotificationsForUser(
   userId: string
 ): Promise<NotificationItem[]> {
-  const db = requireDb();
+  const store = getPrototypeStore();
 
-  const snapshot = await db
-    .collection("users")
-    .doc(userId)
-    .collection("notifications")
-    .orderBy("createdAt", "desc")
-    .limit(24)
-    .get();
-
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      title: String(data.title || "Notification"),
-      body: String(data.body || ""),
-      createdAt: String(data.createdAt || ""),
-      read: Boolean(data.read),
-      tone:
-        data.tone === "warning" || data.tone === "success" ? data.tone : "info",
-      actionHref: data.actionHref ? String(data.actionHref) : undefined,
-    } satisfies NotificationItem;
-  });
+  return store.notifications
+    .filter((item) => item.userId === userId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      body: item.body,
+      createdAt: item.createdAt,
+      read: item.read,
+      tone: item.tone,
+      actionHref: item.actionHref,
+    }));
 }

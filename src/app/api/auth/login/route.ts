@@ -1,10 +1,47 @@
 import { NextResponse } from "next/server";
 
+import { createPrototypeSessionToken } from "@/lib/auth/prototype-session";
+import { isPrototypeMode } from "@/lib/config/app-mode";
 import { getAdminAuth, getUserRole, getUserRoleFromAuth } from "@/lib/firebase/admin";
+import { getUserByEmail } from "@/lib/repositories/users";
 import { sessionCookieName } from "@/lib/constants";
-import { sessionExchangeSchema } from "@/lib/validation/auth";
+import { loginSchema, sessionExchangeSchema } from "@/lib/validation/auth";
 
 export async function POST(request: Request) {
+  if (isPrototypeMode()) {
+    const body = loginSchema.parse(await request.json());
+    const user = await getUserByEmail(body.email);
+
+    if (!user || user.password !== body.password) {
+      return NextResponse.json(
+        { error: "Incorrect email or password for the prototype account." },
+        { status: 401 }
+      );
+    }
+
+    const sessionToken = await createPrototypeSessionToken({
+      uid: user.uid,
+      email: user.email,
+      name: user.fullName,
+      role: user.role,
+    });
+
+    const response = NextResponse.json({
+      ok: true,
+      role: user.role,
+      redirectTo: user.role === "admin" ? "/admin" : "/dashboard",
+    });
+    response.cookies.set(sessionCookieName, sessionToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 5,
+    });
+
+    return response;
+  }
+
   const body = sessionExchangeSchema.parse(await request.json());
   const adminAuth = getAdminAuth();
 

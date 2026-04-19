@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { isPrototypeMode } from "@/lib/config/app-mode";
 import { sessionCookieName } from "@/lib/constants";
+import { verifyPrototypeSessionToken } from "@/lib/auth/prototype-session";
 import {
   getAdminAuth,
   getAuthUserRecord,
@@ -13,14 +15,23 @@ import type { AppSession, UserRole } from "@/lib/types";
 
 export async function readSession() {
   const cookieStore = await cookies();
-  const firebaseToken = cookieStore.get(sessionCookieName)?.value;
+  const sessionToken = cookieStore.get(sessionCookieName)?.value;
 
-  if (!firebaseToken) return null;
+  if (!sessionToken) return null;
+
+  if (isPrototypeMode()) {
+    try {
+      return await verifyPrototypeSessionToken(sessionToken);
+    } catch {
+      return null;
+    }
+  }
+
   const adminAuth = getAdminAuth();
   if (!adminAuth) return null;
 
   try {
-    const decoded = await adminAuth.verifySessionCookie(firebaseToken, true);
+    const decoded = await adminAuth.verifySessionCookie(sessionToken, true);
     const roleFromClaims =
       typeof decoded.role === "string" ? (decoded.role as UserRole) : null;
     const authUser = await getAuthUserRecord(decoded.uid).catch(() => null);
