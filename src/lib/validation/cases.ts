@@ -18,7 +18,7 @@ export const fileReviewStatusSchema = z.enum([
 export const createCaseSchema = z.object({
   title: z.string().min(8, "Add a clear case title."),
   caseType: caseTypeSchema,
-  location: z.string().min(6, "Add a location."),
+  location: z.string().min(3, "Add a location name."),
   description: z.string().min(24, "Add a fuller description for faster routing."),
   formattedAddress: z.string().trim().optional(),
   placeId: z.string().trim().optional(),

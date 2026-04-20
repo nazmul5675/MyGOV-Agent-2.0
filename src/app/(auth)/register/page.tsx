@@ -12,16 +12,16 @@ export default function RegisterPage() {
     <AuthShell
       badge="Citizen onboarding"
       title="Create your secure citizen account."
-      description="Start with the essentials, then complete profile details after sign-up so the onboarding flow feels light, trustworthy, and fast."
+      description="Start with the essentials, then complete profile details after sign-up so the onboarding flow feels light, trustworthy, and fast. Public registration is for citizens only."
       sideContent={
         <>
           <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70">
-            Why this stays lightweight
+            Access rules
           </p>
           <ul className="mt-4 space-y-3 text-sm leading-7 text-primary-foreground/80">
-            <li>Full name is collected at sign-up for real account identity</li>
-            <li>Date of birth and contact details can be completed later on profile</li>
-            <li>Admin access is managed separately and cannot be self-selected</li>
+            <li>Public registration creates citizen accounts only</li>
+            <li>Admin access is assigned separately and cannot be self-registered</li>
+            <li>Admins must sign in through the shared login page with issued credentials</li>
           </ul>
         </>
       }

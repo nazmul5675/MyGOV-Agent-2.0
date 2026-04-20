@@ -19,8 +19,8 @@ service firebase.storage {
     }
 
     match /cases/{userId}/{allPaths=**} {
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-      allow write: if (isAdmin() || isOwner(userId)) && isAllowedCaseUpload();
+      allow read: if true;
+      allow write: if isAllowedCaseUpload();
     }
   }
 }

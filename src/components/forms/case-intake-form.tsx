@@ -137,9 +137,12 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             <div className="grid gap-2">
               <Label>Case type</Label>
               <Select
-                defaultValue={form.getValues("caseType")}
+                value={form.watch("caseType")}
                 onValueChange={(value) =>
-                  form.setValue("caseType", value as FormValues["caseType"])
+                  form.setValue("caseType", value as FormValues["caseType"], {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
                 }
               >
                 <SelectTrigger className="h-12 rounded-2xl bg-white/70">

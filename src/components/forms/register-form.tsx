@@ -142,6 +142,9 @@ export function RegisterForm() {
           Start with the essentials. We collect your full name now, then let you
           complete profile details next so sign-up stays friendly and fast.
         </p>
+        <p className="text-sm leading-6 text-muted-foreground">
+          This sign-up is for citizen access. Admin access is managed separately.
+        </p>
       </CardHeader>
       <CardContent className="space-y-6">
         <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>

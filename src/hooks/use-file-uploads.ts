@@ -140,56 +140,42 @@ export function useFileUploads() {
       return results;
     }
 
-    if (!storage) {
-      const missingVars = getMissingFirebaseClientVars();
-
-      setUploads((current) =>
-        current.map((item) => ({
-          ...item,
-          status: "error",
-        }))
-      );
-
-      throw new Error(
-        `Firebase Storage is not configured for live uploads. Missing client env vars: ${missingVars.join(", ")}`
-      );
-    }
+    const imgbbKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
 
     for (const entry of queued) {
-      const file =
-        "file" in entry && entry.file instanceof File ? entry.file : null;
-      const storagePath = `cases/${userId}/${caseId}/${entry.id}-${entry.name}`;
-      const storageRef = ref(storage, storagePath);
+      const file = "file" in entry && entry.file instanceof File ? entry.file : null;
       if (!file) continue;
-      const task = uploadBytesResumable(storageRef, file, {
-        contentType: entry.contentType,
-      });
 
-      const result = await new Promise<EvidenceFile>((resolve, reject) => {
-        task.on(
-          "state_changed",
-          (snapshot) => {
-            const progress = Math.round(
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-            );
+      const isImage = entry.kind === "photo" || entry.contentType?.startsWith("image/");
+
+      if (isImage) {
+        const result = await new Promise<EvidenceFile>(async (resolve, reject) => {
+          setUploads((current) =>
+            current.map((item) =>
+              item.id === entry.id ? { ...item, progress: 25, status: "uploading" } : item
+            )
+          );
+
+          try {
+            const formData = new FormData();
+            formData.append("image", file);
+            
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+              method: "POST",
+              body: formData,
+            });
+
+            if (!res.ok) throw new Error(`ImgBB error: ${res.statusText}`);
+
             setUploads((current) =>
               current.map((item) =>
-                item.id === entry.id
-                  ? { ...item, progress, status: "uploading", storagePath }
-                  : item
+                item.id === entry.id ? { ...item, progress: 75 } : item
               )
             );
-          },
-          () => {
-            setUploads((current) =>
-              current.map((item) =>
-                item.id === entry.id ? { ...item, status: "error" } : item
-              )
-            );
-            reject(new Error(`Upload failed for ${entry.name}`));
-          },
-          async () => {
-            const downloadUrl = await getDownloadURL(task.snapshot.ref);
+
+            const data = await res.json();
+            const downloadUrl = data.data.url;
+
             setUploads((current) =>
               current.map((item) =>
                 item.id === entry.id
@@ -198,11 +184,12 @@ export function useFileUploads() {
                       progress: 100,
                       status: "uploaded",
                       downloadUrl,
-                      storagePath,
+                      storagePath: `imgbb-${data.data.id}`,
                     }
                   : item
               )
             );
+
             resolve({
               id: entry.id,
               name: entry.name,
@@ -212,14 +199,90 @@ export function useFileUploads() {
               uploadedAt: new Date().toISOString(),
               status: "uploaded",
               downloadUrl,
-              storagePath,
+              storagePath: `imgbb-${data.data.id}`,
               contentType: entry.contentType,
             });
+          } catch (error) {
+            setUploads((current) =>
+              current.map((item) =>
+                item.id === entry.id ? { ...item, status: "error" } : item
+              )
+            );
+            reject(error);
           }
-        );
-      });
+        });
+        results.push(result);
+      } else {
+        if (!storage) {
+          const missingVars = getMissingFirebaseClientVars();
+          setUploads((current) => current.map((item) => ({ ...item, status: "error" })));
+          throw new Error(
+            `Firebase Storage is not configured for non-image uploads. Missing: ${missingVars.join(", ")}`
+          );
+        }
 
-      results.push(result);
+        const storagePath = `cases/${userId}/${caseId}/${entry.id}-${entry.name}`;
+        const storageRef = ref(storage, storagePath);
+        const task = uploadBytesResumable(storageRef, file, {
+          contentType: entry.contentType,
+        });
+
+        const result = await new Promise<EvidenceFile>((resolve, reject) => {
+          task.on(
+            "state_changed",
+            (snapshot) => {
+              const progress = Math.round(
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+              );
+              setUploads((current) =>
+                current.map((item) =>
+                  item.id === entry.id
+                    ? { ...item, progress, status: "uploading", storagePath }
+                    : item
+                )
+              );
+            },
+            () => {
+              setUploads((current) =>
+                current.map((item) =>
+                  item.id === entry.id ? { ...item, status: "error" } : item
+                )
+              );
+              reject(new Error(`Upload failed for ${entry.name}`));
+            },
+            async () => {
+              const downloadUrl = await getDownloadURL(task.snapshot.ref);
+              setUploads((current) =>
+                current.map((item) =>
+                  item.id === entry.id
+                    ? {
+                        ...item,
+                        progress: 100,
+                        status: "uploaded",
+                        downloadUrl,
+                        storagePath,
+                      }
+                    : item
+                )
+              );
+              resolve({
+                id: entry.id,
+                name: entry.name,
+                kind: entry.kind,
+                sizeLabel: formatFileSize(entry.size),
+                sizeBytes: entry.size,
+                uploadedAt: new Date().toISOString(),
+                status: "uploaded",
+                downloadUrl,
+                storagePath,
+                contentType: entry.contentType,
+              });
+            }
+          );
+        });
+
+        results.push(result);
+      }
     }
 
     return results;
