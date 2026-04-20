@@ -105,18 +105,20 @@ export default async function DashboardPage() {
 
       <Reveal>
         <section className="grid items-stretch gap-5 xl:grid-cols-12">
-          <div className="hero-gradient flex h-full flex-col rounded-[32px] p-6 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)] sm:p-8 xl:col-span-8">
+          <div className="hero-gradient flex h-full flex-col justify-between rounded-[32px] p-6 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)] sm:p-8 xl:col-span-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">
               Citizen command center
             </p>
-            <h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
-              One live place for cases, files, and guided next steps.
-            </h2>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-primary-foreground/80">
-              This command center keeps your active case, document trail, assistant guidance, and reminders aligned so you always know what to do next.
-            </p>
+            <div className="mt-4 space-y-4">
+              <h2 className="max-w-3xl text-3xl font-black tracking-tight sm:text-4xl">
+                One live place for cases, files, and guided next steps.
+              </h2>
+              <p className="max-w-2xl text-sm leading-7 text-primary-foreground/80">
+                This command center keeps your active case, document trail, assistant guidance, and reminders aligned so you always know what to do next.
+              </p>
+            </div>
             {activeCase ? (
-              <div className="mt-6 grid gap-4 rounded-[24px] bg-white/10 p-5 lg:grid-cols-3">
+              <div className="mt-8 grid gap-4 rounded-[24px] bg-white/10 p-5 lg:grid-cols-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
                     Active case
@@ -138,7 +140,7 @@ export default async function DashboardPage() {
               </div>
             ) : null}
           </div>
-          <div className="grid auto-rows-fr gap-5 sm:grid-cols-2 xl:col-span-4">
+          <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 xl:col-span-4">
             <StatCard {...stats[0]} icon={<Files className="size-5" />} />
             <StatCard {...stats[1]} icon={<BellRing className="size-5" />} />
             <StatCard {...stats[2]} icon={<ShieldEllipsis className="size-5" />} />
@@ -176,22 +178,22 @@ export default async function DashboardPage() {
               />
             )}
           </div>
-          <div className="space-y-6 xl:col-span-5 2xl:col-span-4">
-            <div className="surface-panel p-6">
+          <div className="space-y-5 xl:col-span-5 2xl:col-span-4">
+            <div className="surface-panel p-5 sm:p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
                 Reminders and notifications
               </p>
-              <div className="mt-5 space-y-4">
+              <div className="mt-4 space-y-3">
                 {reminders.length ? (
                   reminders.map((item) => (
-                    <div key={item.id} className="rounded-[24px] bg-muted/80 p-5">
+                    <div key={item.id} className="rounded-[22px] bg-muted/80 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <p className="min-w-0 font-semibold text-foreground">{item.title}</p>
                         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                           {item.read ? "Viewed" : "Action"}
                         </span>
                       </div>
-                      <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
                         {item.body}
                       </p>
                     </div>
@@ -206,7 +208,7 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            <div className="surface-panel p-6">
+            <div className="surface-panel p-5 sm:p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
                 Next best actions
               </p>
@@ -217,7 +219,7 @@ export default async function DashboardPage() {
                     className="flex items-start gap-3 rounded-[22px] bg-muted/80 p-4"
                   >
                     <Sparkles className="mt-0.5 size-4 text-primary" />
-                    <p className="text-sm leading-7 text-muted-foreground">{action}</p>
+                    <p className="text-sm leading-6 text-muted-foreground">{action}</p>
                   </div>
                 ))}
               </div>
@@ -229,7 +231,7 @@ export default async function DashboardPage() {
       {activeCase ? (
         <Reveal delay={0.08}>
           <section className="grid gap-5 xl:grid-cols-12">
-            <div className="surface-panel p-6 xl:col-span-4 2xl:col-span-3">
+            <div className="surface-panel p-6 xl:col-span-4">
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
@@ -281,36 +283,39 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            <div className="xl:col-span-5 2xl:col-span-6">
+            <div className="xl:col-span-8">
               <LocationPreviewCard
                 title="Case location context"
                 description="Ground the active case with its mapped service location and resolved address."
                 location={activeCase.locationMeta}
-                compact
               />
             </div>
+          </section>
+        </Reveal>
+      ) : null}
 
-            <div className="surface-panel p-6 xl:col-span-3 2xl:col-span-3">
-              <div className="flex items-center gap-3">
-                <MapPinned className="size-5 text-primary" />
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
-                  Case status blocks
-                </p>
-              </div>
-              <div className="mt-4 grid gap-3">
-                {[
-                  `Current stage: ${activeCase.status.replaceAll("_", " ")}`,
-                  `Assigned desk: ${activeCase.assignedUnit}`,
-                  `Progress marker: ${activeCase.progress}% complete`,
-                ].map((entry) => (
-                  <div
-                    key={entry}
-                    className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground"
-                  >
-                    {entry}
-                  </div>
-                ))}
-              </div>
+      {activeCase ? (
+        <Reveal delay={0.09}>
+          <section className="surface-panel p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <MapPinned className="size-5 text-primary" />
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+                Case status blocks
+              </p>
+            </div>
+            <div className="mt-4 grid gap-3 xl:grid-cols-3">
+              {[
+                `Current stage: ${activeCase.status.replaceAll("_", " ")}`,
+                `Assigned desk: ${activeCase.assignedUnit}`,
+                `Progress marker: ${activeCase.progress}% complete`,
+              ].map((entry) => (
+                <div
+                  key={entry}
+                  className="rounded-[22px] bg-muted/80 p-4 text-sm leading-6 text-muted-foreground"
+                >
+                  {entry}
+                </div>
+              ))}
             </div>
           </section>
         </Reveal>
@@ -318,7 +323,7 @@ export default async function DashboardPage() {
 
       <Reveal delay={0.1}>
         <section className="grid gap-6 xl:grid-cols-12">
-          <div className="xl:col-span-7 2xl:col-span-8">
+          <div className="xl:col-span-7">
             <AssistantPanel
               initialMessages={messages || []}
               title="AI helping chat box"
@@ -331,7 +336,7 @@ export default async function DashboardPage() {
               ]}
             />
           </div>
-          <div className="space-y-6 xl:col-span-5 2xl:col-span-4">
+          <div className="space-y-6 xl:col-span-5">
             <EvidenceManager
               files={recentFiles}
               title="Uploaded files overview"
