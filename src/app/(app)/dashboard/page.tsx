@@ -150,18 +150,47 @@ export default async function DashboardPage() {
       </Reveal>
 
       <Reveal delay={0.06}>
-        <section className="grid gap-6 xl:grid-cols-12">
-          <div className="space-y-5 xl:col-span-7 2xl:col-span-8">
-            <PageHeader
-              title="Case command center"
-              description="Recent cases stay actionable here, with the latest status, timeline signals, and evidence context."
-            />
+        <div className="space-y-6">
+          <PageHeader
+            title="Case command center"
+            description="Recent cases stay actionable here, with the latest status, timeline signals, and evidence context."
+          />
+
+          <section className="grid gap-5 xl:grid-cols-3">
             {cases.length ? (
-              <div className="grid gap-5 2xl:grid-cols-2">
+              <>
                 {cases.slice(0, 2).map((item) => (
                   <CaseCard key={item.id} item={item} href={`/cases/${item.id}`} />
                 ))}
-              </div>
+                <div className="surface-panel p-5 sm:p-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                    Reminders and notifications
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {reminders.length ? (
+                      reminders.map((item) => (
+                        <div key={item.id} className="rounded-[22px] bg-muted/80 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-4">
+                            <p className="min-w-0 font-semibold text-foreground">{item.title}</p>
+                            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                              {item.read ? "Viewed" : "Action"}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                            {item.body}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <EmptyState
+                        icon={<BellRing className="size-5" />}
+                        title="No live reminders right now"
+                        description="Notifications and status follow-ups will appear here as real Firestore updates are written for this account."
+                      />
+                    )}
+                  </div>
+                </div>
+              </>
             ) : (
               <EmptyState
                 icon={<Files className="size-5" />}
@@ -177,55 +206,28 @@ export default async function DashboardPage() {
                 }
               />
             )}
-          </div>
-          <div className="space-y-5 xl:col-span-5 2xl:col-span-4">
-            <div className="surface-panel p-5 sm:p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                Reminders and notifications
-              </p>
-              <div className="mt-4 space-y-3">
-                {reminders.length ? (
-                  reminders.map((item) => (
-                    <div key={item.id} className="rounded-[22px] bg-muted/80 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <p className="min-w-0 font-semibold text-foreground">{item.title}</p>
-                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                          {item.read ? "Viewed" : "Action"}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        {item.body}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <EmptyState
-                    icon={<BellRing className="size-5" />}
-                    title="No live reminders right now"
-                    description="Notifications and status follow-ups will appear here as real Firestore updates are written for this account."
-                  />
-                )}
-              </div>
-            </div>
+          </section>
 
-            <div className="surface-panel p-5 sm:p-6">
+          <section className="surface-panel p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <Sparkles className="size-5 text-primary" />
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
                 Next best actions
               </p>
-              <div className="mt-4 space-y-3">
-                {recommendedActions.map((action) => (
-                  <div
-                    key={action}
-                    className="flex items-start gap-3 rounded-[22px] bg-muted/80 p-4"
-                  >
-                    <Sparkles className="mt-0.5 size-4 text-primary" />
-                    <p className="text-sm leading-6 text-muted-foreground">{action}</p>
-                  </div>
-                ))}
-              </div>
             </div>
-          </div>
-        </section>
+            <div className="mt-4 grid gap-3 xl:grid-cols-3">
+              {recommendedActions.map((action) => (
+                <div
+                  key={action}
+                  className="flex items-start gap-3 rounded-[22px] bg-muted/80 p-4"
+                >
+                  <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <p className="text-sm leading-6 text-muted-foreground">{action}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </Reveal>
 
       {activeCase ? (
