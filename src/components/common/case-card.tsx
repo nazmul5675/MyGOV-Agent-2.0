@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, FileStack, MapPin } from "lucide-react";
+import { ArrowUpRight, Clock3, FileStack, MapPin, Sparkles } from "lucide-react";
 
 import { caseTypeLabelMap } from "@/lib/constants";
 import type { CaseItem } from "@/lib/types";
@@ -14,6 +14,8 @@ export function CaseCard({
   item: CaseItem;
   href: string;
 }) {
+  const missingDocs = item.intake.missingDocuments.length;
+
   return (
     <article className="surface-panel interactive-lift flex h-full flex-col gap-5 p-6">
       <div className="flex items-start justify-between gap-4">
@@ -29,6 +31,21 @@ export function CaseCard({
         <StatusBadge status={item.status} />
       </div>
       <p className="text-sm leading-7 text-muted-foreground">{item.summary}</p>
+      <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em]">
+        <span className="rounded-full bg-accent px-3 py-1 text-accent-foreground">
+          {item.evidence.length} file{item.evidence.length === 1 ? "" : "s"}
+        </span>
+        <span
+          className={cn(
+            "rounded-full px-3 py-1",
+            missingDocs
+              ? "bg-amber-100 text-amber-900"
+              : "bg-emerald-100 text-emerald-900"
+          )}
+        >
+          {missingDocs ? `${missingDocs} missing doc${missingDocs === 1 ? "" : "s"}` : "packet ready"}
+        </span>
+      </div>
       <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
         <div className="flex items-center gap-2">
           <MapPin className="size-4" />
@@ -37,6 +54,14 @@ export function CaseCard({
         <div className="flex items-center gap-2">
           <FileStack className="size-4" />
           <span>{item.evidence.length} evidence items</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Clock3 className="size-4" />
+          <span>Updated {new Date(item.updatedAt).toLocaleDateString("en-MY")}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-4" />
+          <span>{item.intake.category}</span>
         </div>
       </div>
       <div className="space-y-2">

@@ -24,6 +24,9 @@ export function EvidenceManager({
   dense?: boolean;
 }) {
   const accepted = files.filter((file) => file.status === "accepted").length;
+  const pendingReview = files.filter((file) =>
+    ["uploaded", "under_review"].includes(file.status)
+  ).length;
   const needsAttention = files.filter((file) =>
     ["needs_replacement", "rejected"].includes(file.status)
   ).length;
@@ -47,6 +50,9 @@ export function EvidenceManager({
           </span>
           <span className="rounded-full bg-emerald-100 px-3 py-2 text-emerald-800">
             {accepted} accepted
+          </span>
+          <span className="rounded-full bg-sky-100 px-3 py-2 text-sky-800">
+            {pendingReview} pending review
           </span>
           <span className="rounded-full bg-orange-100 px-3 py-2 text-orange-800">
             {needsAttention} need action
@@ -102,6 +108,16 @@ export function EvidenceManager({
                   </p>
                 </div>
               </div>
+              {file.downloadUrl ? (
+                <a
+                  href={file.downloadUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                >
+                  Open file preview
+                </a>
+              ) : null}
             </article>
           ))}
         </div>

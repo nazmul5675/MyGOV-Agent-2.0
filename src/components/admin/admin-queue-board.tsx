@@ -1,14 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
-import { Search, ShieldAlert } from "lucide-react";
+import { ArrowRight, Search, ShieldAlert, Sparkles } from "lucide-react";
 
-import type { CaseItem } from "@/lib/types";
 import { EmptyState } from "@/components/common/empty-state";
 import { StatusBadge } from "@/components/common/status-badge";
-import { Input } from "@/components/ui/input";
-import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { CaseItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type AdminQueueFilter = "all" | "needs_review" | "need_more_docs" | "in_progress" | "resolved";
@@ -33,6 +33,7 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<AdminQueueFilter>("all");
   const deferredQuery = useDeferredValue(query);
+
   const filterCounts = useMemo(() => {
     return {
       ...filterCountsConfig,
@@ -102,7 +103,10 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
       {filteredCases.length ? (
         <div className="grid gap-5 xl:grid-cols-2">
           {filteredCases.map((item) => (
-            <article key={item.id} className="surface-panel interactive-lift flex h-full flex-col gap-5 p-6">
+            <article
+              key={item.id}
+              className="surface-panel interactive-lift flex h-full flex-col gap-5 p-6"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
@@ -112,13 +116,25 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
                     {item.title}
                   </h3>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {item.citizenName} · {item.location}
+                    {item.citizenName} / {item.location}
                   </p>
                 </div>
                 <StatusBadge status={item.status} />
               </div>
 
               <p className="text-sm leading-7 text-muted-foreground">{item.intake.adminSummary}</p>
+
+              <div className="rounded-[20px] border border-primary/10 bg-primary/[0.04] p-4 text-sm leading-7 text-muted-foreground">
+                <div className="flex items-center gap-2 text-foreground">
+                  <Sparkles className="size-4 text-primary" />
+                  <span className="font-semibold">AI summary focus</span>
+                </div>
+                <p className="mt-2">
+                  {item.intake.missingDocuments.length
+                    ? `Prioritize ${item.intake.missingDocuments[0]} and check whether the current file packet already supports a citizen-facing follow-up.`
+                    : "This packet looks structurally complete. Use the AI helper to draft an officer summary and route note before moving it forward."}
+                </p>
+              </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-[20px] bg-muted/80 p-4">
@@ -161,10 +177,13 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
 
               <Link
                 href={`/admin/cases/${item.id}`}
-                className={cn(buttonVariants({ variant: "outline" }), "mt-auto justify-between px-4")}
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "mt-auto justify-between px-4"
+                )}
               >
                 Open review workspace
-                <ShieldAlert className="size-4" />
+                <ArrowRight className="size-4" />
               </Link>
             </article>
           ))}

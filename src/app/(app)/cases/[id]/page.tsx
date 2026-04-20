@@ -14,6 +14,7 @@ import { AssistantPanel } from "@/components/common/assistant-panel";
 import { EvidenceManager } from "@/components/common/evidence-manager";
 import { EmptyState } from "@/components/common/empty-state";
 import { LiveDataState } from "@/components/common/live-data-state";
+import { LocationPreviewCard } from "@/components/maps/location-preview-card";
 import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Timeline } from "@/components/common/timeline";
@@ -85,6 +86,11 @@ export default async function CitizenCaseDetailPage({
 
   if (!item) notFound();
 
+  const acceptedFiles = item.evidence.filter((file) => file.status === "accepted").length;
+  const pendingFiles = item.evidence.filter((file) =>
+    ["uploaded", "under_review", "needs_replacement"].includes(file.status)
+  ).length;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -151,6 +157,27 @@ export default async function CitizenCaseDetailPage({
             title="Uploaded files"
             description="Every file linked to this case stays visible here with a live review state, so document handling feels like a real workflow instead of hidden attachments."
           />
+
+          <section className="grid gap-4 md:grid-cols-3">
+            <div className="surface-panel p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Accepted files
+              </p>
+              <p className="mt-2 text-3xl font-bold text-foreground">{acceptedFiles}</p>
+            </div>
+            <div className="surface-panel p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Pending review
+              </p>
+              <p className="mt-2 text-3xl font-bold text-foreground">{pendingFiles}</p>
+            </div>
+            <div className="surface-panel p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Timeline events
+              </p>
+              <p className="mt-2 text-3xl font-bold text-foreground">{item.timeline.length}</p>
+            </div>
+          </section>
         </div>
 
         <div className="space-y-6">
@@ -218,6 +245,12 @@ export default async function CitizenCaseDetailPage({
               )}
             </div>
           </div>
+
+          <LocationPreviewCard
+            title="Location and service area"
+            description="Use this map context to confirm the complaint or service location tied to this case."
+            location={item.locationMeta}
+          />
         </div>
       </section>
 

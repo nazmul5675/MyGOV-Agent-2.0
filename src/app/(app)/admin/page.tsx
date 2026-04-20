@@ -70,6 +70,7 @@ export default async function AdminDashboardPage() {
   }
 
   const { stats, queue, filesNeedingReview, recentActivity, suggestedActions } = data;
+  const aiFocusCases = queue.slice(0, 3);
   const statIcons = [
     <ClipboardCheck className="size-5" key="total" />,
     <ShieldCheck className="size-5" key="review" />,
@@ -123,6 +124,35 @@ export default async function AdminDashboardPage() {
                 {suggestedActions.map((action) => (
                   <div key={action} className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground">
                     {action}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="surface-panel p-6">
+              <div className="flex items-center gap-3">
+                <Sparkles className="size-5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                  AI summary cards
+                </p>
+              </div>
+              <div className="mt-4 space-y-3">
+                {aiFocusCases.map((item) => (
+                  <div key={item.id} className="rounded-[22px] bg-muted/80 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-foreground">{item.title}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.citizenName} / {item.assignedUnit}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+                        {item.intake.urgency}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                      {item.intake.adminSummary}
+                    </p>
                   </div>
                 ))}
               </div>

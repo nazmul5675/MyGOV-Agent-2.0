@@ -3,7 +3,9 @@ import Link from "next/link";
 import {
   AlertTriangle,
   BellRing,
+  CheckCircle2,
   Files,
+  MapPinned,
   ShieldEllipsis,
   Sparkles,
   Workflow,
@@ -14,6 +16,7 @@ import { CaseCard } from "@/components/common/case-card";
 import { EvidenceManager } from "@/components/common/evidence-manager";
 import { EmptyState } from "@/components/common/empty-state";
 import { LiveDataState } from "@/components/common/live-data-state";
+import { LocationPreviewCard } from "@/components/maps/location-preview-card";
 import { PageHeader } from "@/components/common/page-header";
 import { Reveal } from "@/components/common/reveal";
 import { StatCard } from "@/components/common/stat-card";
@@ -77,6 +80,12 @@ export default async function DashboardPage() {
   }
 
   const { stats, cases, reminders, activeCase, recentFiles, recentActivity, recommendedActions } = data;
+  const activeCaseAcceptedFiles =
+    activeCase?.evidence.filter((file) => file.status === "accepted").length || 0;
+  const activeCasePendingFiles =
+    activeCase?.evidence.filter((file) =>
+      ["uploaded", "under_review", "needs_replacement"].includes(file.status)
+    ).length || 0;
 
   return (
     <div className="space-y-6">
@@ -166,6 +175,69 @@ export default async function DashboardPage() {
                 }
               />
             )}
+
+            {activeCase ? (
+              <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+                <div className="surface-panel p-6">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="size-5 text-primary" />
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                      Active case readiness
+                    </p>
+                  </div>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-[22px] bg-muted/80 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        Accepted
+                      </p>
+                      <p className="mt-2 text-2xl font-bold text-foreground">
+                        {activeCaseAcceptedFiles}
+                      </p>
+                    </div>
+                    <div className="rounded-[22px] bg-muted/80 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        Pending review
+                      </p>
+                      <p className="mt-2 text-2xl font-bold text-foreground">
+                        {activeCasePendingFiles}
+                      </p>
+                    </div>
+                    <div className="rounded-[22px] bg-muted/80 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        Missing docs
+                      </p>
+                      <p className="mt-2 text-2xl font-bold text-foreground">
+                        {activeCase.intake.missingDocuments.length}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-5 space-y-3">
+                    {activeCase.intake.missingDocuments.length ? (
+                      activeCase.intake.missingDocuments.map((item) => (
+                        <div
+                          key={item}
+                          className="flex items-start gap-3 rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-950"
+                        >
+                          <Sparkles className="mt-0.5 size-4 shrink-0" />
+                          <p>{item}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-[20px] border border-emerald-200 bg-emerald-50 p-4 text-sm leading-7 text-emerald-900">
+                        This packet currently has no missing-document flags.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <LocationPreviewCard
+                  title="Case location context"
+                  description="Ground the active case with its mapped service location and resolved address."
+                  location={activeCase.locationMeta}
+                  compact
+                />
+              </section>
+            ) : null}
           </div>
           <div className="space-y-6">
             <div className="surface-panel p-6">
@@ -213,6 +285,31 @@ export default async function DashboardPage() {
                 ))}
               </div>
             </div>
+
+            {activeCase ? (
+              <div className="surface-panel p-6">
+                <div className="flex items-center gap-3">
+                  <MapPinned className="size-5 text-primary" />
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                    Case status blocks
+                  </p>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {[
+                    `Current stage: ${activeCase.status.replaceAll("_", " ")}`,
+                    `Assigned desk: ${activeCase.assignedUnit}`,
+                    `Progress marker: ${activeCase.progress}% complete`,
+                  ].map((entry) => (
+                    <div
+                      key={entry}
+                      className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground"
+                    >
+                      {entry}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </section>
       </Reveal>
