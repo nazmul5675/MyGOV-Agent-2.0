@@ -53,6 +53,7 @@ Citizens can create and track cases, upload evidence, view location context, ask
 - review workload and urgent items
 - file review surface
 - AI-ready operational summaries
+- user management and role control
 - recent activity
 - direct navigation into case review
 
@@ -65,6 +66,14 @@ Citizens can create and track cases, upload evidence, view location context, ask
 - status update actions
 - timeline and map context
 - AI review helper
+
+### Admin user management
+
+- protected `/admin/users` console
+- search and filter by role, status, and account identity
+- inspect profile completeness and related case counts
+- promote citizen to admin or demote admin to citizen with confirmation
+- audit role changes in admin activity history
 
 ## Architecture
 
@@ -129,6 +138,8 @@ The app supports two operating modes:
 - Firebase Auth handles login, register, and forgot-password
 - MongoDB stores user profile and application data
 - Firebase Storage handles real uploads
+- public registration always creates `citizen` accounts
+- admins sign in through the shared login with assigned credentials
 - citizen users land on `/dashboard`
 - admin users land on `/admin`
 
@@ -139,7 +150,7 @@ The app supports two operating modes:
 - MongoDB still stores the application data
 - uploads use the demo upload path for presentation stability
 
-Default env examples are set to `live`. Switch to `prototype` only when you want the judge-friendly seeded demo flow.
+Default env examples are set to `prototype` so the judge-friendly seeded demo flow works out of the box. Switch to `live` when you want Firebase-backed sign-in and uploads.
 
 ## Demo Credentials
 
@@ -208,6 +219,7 @@ Admin routes:
 
 - `/admin`
 - `/admin/cases/[id]`
+- `/admin/users`
 
 ## Judge Demo Flow
 
@@ -224,7 +236,8 @@ Recommended hero flow:
 9. Show queue visibility, file review workload, and AI summary cards.
 10. Open the same case in `/admin/cases/[id]`.
 11. Review evidence, add an internal note, request more documents or update status.
-12. Return to the citizen side and show that the workflow context is coherent.
+12. Open `/admin/users` and show safe role control and user oversight.
+13. Return to the citizen side and show that the workflow context is coherent.
 
 Secondary “No Wrong Door” proof:
 
@@ -265,7 +278,7 @@ Firebase admin variables for secure session exchange:
 
 ```env
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_APP_MODE=prototype
+NEXT_PUBLIC_APP_MODE=live
 APP_SESSION_SECRET=replace-with-a-long-random-string
 MONGODB_URI=replace-with-your-mongodb-uri
 MONGODB_DB_NAME=mygov_agent_2
