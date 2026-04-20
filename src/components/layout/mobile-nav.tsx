@@ -33,14 +33,14 @@ export function MobileNav({
               key={`${role}-${item.href}`}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-[20px] px-3 py-3 text-[11px] font-semibold transition-all duration-200",
+                "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[20px] px-2 py-3 text-center text-[11px] font-semibold leading-tight transition-all duration-200",
                 active
                   ? "bg-primary text-primary-foreground shadow-[0_14px_24px_rgba(0,30,64,0.18)]"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
             >
               <Icon className="size-4" />
-              {item.shortLabel || item.label}
+              <span className="min-w-0">{item.shortLabel || item.label}</span>
             </Link>
           );
         })}

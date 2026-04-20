@@ -65,11 +65,11 @@ export function EvidenceManager({
           {files.map((file) => (
             <article
               key={file.id}
-              className="group rounded-[24px] border border-border/60 bg-white/75 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
+              className="group min-w-0 rounded-[24px] border border-border/60 bg-white/75 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="space-y-2">
-                  <p className="font-semibold text-foreground">{file.name}</p>
+                <div className="min-w-0 space-y-2">
+                  <p className="break-all font-semibold text-foreground">{file.name}</p>
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                     <span>{file.kind.replace("_", " ")}</span>
                     <span>{file.sizeLabel}</span>

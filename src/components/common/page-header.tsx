@@ -12,8 +12,8 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-      <div className="space-y-3">
+    <div className="flex min-w-0 flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <div className="min-w-0 space-y-3">
         {eyebrow ? (
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">
             {eyebrow}
@@ -28,7 +28,7 @@ export function PageHeader({
           </p>
         </div>
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap items-center gap-3 lg:justify-end">{actions}</div> : null}
     </div>
   );
 }

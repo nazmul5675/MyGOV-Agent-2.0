@@ -5,7 +5,7 @@ import type { CaseStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const statusStyles = cva(
-  "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-[0.18em] uppercase transition-[transform,background-color,color,box-shadow] duration-300 motion-safe:hover:-translate-y-0.5",
+  "inline-flex max-w-full items-center justify-center rounded-full px-3 py-1 text-center text-xs font-semibold leading-5 tracking-[0.18em] uppercase transition-[transform,background-color,color,box-shadow] duration-300 motion-safe:hover:-translate-y-0.5",
   {
     variants: {
       status: {

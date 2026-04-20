@@ -23,15 +23,15 @@ export function AuthShell({
 }: AuthShellProps) {
   return (
     <div className="container-shell grid min-h-screen items-center gap-10 py-12 lg:grid-cols-[0.95fr_1.05fr]">
-      <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-4">
+      <div className="min-w-0 space-y-6 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-4">
         <div className="inline-flex rounded-full bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-accent-foreground">
           {badge}
         </div>
         <div className="space-y-4">
-          <h1 className="text-balance text-5xl font-black tracking-tight text-primary">
+          <h1 className="text-balance text-4xl font-black tracking-tight text-primary sm:text-5xl">
             {title}
           </h1>
-          <p className="max-w-xl text-lg leading-8 text-muted-foreground">
+          <p className="max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">
             {description}
           </p>
         </div>
@@ -59,7 +59,7 @@ export function AuthShell({
           {footerLink?.label || "Back to landing page"}
         </Link>
       </div>
-      <div className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-right-4">
+      <div className="min-w-0 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-right-4">
         {children}
       </div>
     </div>

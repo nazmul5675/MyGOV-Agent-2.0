@@ -83,7 +83,7 @@ export function ProfileBasicsForm({
   };
 
   return (
-    <Card className="surface-panel">
+    <Card className="surface-panel min-w-0">
       <CardHeader className="space-y-2">
         <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
           Profile basics

@@ -104,9 +104,9 @@ export function AssistantPanel({
   };
 
   return (
-    <section className="surface-panel flex min-h-[36rem] flex-col p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+    <section className="surface-panel flex min-h-[32rem] flex-col p-5 sm:min-h-[36rem] sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
             {title}
           </p>
@@ -115,7 +115,7 @@ export function AssistantPanel({
               "Ask for document guidance, upload checks, next steps, or a cleaner explanation before you submit or follow up."}
           </p>
         </div>
-        <div className="rounded-full bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent-foreground">
+        <div className="self-start rounded-full bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent-foreground">
           Case-aware assistant
         </div>
       </div>
@@ -150,13 +150,13 @@ export function AssistantPanel({
               ) : null}
               <div
                 className={cn(
-                  "max-w-[85%] rounded-[24px] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.08)]",
+                  "max-w-[90%] break-words rounded-[24px] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.08)] sm:max-w-[85%]",
                   message.role === "assistant"
                     ? "bg-white text-foreground"
                     : "bg-primary text-primary-foreground"
                 )}
               >
-                <p className="text-sm leading-7">{message.body}</p>
+                <p className="text-sm leading-7 whitespace-pre-wrap">{message.body}</p>
                 {message.attachments?.length ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {message.attachments.map((attachment) => (
@@ -240,15 +240,15 @@ export function AssistantPanel({
           placeholder="Ask what to upload, how to explain your issue, or what to do next."
           className="min-h-24 rounded-[22px] border-0 bg-transparent px-2 py-2 shadow-none focus-visible:ring-0"
         />
-        <div className="mt-3 flex items-center justify-between gap-4">
-          <p className="text-xs leading-6 text-muted-foreground">
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="min-w-0 text-xs leading-6 text-muted-foreground">
             {assistantMeta?.source === "gemini" && assistantMeta.model
               ? `Live Gemini is active with ${assistantMeta.model}.`
               : "The assistant uses case and file context from the prototype data layer and upgrades to live Gemini responses whenever the API key is configured."}
           </p>
           <Button
             type="button"
-            className="rounded-2xl px-5"
+            className="w-full rounded-2xl px-5 sm:w-auto"
             disabled={isPending || draft.trim().length < 4}
             onClick={() => handleSend(draft)}
           >

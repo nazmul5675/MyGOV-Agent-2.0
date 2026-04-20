@@ -11,10 +11,10 @@ export async function MarketingHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/40 bg-background/80 backdrop-blur-2xl">
-      <div className="container-shell flex h-20 items-center justify-between gap-6">
-        <Link href="/" className="flex items-center gap-3">
+      <div className="container-shell flex min-h-20 flex-wrap items-center justify-between gap-4 py-3">
+        <Link href="/" className="flex min-w-0 items-center gap-3">
           <LogoMark />
-          <div>
+          <div className="min-w-0">
             <p className="font-heading text-lg font-bold tracking-tight text-primary">
               MyGOV Agent 2.0
             </p>
@@ -38,7 +38,7 @@ export async function MarketingHeader() {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           {session ? (
             <Link
               href="/profile"

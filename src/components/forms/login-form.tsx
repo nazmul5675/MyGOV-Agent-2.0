@@ -166,7 +166,7 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="surface-panel border-white/50 bg-white/82">
+    <Card className="surface-panel min-w-0 border-white/50 bg-white/82">
       <CardHeader className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <AppModeBadge />
@@ -278,18 +278,18 @@ export function LoginForm() {
                     key={account.email}
                     className="rounded-[24px] border border-border/60 bg-muted/55 p-4"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-3">
                         <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                           <Icon className="size-4" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-semibold text-foreground">{account.role}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{account.email}</p>
+                          <p className="mt-1 break-all text-sm text-muted-foreground">{account.email}</p>
                           <p className="text-sm text-muted-foreground">{account.password}</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 sm:justify-end">
                         <button
                           type="button"
                           onClick={() => fillDemoCredentials(account.email, account.password)}

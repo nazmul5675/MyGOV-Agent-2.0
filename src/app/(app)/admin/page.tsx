@@ -139,8 +139,8 @@ export default async function AdminDashboardPage() {
               <div className="mt-4 space-y-3">
                 {aiFocusCases.map((item) => (
                   <div key={item.id} className="rounded-[22px] bg-muted/80 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
                         <p className="font-semibold text-foreground">{item.title}</p>
                         <p className="mt-1 text-sm text-muted-foreground">
                           {item.citizenName} / {item.assignedUnit}

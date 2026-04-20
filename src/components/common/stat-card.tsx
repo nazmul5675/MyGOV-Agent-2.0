@@ -12,10 +12,10 @@ export function StatCard({
   icon: ReactNode;
 }) {
   return (
-    <div className="surface-panel interactive-lift relative overflow-hidden p-6 transition-transform duration-300">
+    <div className="surface-panel interactive-lift relative flex h-full overflow-hidden p-6 transition-transform duration-300">
       <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/5 blur-2xl" />
-      <div className="relative flex items-start justify-between gap-5">
-        <div className="space-y-3">
+      <div className="relative flex w-full items-start justify-between gap-5">
+        <div className="min-w-0 space-y-3">
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="text-3xl font-black tracking-tight text-primary">{value}</p>
           <p className="text-sm text-muted-foreground">{change}</p>

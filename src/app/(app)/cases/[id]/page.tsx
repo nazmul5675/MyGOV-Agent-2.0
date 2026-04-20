@@ -115,9 +115,9 @@ export default async function CitizenCaseDetailPage({
 
       <section className="grid gap-6 xl:grid-cols-[1.04fr_0.96fr]">
         <div className="space-y-6">
-          <div className="surface-panel p-7">
+          <div className="surface-panel p-6 sm:p-7">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-3">
+              <div className="min-w-0 space-y-3">
                 <StatusBadge status={item.status} />
                 <p className="text-sm leading-7 text-muted-foreground">{item.summary}</p>
               </div>
@@ -181,7 +181,7 @@ export default async function CitizenCaseDetailPage({
         </div>
 
         <div className="space-y-6">
-          <div className="hero-gradient rounded-[32px] p-7 text-primary-foreground">
+          <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground sm:p-7">
             <div className="flex items-center gap-3">
               <MessageSquareQuote className="size-5" />
               <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">

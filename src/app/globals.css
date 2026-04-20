@@ -134,9 +134,10 @@
       radial-gradient(circle at bottom left, rgba(255, 225, 107, 0.22), transparent 25%),
       var(--background);
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
   body {
-    @apply min-h-screen bg-background text-foreground antialiased;
+    @apply min-h-screen overflow-x-clip bg-background text-foreground antialiased;
   }
   h1,
   h2,
@@ -160,12 +161,12 @@
 }
 
 @utility glass-panel {
-  @apply border border-white/45 bg-white/78 backdrop-blur-2xl dark:border-white/10 dark:bg-white/6;
+  @apply min-w-0 border border-white/45 bg-white/78 backdrop-blur-2xl dark:border-white/10 dark:bg-white/6;
   box-shadow: var(--shadow-soft);
 }
 
 @utility surface-panel {
-  @apply rounded-3xl border border-border/60 bg-card/92 backdrop-blur-sm transition-[transform,box-shadow,border-color,background-color] duration-300;
+  @apply min-w-0 rounded-3xl border border-border/60 bg-card/92 backdrop-blur-sm transition-[transform,box-shadow,border-color,background-color] duration-300;
   box-shadow: var(--shadow-soft);
 }
 

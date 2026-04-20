@@ -105,11 +105,11 @@ export default async function DashboardPage() {
 
       <Reveal>
         <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="hero-gradient rounded-[32px] p-8 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)]">
+          <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)] sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">
               Citizen command center
             </p>
-            <h2 className="mt-4 text-4xl font-black tracking-tight">
+            <h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
               One live place for cases, files, and guided next steps.
             </h2>
             <p className="mt-4 max-w-xl text-sm leading-7 text-primary-foreground/80">
@@ -248,8 +248,8 @@ export default async function DashboardPage() {
                 {reminders.length ? (
                   reminders.map((item) => (
                     <div key={item.id} className="rounded-[24px] bg-muted/80 p-5">
-                      <div className="flex items-center justify-between gap-4">
-                        <p className="font-semibold text-foreground">{item.title}</p>
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <p className="min-w-0 font-semibold text-foreground">{item.title}</p>
                         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                           {item.read ? "Viewed" : "Action"}
                         </span>

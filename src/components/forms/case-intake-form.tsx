@@ -112,7 +112,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
-      className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]"
+      className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]"
     >
       <div className="space-y-6">
         <Card className="surface-panel">
@@ -181,8 +181,8 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
         </Card>
 
         <Card className="surface-panel overflow-hidden">
-          <CardHeader className="flex flex-row items-start justify-between gap-4">
-            <div>
+          <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row">
+            <div className="min-w-0">
               <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
                 Evidence and uploads
               </CardTitle>
@@ -192,7 +192,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                   : "Photos, documents, and voice notes upload into Firebase Storage when credentials are connected, with metadata saved against the case."}
               </p>
             </div>
-            <div className="rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <div className="self-start rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               {uploadCountLabel}
             </div>
           </CardHeader>
@@ -248,9 +248,9 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             <div className="space-y-3">
               {uploads.map((item) => (
                 <div key={item.id} className="rounded-[24px] bg-white/80 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-4 text-sm">
-                    <div>
-                      <p className="font-semibold text-foreground">{item.name}</p>
+                  <div className="mb-3 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="break-all font-semibold text-foreground">{item.name}</p>
                       <p className="text-muted-foreground">
                         {`${item.kind.replace("_", " ")} · ${(
                           item.size /
@@ -259,7 +259,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                         ).toFixed(2)} MB`}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                       {item.progress === 100 ? (
                         <CheckCircle2 className="size-4 text-[#1d7d49]" />
                       ) : null}

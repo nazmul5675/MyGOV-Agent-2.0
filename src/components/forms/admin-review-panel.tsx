@@ -113,7 +113,7 @@ export function AdminReviewPanel({
         />
         <Button
           variant="outline"
-          className="w-full justify-start"
+          className="h-auto w-full justify-start py-3 text-left whitespace-normal"
           disabled={isPending}
           onClick={() => runAction("internal_note")}
         >
@@ -128,7 +128,7 @@ export function AdminReviewPanel({
               <Button
                 variant={action.tone}
                 size="default"
-                className="w-full justify-start rounded-2xl"
+                className="h-auto w-full justify-start rounded-2xl py-3 text-left whitespace-normal"
                 disabled={isPending}
                 onClick={() => runAction(action.value)}
               >

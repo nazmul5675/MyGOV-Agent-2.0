@@ -74,11 +74,11 @@ export default async function NotificationsPage() {
         {notifications.length ? notifications.map((notification) => {
           const Icon = toneIconMap[notification.tone];
           return (
-            <article key={notification.id} className="surface-panel flex items-start gap-4 p-6">
+            <article key={notification.id} className="surface-panel flex min-w-0 items-start gap-4 p-5 sm:p-6">
               <div className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
                 <Icon className="size-4" />
               </div>
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-lg font-bold tracking-tight text-foreground">
                     {notification.title}

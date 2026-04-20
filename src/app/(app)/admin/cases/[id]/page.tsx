@@ -154,9 +154,9 @@ export default async function AdminCaseDetailPage({
         </aside>
 
         <div className="space-y-6">
-          <div className="hero-gradient rounded-[32px] p-7 text-primary-foreground">
-            <div className="flex items-center justify-between gap-4">
-              <div>
+          <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground sm:p-7">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="min-w-0">
                 <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70">
                   Case packet
                 </p>

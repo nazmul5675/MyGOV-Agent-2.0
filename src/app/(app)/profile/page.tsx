@@ -74,14 +74,14 @@ export default async function ProfilePage({
       />
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <div className="hero-gradient rounded-[32px] p-8 text-primary-foreground">
+        <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground sm:p-8">
           <div className="flex items-center gap-4">
             <div className="flex size-16 items-center justify-center rounded-full bg-white/10">
               <UserRound className="size-7" />
             </div>
-            <div>
-              <p className="font-heading text-3xl font-bold tracking-tight">{profile.fullName}</p>
-              <p className="text-sm text-primary-foreground/75">{profile.email}</p>
+            <div className="min-w-0">
+              <p className="break-words font-heading text-3xl font-bold tracking-tight">{profile.fullName}</p>
+              <p className="break-all text-sm text-primary-foreground/75">{profile.email}</p>
             </div>
           </div>
           <p className="mt-6 max-w-xl text-sm leading-7 text-primary-foreground/82">

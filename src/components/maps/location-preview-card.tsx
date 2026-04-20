@@ -62,10 +62,10 @@ export function LocationPreviewCard({
 
       {location ? (
         <div className="grid gap-4 border-t border-border/60 p-6 sm:grid-cols-2">
-          <div className="space-y-3">
+          <div className="min-w-0 space-y-3">
             <div className="flex items-start gap-3">
               <MapPin className="mt-1 size-4 text-primary" />
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
                   {location.formattedAddress || location.locationText}
                 </p>
@@ -88,7 +88,7 @@ export function LocationPreviewCard({
               </Link>
             ) : null}
           </div>
-          <div className="grid gap-3 sm:justify-self-end">
+          <div className="grid gap-3 sm:justify-self-end sm:text-right">
             {typeof location.lat === "number" && typeof location.lng === "number" ? (
               <div className="rounded-[20px] bg-muted/75 p-4 text-sm">
                 <div className="flex items-center gap-2 font-semibold text-foreground">

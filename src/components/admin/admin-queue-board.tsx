@@ -105,11 +105,11 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
           {filteredCases.map((item) => (
             <article
               key={item.id}
-              className="surface-panel interactive-lift flex h-full flex-col gap-5 p-6"
+              className="surface-panel interactive-lift flex h-full min-w-0 flex-col gap-5 p-6"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="break-all text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
                     {item.reference}
                   </p>
                   <h3 className="mt-2 text-xl font-bold tracking-tight text-foreground">
@@ -179,7 +179,7 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
                 href={`/admin/cases/${item.id}`}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
-                  "mt-auto justify-between px-4"
+                  "mt-auto w-full justify-between px-4 sm:w-auto"
                 )}
               >
                 Open review workspace

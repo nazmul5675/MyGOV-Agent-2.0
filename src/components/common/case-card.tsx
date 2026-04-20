@@ -18,14 +18,14 @@ export function CaseCard({
 
   return (
     <article className="surface-panel interactive-lift flex h-full flex-col gap-5 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 space-y-3">
           <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {caseTypeLabelMap[item.type]}
           </div>
           <div>
             <h3 className="text-xl font-bold tracking-tight text-foreground">{item.title}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{item.reference}</p>
+            <p className="mt-1 break-all text-sm text-muted-foreground">{item.reference}</p>
           </div>
         </div>
         <StatusBadge status={item.status} />
@@ -80,7 +80,7 @@ export function CaseCard({
         href={href}
         className={cn(
           buttonVariants({ variant: "outline", size: "default" }),
-          "mt-auto justify-between px-4"
+          "mt-auto w-full justify-between px-4 sm:w-auto"
         )}
       >
         Open case

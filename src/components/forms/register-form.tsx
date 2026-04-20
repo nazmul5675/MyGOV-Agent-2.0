@@ -132,7 +132,7 @@ export function RegisterForm() {
   };
 
   return (
-    <Card className="surface-panel border-white/50 bg-white/82">
+    <Card className="surface-panel min-w-0 border-white/50 bg-white/82">
       <CardHeader className="space-y-2">
         <AppModeBadge />
         <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">

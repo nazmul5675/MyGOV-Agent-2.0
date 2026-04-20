@@ -12,7 +12,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="surface-panel flex flex-col items-center justify-center gap-4 px-8 py-14 text-center">
+    <div className="surface-panel flex min-w-0 flex-col items-center justify-center gap-4 px-6 py-12 text-center sm:px-8 sm:py-14">
       <div className="flex size-14 items-center justify-center rounded-full bg-accent text-accent-foreground">
         {icon}
       </div>

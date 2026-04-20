@@ -22,7 +22,7 @@ export function Timeline({ events }: { events: CaseEvent[] }) {
             <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground shadow-[0_12px_26px_rgba(12,74,132,0.12)]">
               <Icon className="size-4" />
             </div>
-            <div className="surface-panel flex-1 p-5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
+            <div className="surface-panel min-w-0 flex-1 p-5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h4 className="font-semibold text-foreground">{event.title}</h4>
                 <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">

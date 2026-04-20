@@ -75,8 +75,8 @@ export function EvidenceReviewPanel({
 
   return (
     <section className="surface-panel p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
             Evidence review tools
           </p>
@@ -84,7 +84,7 @@ export function EvidenceReviewPanel({
             Review files one by one, record a note for the citizen, and update the live case timeline from the same control surface.
           </p>
         </div>
-        <div className="rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="self-start rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {files.length} file reviews
         </div>
       </div>
@@ -93,8 +93,8 @@ export function EvidenceReviewPanel({
         {files.map((file) => (
           <article key={file.id} className="rounded-[24px] bg-muted/70 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="font-semibold text-foreground">{file.name}</p>
+              <div className="min-w-0">
+                <p className="break-all font-semibold text-foreground">{file.name}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {file.kind.replace("_", " ")} · {file.sizeLabel}
                 </p>
@@ -112,13 +112,13 @@ export function EvidenceReviewPanel({
               placeholder="Add a review note or citizen-facing follow-up."
             />
 
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <div className="mt-4 grid gap-2 lg:grid-cols-2">
               {reviewActions.map((action) => (
                 <Button
                   key={action.value}
                   type="button"
                   variant={action.value === "accepted" ? "default" : "outline"}
-                  className="justify-start rounded-2xl"
+                  className="h-auto justify-start rounded-2xl py-3 text-left whitespace-normal"
                   disabled={isPending}
                   onClick={() => runReviewAction(file.id, action.value)}
                 >
