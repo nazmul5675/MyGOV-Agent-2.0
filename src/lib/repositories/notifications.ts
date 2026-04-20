@@ -1,12 +1,14 @@
 import type { NotificationItem } from "@/lib/types";
-import { getPrototypeStore } from "@/lib/prototype/store";
+import {
+  listPrototypeNotificationsForUser,
+  pushPrototypeNotification,
+} from "@/lib/prototype/repository";
 
 export async function createNotificationForUser(
   userId: string,
   notification: Omit<NotificationItem, "id">
 ) {
-  const store = getPrototypeStore();
-  store.notifications.unshift({
+  pushPrototypeNotification({
     id: `notif-${Math.random().toString(36).slice(2, 10)}`,
     userId,
     ...notification,
@@ -16,11 +18,7 @@ export async function createNotificationForUser(
 export async function listNotificationsForUser(
   userId: string
 ): Promise<NotificationItem[]> {
-  const store = getPrototypeStore();
-
-  return store.notifications
-    .filter((item) => item.userId === userId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  return listPrototypeNotificationsForUser(userId)
     .map((item) => ({
       id: item.id,
       title: item.title,

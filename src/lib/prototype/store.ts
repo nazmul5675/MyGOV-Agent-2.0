@@ -7,24 +7,15 @@ import type {
   PrototypeAssistantMessageRecord,
   PrototypeCaseEventRecord,
   PrototypeCaseRecord,
+  PrototypeDataset,
   PrototypeFileRecord,
   PrototypeNotificationRecord,
   PrototypeReminderRecord,
   PrototypeUserRecord,
 } from "@/types/prototype";
 
-type PrototypeState = {
-  users: PrototypeUserRecord[];
-  cases: PrototypeCaseRecord[];
-  caseEvents: PrototypeCaseEventRecord[];
-  files: PrototypeFileRecord[];
-  notifications: PrototypeNotificationRecord[];
-  reminders: PrototypeReminderRecord[];
-  chatSeeds: PrototypeAssistantMessageRecord[];
-};
-
 type MutableGlobal = typeof globalThis & {
-  __MYGOV_PROTOTYPE_STORE__?: PrototypeState;
+  __MYGOV_PROTOTYPE_STORE__?: PrototypeDataset;
 };
 
 function readJsonFile<T>(filename: string): T {
@@ -32,7 +23,7 @@ function readJsonFile<T>(filename: string): T {
   return JSON.parse(readFileSync(filePath, "utf8")) as T;
 }
 
-function loadPrototypeState(): PrototypeState {
+function loadPrototypeState(): PrototypeDataset {
   return {
     users: readJsonFile<PrototypeUserRecord[]>("users.json"),
     cases: readJsonFile<PrototypeCaseRecord[]>("cases.json"),

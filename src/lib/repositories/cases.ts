@@ -10,8 +10,22 @@ import type {
   EvidenceFile,
   NotificationItem,
 } from "@/lib/types";
-import { getPrototypeStore } from "@/lib/prototype/store";
 import { createNotificationForUser } from "@/lib/repositories/notifications";
+import {
+  getPrototypeCaseById,
+  listPrototypeCases,
+  listPrototypeCasesForCitizen,
+  listPrototypeCaseEvents,
+  listPrototypeChatMessagesForThread,
+  listPrototypeFilesForCase,
+  listPrototypeRemindersForCase,
+  listPrototypeRemindersForUser,
+  pushPrototypeCase,
+  pushPrototypeCaseEvent,
+  pushPrototypeChatMessage,
+  pushPrototypeFiles,
+  pushPrototypeReminder,
+} from "@/lib/prototype/repository";
 import type {
   PrototypeAssistantMessageRecord,
   PrototypeCaseEventRecord,
@@ -35,19 +49,15 @@ function sortEvents(events: CaseEvent[]) {
 }
 
 function getCaseEvents(caseId: string): PrototypeCaseEventRecord[] {
-  return getPrototypeStore().caseEvents.filter((item) => item.caseId === caseId);
+  return listPrototypeCaseEvents(caseId);
 }
 
 function getCaseFiles(caseId: string): PrototypeFileRecord[] {
-  return getPrototypeStore()
-    .files.filter((item) => item.caseId === caseId)
-    .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+  return listPrototypeFilesForCase(caseId);
 }
 
 function getCaseReminders(caseId: string): PrototypeReminderRecord[] {
-  return getPrototypeStore()
-    .reminders.filter((item) => item.caseId === caseId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return listPrototypeRemindersForCase(caseId);
 }
 
 function mapCaseRecord(base: PrototypeCaseRecord): CaseItem {
@@ -72,10 +82,7 @@ function mapCaseRecord(base: PrototypeCaseRecord): CaseItem {
 }
 
 function getAllCases() {
-  return getPrototypeStore()
-    .cases.slice()
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-    .map(mapCaseRecord);
+  return listPrototypeCases().map(mapCaseRecord);
 }
 
 function computeCitizenStats(cases: CaseItem[]): DashboardStat[] {
@@ -115,7 +122,7 @@ function computeAdminStats(cases: CaseItem[]): DashboardStat[] {
 }
 
 function getCasesForCitizen(citizenId: string) {
-  return getAllCases().filter((item) => item.citizenId === citizenId);
+  return listPrototypeCasesForCitizen(citizenId).map(mapCaseRecord);
 }
 
 export async function getCitizenDashboardData(
@@ -136,9 +143,7 @@ export async function getCitizenDashboardData(
     .flatMap((item) => item.timeline)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 6);
-  const reminders: NotificationItem[] = getPrototypeStore()
-    .reminders.filter((item) => item.userId === session.uid)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const reminders: NotificationItem[] = listPrototypeRemindersForUser(session.uid)
     .slice(0, 4)
     .map((item) => ({
       id: item.id,
@@ -212,8 +217,8 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 }
 
 export async function getAdminCaseById(caseId: string) {
-  const item = getAllCases().find((candidate) => candidate.id === caseId);
-  return item || null;
+  const item = getPrototypeCaseById(caseId);
+  return item ? mapCaseRecord(item) : null;
 }
 
 export interface CreateCasePayload {
@@ -221,6 +226,7 @@ export interface CreateCasePayload {
   title: string;
   type: CaseItem["type"];
   location: string;
+  locationMeta?: CaseItem["locationMeta"];
   summary: string;
   citizenId: string;
   citizenName: string;
@@ -269,7 +275,7 @@ export async function appendCaseEvent(
   caseId: string,
   event: Omit<CaseEvent, "id">
 ) {
-  getPrototypeStore().caseEvents.push({
+  pushPrototypeCaseEvent({
     id: `evt-${Math.random().toString(36).slice(2, 10)}`,
     caseId,
     ...event,
@@ -277,7 +283,6 @@ export async function appendCaseEvent(
 }
 
 export async function createCaseRecord(payload: CreateCasePayload) {
-  const store = getPrototypeStore();
   const createdAt = isoNow();
   const evidence = payload.evidence.map((item) => ({
     ...buildEvidenceFile({
@@ -307,6 +312,7 @@ export async function createCaseRecord(payload: CreateCasePayload) {
     type: payload.type,
     status: "submitted",
     location: payload.location,
+    locationMeta: payload.locationMeta,
     createdAt,
     updatedAt: createdAt,
     summary: payload.summary,
@@ -328,14 +334,22 @@ export async function createCaseRecord(payload: CreateCasePayload) {
       structuredIntake: {
         channel: "prototype-web",
         capturedAt: createdAt,
+        locationText: payload.location,
+        formattedAddress: payload.locationMeta?.formattedAddress || payload.location,
+        placeId: payload.locationMeta?.placeId || "",
+        coordinates:
+          typeof payload.locationMeta?.lat === "number" &&
+          typeof payload.locationMeta?.lng === "number"
+            ? [`${payload.locationMeta.lat}`, `${payload.locationMeta.lng}`]
+            : [],
       },
     },
     latestInternalNote: "Awaiting first admin review.",
     updatedBy: payload.citizenId,
   };
 
-  store.cases.unshift(caseRecord);
-  store.files.unshift(...evidence);
+  pushPrototypeCase(caseRecord);
+  pushPrototypeFiles(evidence);
 
   await appendCaseEvent(payload.id, {
     type: "status",
@@ -357,7 +371,7 @@ export async function createCaseRecord(payload: CreateCasePayload) {
     });
   }
 
-  store.reminders.unshift({
+  pushPrototypeReminder({
     id: `reminder-${Math.random().toString(36).slice(2, 10)}`,
     caseId: payload.id,
     userId: payload.citizenId,
@@ -387,8 +401,7 @@ export async function createCaseRecord(payload: CreateCasePayload) {
 }
 
 export async function addEvidenceToCase(caseId: string, evidence: EvidenceFile[]) {
-  const store = getPrototypeStore();
-  const caseRecord = store.cases.find((item) => item.id === caseId);
+  const caseRecord = getPrototypeCaseById(caseId);
   if (!caseRecord) throw new Error("Case not found.");
 
   const files = evidence.map((item) => ({
@@ -397,7 +410,7 @@ export async function addEvidenceToCase(caseId: string, evidence: EvidenceFile[]
     ownerUid: caseRecord.citizenId,
   })) satisfies PrototypeFileRecord[];
 
-  store.files.unshift(...files);
+  pushPrototypeFiles(files);
   caseRecord.updatedAt = isoNow();
   caseRecord.progress = Math.min(100, Math.max(caseRecord.progress, 36));
   caseRecord.intake.missingDocuments = [];
@@ -453,8 +466,7 @@ const actionConfig: Record<
 };
 
 export async function applyAdminCaseAction(payload: AdminCaseActionPayload) {
-  const store = getPrototypeStore();
-  const caseRecord = store.cases.find((item) => item.id === payload.caseId);
+  const caseRecord = getPrototypeCaseById(payload.caseId);
   if (!caseRecord) throw new Error("Case not found.");
 
   const config = actionConfig[payload.action];
@@ -470,7 +482,7 @@ export async function applyAdminCaseAction(payload: AdminCaseActionPayload) {
     caseRecord.intake.missingDocuments = Array.from(
       new Set([...caseRecord.intake.missingDocuments, payload.note])
     );
-    store.reminders.unshift({
+    pushPrototypeReminder({
       id: `reminder-${Math.random().toString(36).slice(2, 10)}`,
       caseId: payload.caseId,
       userId: caseRecord.citizenId,
@@ -517,11 +529,8 @@ export async function updateEvidenceReviewStatus(input: {
   actorName: string;
   actorId: string;
 }) {
-  const store = getPrototypeStore();
-  const file = store.files.find(
-    (item) => item.caseId === input.caseId && item.id === input.fileId
-  );
-  const caseRecord = store.cases.find((item) => item.id === input.caseId);
+  const file = listPrototypeFilesForCase(input.caseId).find((item) => item.id === input.fileId);
+  const caseRecord = getPrototypeCaseById(input.caseId);
 
   if (!file || !caseRecord) {
     throw new Error("File record not found.");
@@ -557,9 +566,10 @@ export async function updateEvidenceReviewStatus(input: {
 }
 
 export async function listCaseAssistantMessages(caseId: string): Promise<AssistantMessage[]> {
-  return getPrototypeStore()
-    .chatSeeds.filter((item) => item.caseId === caseId || item.threadKey === `case:${caseId}`)
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  return listPrototypeChatMessagesForThread({
+    caseId,
+    threadKey: `case:${caseId}`,
+  })
     .map((item) => ({
       id: item.id,
       role: item.role,
@@ -572,9 +582,10 @@ export async function listCaseAssistantMessages(caseId: string): Promise<Assista
 }
 
 export async function listDashboardAssistantMessages(userId: string): Promise<AssistantMessage[]> {
-  return getPrototypeStore()
-    .chatSeeds.filter((item) => item.userId === userId && item.threadKey === "dashboard")
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  return listPrototypeChatMessagesForThread({
+    userId,
+    threadKey: "dashboard",
+  })
     .map((item) => ({
       id: item.id,
       role: item.role,
@@ -605,7 +616,7 @@ export async function appendAssistantMessage(input: {
     attachments: input.attachments || [],
   };
 
-  getPrototypeStore().chatSeeds.push(record);
+  pushPrototypeChatMessage(record);
   return {
     id: record.id,
     role: record.role,

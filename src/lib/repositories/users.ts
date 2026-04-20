@@ -1,5 +1,10 @@
 import type { AppSession, UserProfile, UserRole } from "@/lib/types";
-import { getPrototypeStore } from "@/lib/prototype/store";
+import {
+  getPrototypeUserByEmail,
+  getPrototypeUserByUid,
+  listPrototypeUsers,
+  pushPrototypeUser,
+} from "@/lib/prototype/repository";
 import type { PrototypeUserRecord } from "@/types/prototype";
 
 function slugifyName(value: string) {
@@ -27,8 +32,7 @@ function toUserProfile(record: PrototypeUserRecord): UserProfile {
 }
 
 export async function getUserProfile(session: AppSession): Promise<UserProfile> {
-  const store = getPrototypeStore();
-  const user = store.users.find((item) => item.uid === session.uid);
+  const user = getPrototypeUserByUid(session.uid);
 
   if (!user) {
     throw new Error(
@@ -50,8 +54,7 @@ export async function upsertUserProfile(
     addressText?: string;
   }
 ) {
-  const store = getPrototypeStore();
-  const existing = store.users.find((item) => item.uid === uid);
+  const existing = getPrototypeUserByUid(uid);
   const now = new Date().toISOString();
 
   if (existing) {
@@ -65,7 +68,7 @@ export async function upsertUserProfile(
     return;
   }
 
-  store.users.push({
+  pushPrototypeUser({
     id: uid,
     uid,
     email: data.email,
@@ -82,12 +85,7 @@ export async function upsertUserProfile(
 }
 
 export async function getUserByEmail(email: string) {
-  const store = getPrototypeStore();
-  return (
-    store.users.find(
-      (item) => item.email.toLowerCase() === email.trim().toLowerCase()
-    ) || null
-  );
+  return getPrototypeUserByEmail(email);
 }
 
 export async function createPrototypeUser(input: {
@@ -95,17 +93,17 @@ export async function createPrototypeUser(input: {
   email: string;
   password: string;
 }) {
-  const store = getPrototypeStore();
   const email = input.email.trim().toLowerCase();
+  const users = listPrototypeUsers();
 
-  if (store.users.some((item) => item.email.toLowerCase() === email)) {
+  if (users.some((item) => item.email.toLowerCase() === email)) {
     throw new Error("An account with this email already exists.");
   }
 
   const slugBase = slugifyName(input.fullName) || "citizen";
   let uid = `citizen-${slugBase}`;
   let counter = 2;
-  while (store.users.some((item) => item.uid === uid)) {
+  while (users.some((item) => item.uid === uid)) {
     uid = `citizen-${slugBase}-${counter}`;
     counter += 1;
   }
@@ -123,6 +121,6 @@ export async function createPrototypeUser(input: {
     updatedAt: now,
   };
 
-  store.users.push(user);
+  pushPrototypeUser(user);
   return user;
 }

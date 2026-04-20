@@ -27,3 +27,13 @@ export interface PrototypeReminderRecord extends NotificationItem {
 export interface PrototypeAssistantMessageRecord extends AssistantMessage {
   userId: string;
 }
+
+export interface PrototypeDataset {
+  users: PrototypeUserRecord[];
+  cases: PrototypeCaseRecord[];
+  caseEvents: PrototypeCaseEventRecord[];
+  files: PrototypeFileRecord[];
+  notifications: PrototypeNotificationRecord[];
+  reminders: PrototypeReminderRecord[];
+  chatSeeds: PrototypeAssistantMessageRecord[];
+}
