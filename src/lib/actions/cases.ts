@@ -1,4 +1,4 @@
-import type { EvidenceFile } from "@/lib/types";
+import type { AssistantResponseMeta, EvidenceFile } from "@/lib/types";
 import { adminActionSchema, createCaseRequestSchema } from "@/lib/validation/cases";
 import type { z } from "zod";
 
@@ -53,6 +53,7 @@ export async function sendAssistantMessage(payload: {
   return postJson<{
     userMessage: { id: string; body: string; createdAt: string };
     assistantMessage: { id: string; body: string; createdAt: string; attachments?: string[] };
+    assistantMeta: AssistantResponseMeta;
   }>("/api/assistant/messages", payload);
 }
 

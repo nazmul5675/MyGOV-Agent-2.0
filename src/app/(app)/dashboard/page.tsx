@@ -223,6 +223,12 @@ export default async function DashboardPage() {
             initialMessages={messages || []}
             title="AI helping chat box"
             subtitle="Use the assistant to check required documents, clean up your explanation, understand a status, or verify whether your uploads are complete."
+            suggestedPrompts={[
+              "What documents do I need?",
+              "Help me explain my issue",
+              "Summarize my uploaded files",
+              "What should I do next?",
+            ]}
           />
           <div className="space-y-6">
             <EvidenceManager

@@ -221,6 +221,12 @@ export default async function AdminCaseDetailPage({
             initialMessages={messages || []}
             title="AI review helper"
             subtitle="Use the assistant to summarize the packet, check for missing documents, and prepare a clearer citizen-facing follow-up note."
+            suggestedPrompts={[
+              "Draft an officer summary for this case",
+              "Summarize the uploaded files",
+              "What documents are still missing?",
+              "What should the admin do next?",
+            ]}
           />
         </div>
       </section>

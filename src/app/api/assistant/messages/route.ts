@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 
 import { generateGeminiAssistantReply, hasGeminiKey } from "@/lib/ai/gemini";
 import { readSession } from "@/lib/auth/session";
-import { buildAssistantReply } from "@/lib/assistant";
+import { buildAssistantFallbackNotice, buildAssistantReply } from "@/lib/assistant";
 import {
   appendAssistantMessage,
   getAdminCaseById,
@@ -42,43 +42,71 @@ export async function POST(request: Request) {
       ? await listCaseAssistantMessages(body.caseId)
       : await listDashboardAssistantMessages(session.uid);
 
-    let reply: string;
+    const geminiConfigured = hasGeminiKey();
+    let assistantBody: string;
+    let attachments: string[] = [];
+    let assistantMeta;
+
     try {
-      reply = hasGeminiKey()
-        ? await generateGeminiAssistantReply({
+      if (geminiConfigured) {
+        const geminiResult = await generateGeminiAssistantReply({
             prompt: body.body,
             role: session.role,
             citizenName: session.name,
             caseItem,
             history,
-          })
-        : buildAssistantReply({
-            prompt: body.body,
-            caseItem,
-            citizenName: session.name,
           });
-    } catch {
-      reply = buildAssistantReply({
+
+        assistantBody = geminiResult.body;
+        attachments = geminiResult.attachments.length
+          ? geminiResult.attachments
+          : caseItem?.intake.missingDocuments.slice(0, 4) || [];
+        assistantMeta = {
+          source: geminiResult.source,
+          model: geminiResult.model,
+        };
+      } else {
+        const fallback = buildAssistantReply({
+          prompt: body.body,
+          caseItem,
+          citizenName: session.name,
+          role: session.role,
+        });
+
+        assistantBody = fallback.reply;
+        attachments = fallback.attachments;
+        assistantMeta = buildAssistantFallbackNotice({
+          hadGeminiKey: false,
+        });
+      }
+    } catch (failure) {
+      const fallback = buildAssistantReply({
         prompt: body.body,
         caseItem,
         citizenName: session.name,
+        role: session.role,
+      });
+
+      assistantBody = fallback.reply;
+      attachments = fallback.attachments;
+      assistantMeta = buildAssistantFallbackNotice({
+        hadGeminiKey: geminiConfigured,
+        failure,
       });
     }
 
     const assistantMessage = await appendAssistantMessage({
       userId: session.uid,
       role: "assistant",
-      body: reply,
+      body: assistantBody,
       caseId: body.caseId,
-      attachments:
-        caseItem?.intake.missingDocuments.length
-          ? caseItem.intake.missingDocuments.slice(0, 3)
-          : [],
+      attachments,
     });
 
     return NextResponse.json({
       userMessage,
       assistantMessage,
+      assistantMeta,
     });
   } catch (error) {
     if (error instanceof ZodError) {

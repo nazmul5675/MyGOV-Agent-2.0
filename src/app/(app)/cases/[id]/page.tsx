@@ -242,6 +242,12 @@ export default async function CitizenCaseDetailPage({
           initialMessages={messages || []}
           title="Contextual AI helper"
           subtitle="This assistant is tied to the live case record, so you can ask what the current status means, what documents still matter, or what you should do next."
+          suggestedPrompts={[
+            "What documents do I need?",
+            "Help me explain my issue",
+            "Summarize my uploaded files",
+            "Why is my case still under review?",
+          ]}
         />
       </section>
     </div>

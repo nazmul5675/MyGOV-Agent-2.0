@@ -1,12 +1,19 @@
 import "server-only";
 
-import type { AssistantMessage, CaseItem, EvidenceFile } from "@/lib/types";
+import type { AssistantMessage, CaseItem, EvidenceFile, UserRole } from "@/lib/types";
 
 const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite";
 
+interface GeminiAssistantPayload {
+  reply: string;
+  documentChecklist: string[];
+  nextSteps: string[];
+  summaryTitle: string;
+}
+
 function buildCaseContext(caseItem?: CaseItem | null) {
   if (!caseItem) {
-    return "No specific case is open. Focus on general document guidance, next steps, and citizen-friendly explanations.";
+    return "No specific case is open. Focus on dashboard-level guidance, document readiness, next steps, and concise citizen-safe explanations.";
   }
 
   const fileSummary = caseItem.evidence.length
@@ -25,6 +32,7 @@ function buildCaseContext(caseItem?: CaseItem | null) {
     `Location: ${caseItem.location}`,
     `Citizen summary: ${caseItem.intake.citizenSummary}`,
     `Admin summary: ${caseItem.intake.adminSummary}`,
+    `Category: ${caseItem.intake.category}`,
     `Urgency: ${caseItem.intake.urgency}`,
     `Missing documents: ${caseItem.intake.missingDocuments.join(", ") || "None flagged"}`,
     `Files: ${fileSummary}`,
@@ -39,13 +47,86 @@ function buildConversationSnippet(history: AssistantMessage[]) {
     .join("\n");
 }
 
+function buildSystemInstruction(role: UserRole) {
+  return [
+    "You are MyGOV Agent 2.0, an embedded AI case assistant for a premium Malaysian-style GovTech workflow.",
+    "Be calm, trustworthy, practical, and concise.",
+    role === "admin"
+      ? "The current user is an admin officer. Give operational guidance, decision support, and concise officer-ready summaries."
+      : "The current user is a citizen. Use plain language, explain next steps clearly, and avoid bureaucratic phrasing.",
+    "Stay grounded in the provided case, file, and timeline context.",
+    "Do not invent laws, approvals, or unavailable evidence.",
+    "If evidence is incomplete, say what is present and what is still missing.",
+    "Prefer concrete next steps over generic advice.",
+    "Return valid JSON only.",
+  ].join(" ");
+}
+
+function buildUserPrompt(input: {
+  prompt: string;
+  role: UserRole;
+  citizenName: string;
+  caseItem?: CaseItem | null;
+  history?: AssistantMessage[];
+}) {
+  return [
+    `Citizen name: ${input.citizenName}`,
+    `User role: ${input.role}`,
+    `Case context:\n${buildCaseContext(input.caseItem)}`,
+    input.history?.length
+      ? `Recent conversation:\n${buildConversationSnippet(input.history)}`
+      : "Recent conversation: none",
+    `Current user prompt: ${input.prompt}`,
+    "Respond with JSON using these fields:",
+    '- "summaryTitle": a short heading',
+    '- "reply": the main assistant response in under 220 words',
+    '- "documentChecklist": 0 to 4 short document or evidence items',
+    '- "nextSteps": 1 to 3 short, concrete next steps',
+  ].join("\n\n");
+}
+
+function parseGeminiJson(text: string): GeminiAssistantPayload {
+  const parsed = JSON.parse(text) as Partial<GeminiAssistantPayload>;
+
+  return {
+    summaryTitle:
+      typeof parsed.summaryTitle === "string" && parsed.summaryTitle.trim()
+        ? parsed.summaryTitle.trim()
+        : "AI case guidance",
+    reply:
+      typeof parsed.reply === "string" && parsed.reply.trim()
+        ? parsed.reply.trim()
+        : "I could not prepare a full response from Gemini.",
+    documentChecklist: Array.isArray(parsed.documentChecklist)
+      ? parsed.documentChecklist
+          .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+          .slice(0, 4)
+      : [],
+    nextSteps: Array.isArray(parsed.nextSteps)
+      ? parsed.nextSteps
+          .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+          .slice(0, 3)
+      : [],
+  };
+}
+
+function formatAssistantReply(payload: GeminiAssistantPayload) {
+  const sections = [payload.reply.trim()];
+
+  if (payload.nextSteps.length) {
+    sections.push(`Next steps: ${payload.nextSteps.join(" | ")}`);
+  }
+
+  return sections.filter(Boolean).join("\n\n");
+}
+
 export function hasGeminiKey() {
   return Boolean(process.env.GEMINI_API_KEY);
 }
 
 export async function generateGeminiAssistantReply(input: {
   prompt: string;
-  role: "citizen" | "admin";
+  role: UserRole;
   citizenName: string;
   caseItem?: CaseItem | null;
   history?: AssistantMessage[];
@@ -56,50 +137,53 @@ export async function generateGeminiAssistantReply(input: {
   }
 
   const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-  const systemPrompt = [
-    "You are MyGOV Agent 2.0, an embedded case assistant for a Malaysian-style GovTech workflow.",
-    "Be clear, calm, concise, and practical.",
-    `The current user is an ${input.role}.`,
-    "Help with document guidance, next steps, case summaries, missing document checklists, and status explanations.",
-    "Do not invent laws or guarantee approvals.",
-    "If the user asks about files, mention which files appear present and which items still look missing.",
-    "If speaking to an admin, produce operational guidance and a short officer-ready summary when useful.",
-    "If speaking to a citizen, produce plain-language guidance and reassure them about the next concrete step.",
-  ].join(" ");
-
-  const contents = [
-    {
-      role: "user",
-      parts: [
-        {
-          text: [
-            systemPrompt,
-            `Citizen name: ${input.citizenName}`,
-            `Case context:\n${buildCaseContext(input.caseItem)}`,
-            input.history?.length
-              ? `Recent conversation:\n${buildConversationSnippet(input.history)}`
-              : "Recent conversation: none",
-            `Current prompt: ${input.prompt}`,
-            "Respond in under 220 words. If useful, use short bullets. End with the clearest next step.",
-          ].join("\n\n"),
-        },
-      ],
-    },
-  ];
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
     },
     body: JSON.stringify({
-      contents,
+      system_instruction: {
+        parts: [{ text: buildSystemInstruction(input.role) }],
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: buildUserPrompt(input),
+            },
+          ],
+        },
+      ],
       generationConfig: {
-        temperature: 0.5,
+        temperature: 0.45,
         topP: 0.9,
-        maxOutputTokens: 400,
+        maxOutputTokens: 500,
+        responseMimeType: "application/json",
+        responseJsonSchema: {
+          type: "object",
+          properties: {
+            summaryTitle: {
+              type: "string",
+            },
+            reply: {
+              type: "string",
+            },
+            documentChecklist: {
+              type: "array",
+              items: { type: "string" },
+            },
+            nextSteps: {
+              type: "array",
+              items: { type: "string" },
+            },
+          },
+          required: ["reply", "documentChecklist", "nextSteps", "summaryTitle"],
+        },
       },
     }),
     cache: "no-store",
@@ -129,5 +213,14 @@ export async function generateGeminiAssistantReply(input: {
     throw new Error("Gemini returned an empty assistant response.");
   }
 
-  return text;
+  const parsed = parseGeminiJson(text);
+
+  return {
+    body: formatAssistantReply(parsed),
+    attachments: parsed.documentChecklist,
+    model,
+    summaryTitle: parsed.summaryTitle,
+    nextSteps: parsed.nextSteps,
+    source: "gemini" as const,
+  };
 }

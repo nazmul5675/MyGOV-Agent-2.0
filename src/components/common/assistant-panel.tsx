@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { Bot, LoaderCircle, SendHorizonal, Sparkles, User2 } from "lucide-react";
+import {
+  Bot,
+  LoaderCircle,
+  SendHorizonal,
+  Sparkles,
+  TriangleAlert,
+  User2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { sendAssistantMessage } from "@/lib/actions/cases";
-import type { AssistantMessage } from "@/lib/types";
+import type { AssistantMessage, AssistantResponseMeta } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -30,14 +37,17 @@ export function AssistantPanel({
   subtitle,
   caseId,
   initialMessages,
+  suggestedPrompts = starterPrompts,
 }: {
   title?: string;
   subtitle?: string;
   caseId?: string;
   initialMessages: AssistantMessage[];
+  suggestedPrompts?: string[];
 }) {
   const [messages, setMessages] = useState(initialMessages);
   const [draft, setDraft] = useState("");
+  const [assistantMeta, setAssistantMeta] = useState<AssistantResponseMeta | null>(null);
   const [isPending, startTransition] = useTransition();
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const isEmpty = !messages.length;
@@ -50,8 +60,8 @@ export function AssistantPanel({
   }, [messages]);
 
   const quickPrompts = useMemo(
-    () => starterPrompts.filter((prompt) => !messages.some((item) => item.body === prompt)),
-    [messages]
+    () => suggestedPrompts.filter((prompt) => !messages.some((item) => item.body === prompt)),
+    [messages, suggestedPrompts]
   );
 
   const handleSend = (body: string) => {
@@ -64,6 +74,7 @@ export function AssistantPanel({
           body: trimmed,
           caseId,
         });
+        setAssistantMeta(response.assistantMeta);
 
         setMessages((current) => [
           ...current,
@@ -209,6 +220,19 @@ export function AssistantPanel({
       </div>
 
       <div className="mt-4 rounded-[28px] border border-border/70 bg-white/85 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+        {assistantMeta?.notice ? (
+          <div
+            className={cn(
+              "mb-3 flex items-start gap-3 rounded-[22px] border px-4 py-3 text-sm",
+              assistantMeta.source === "gemini"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-amber-200 bg-amber-50 text-amber-900"
+            )}
+          >
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            <p className="leading-6">{assistantMeta.notice}</p>
+          </div>
+        ) : null}
         <Textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -218,7 +242,9 @@ export function AssistantPanel({
         />
         <div className="mt-3 flex items-center justify-between gap-4">
           <p className="text-xs leading-6 text-muted-foreground">
-            The assistant uses case and file context from the prototype data layer and upgrades to live Gemini responses whenever the API key is configured.
+            {assistantMeta?.source === "gemini" && assistantMeta.model
+              ? `Live Gemini is active with ${assistantMeta.model}.`
+              : "The assistant uses case and file context from the prototype data layer and upgrades to live Gemini responses whenever the API key is configured."}
           </p>
           <Button
             type="button"

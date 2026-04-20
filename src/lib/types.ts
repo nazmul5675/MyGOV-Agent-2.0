@@ -90,6 +90,14 @@ export interface AssistantMessage {
   attachments?: string[];
 }
 
+export type AssistantResponseSource = "gemini" | "prototype-fallback";
+
+export interface AssistantResponseMeta {
+  source: AssistantResponseSource;
+  model?: string;
+  notice?: string;
+}
+
 export interface IntakeSummary {
   citizenSummary: string;
   adminSummary: string;
@@ -99,6 +107,17 @@ export interface IntakeSummary {
   structuredIntake: Record<string, string | string[]>;
 }
 
+export interface CaseLocationMeta {
+  locationText: string;
+  formattedAddress?: string;
+  placeId?: string;
+  lat?: number;
+  lng?: number;
+  timezoneId?: string;
+  nearbyLandmark?: string;
+  mapZoom?: number;
+}
+
 export interface CaseItem {
   id: string;
   reference: string;
@@ -106,6 +125,7 @@ export interface CaseItem {
   type: CaseType;
   status: CaseStatus;
   location: string;
+  locationMeta?: CaseLocationMeta;
   createdAt: string;
   updatedAt: string;
   summary: string;
