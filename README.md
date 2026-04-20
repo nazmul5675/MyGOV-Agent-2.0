@@ -146,6 +146,25 @@ The store is intentionally presentation-focused:
 - supports a clean judge-friendly end-to-end flow
 - resets when the server restarts
 
+Current seeded coverage:
+
+- 3 citizen users
+- 1 admin user
+- 7 cases across mixed statuses
+- linked file metadata, reminders, notifications, and assistant chat seeds
+- multiple timeline events per case for a smoother demo story
+
+Data selectors and mutations are centralized in:
+
+- `src/lib/prototype/repository.ts`
+
+### How to Update Prototype Data
+
+1. Edit the relevant JSON file in `src/data/prototype`.
+2. Keep IDs and cross-references aligned across `cases.json`, `files.json`, `case-events.json`, `notifications.json`, `reminders.json`, and `chat-seeds.json`.
+3. Restart the dev server if you want a fully fresh in-memory state.
+4. If you create a new case type or field, update the matching TypeScript types and repository mapping logic.
+
 ## Demo Accounts
 
 Seeded prototype accounts:
@@ -307,6 +326,7 @@ Prototype-first variables:
 - `APP_SESSION_SECRET`
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL`
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
 
 Optional Firebase variables for future live mode:
 
@@ -339,11 +359,19 @@ SESSION_COOKIE_NAME=mygov_session
 3. Keep `GEMINI_MODEL=gemini-2.5-flash-lite` unless you intentionally want a different model.
 4. Restart the dev server.
 
-Current local status in this workspace:
+If Gemini is unavailable at runtime, the assistant falls back to the local prototype guidance layer so the demo does not break.
 
-- `GEMINI_API_KEY` is not configured yet
+## Demo Checklist
 
-That means the assistant is implemented, but it is currently using the local fallback response path instead of real Gemini.
+Recommended presentation flow:
+
+1. Sign in as `aisyah.rahman@mygov-demo.my`.
+2. Open `/dashboard` and show the active case overview, file readiness, reminders, and AI helping chat.
+3. Ask Gemini what documents are needed or to summarize uploaded files.
+4. Open `/cases/case-flood-shah-alam` to show timeline, missing documents, file review states, and mapped location context.
+5. Switch to the admin account `amir.fauzi@mygov-demo.my`.
+6. Open `/admin` to show the queue, AI summary cards, and pending file review surface.
+7. Open `/admin/cases/case-flood-shah-alam` and demonstrate evidence review, internal notes, admin actions, and the AI review helper.
 
 ## Local Development
 
@@ -400,6 +428,18 @@ This build is intentionally a polished prototype:
 - set `APP_SESSION_SECRET`
 - set `GEMINI_API_KEY`
 - do not ship `.env.local`, `.git`, `.next`, or `node_modules`
+
+## Submission Packaging
+
+Do not include these in the handoff zip:
+
+- `.env`
+- `.env.local`
+- `.git`
+- `.next`
+- `node_modules`
+- cache folders
+- build artifacts
 
 ## Git Workflow Notes
 
