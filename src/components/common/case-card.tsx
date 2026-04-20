@@ -17,15 +17,15 @@ export function CaseCard({
   const missingDocs = item.intake.missingDocuments.length;
 
   return (
-    <article className="surface-panel interactive-lift flex h-full flex-col gap-4 p-5 sm:p-6">
+    <article className="surface-panel interactive-lift flex h-full flex-col gap-4 p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 space-y-3">
           <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {caseTypeLabelMap[item.type]}
           </div>
           <div className="space-y-1.5">
-            <h3 className="text-xl font-bold tracking-tight text-foreground">{item.title}</h3>
-            <p className="mt-1 break-all text-sm text-muted-foreground">{item.reference}</p>
+            <h3 className="text-xl font-bold leading-8 tracking-tight text-foreground">{item.title}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{item.reference}</p>
           </div>
         </div>
         <StatusBadge status={item.status} />
@@ -47,9 +47,9 @@ export function CaseCard({
         </span>
       </div>
       <div className="grid gap-x-4 gap-y-3 text-sm text-muted-foreground sm:grid-cols-2">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-start gap-2">
           <MapPin className="size-4" />
-          <span>{item.location}</span>
+          <span className="min-w-0">{item.location}</span>
         </div>
         <div className="flex items-center gap-2">
           <FileStack className="size-4" />

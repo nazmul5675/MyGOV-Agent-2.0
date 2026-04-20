@@ -20,12 +20,12 @@ export function Topbar({
 }) {
   const noticeHref = session.role === "citizen" ? "/notifications" : "/admin";
   const homeHref = session.role === "admin" ? "/admin" : "/dashboard";
-  const quickLinks = roleNavigation[session.role].slice(0, 3);
+  const quickLinks = roleNavigation[session.role];
 
   return (
-    <div className="glass-panel flex flex-col gap-3 rounded-[26px] px-4 py-3.5">
+    <div className="glass-panel flex flex-col gap-3 rounded-[24px] px-4 py-3">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0 space-y-2">
+        <div className="min-w-0 space-y-1.5">
           <Link
             href={homeHref}
             className="flex items-center gap-3 rounded-[24px] px-1 py-1 transition-colors hover:bg-white/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 lg:hidden"
@@ -44,7 +44,7 @@ export function Topbar({
             {session.role === "admin" ? "Admin portal" : "Citizen portal"}
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
-            <p className="font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
+            <p className="font-heading text-base font-bold tracking-tight text-foreground sm:text-lg">
               {title}
             </p>
             <AppModeBadge />
@@ -87,8 +87,10 @@ export function Topbar({
 
       <div className="hidden flex-wrap items-center gap-2 pt-0.5 md:flex">
         {quickLinks.map((item) => {
-          const active =
-            currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+          const matchPrefixes = item.matchPrefixes || [item.href];
+          const active = matchPrefixes.some(
+            (prefix) => currentPath === prefix || currentPath.startsWith(`${prefix}/`)
+          );
 
           return (
             <Link

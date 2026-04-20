@@ -65,7 +65,7 @@ export function EvidenceManager({
           {files.map((file) => (
             <article
               key={file.id}
-              className="group min-w-0 rounded-[24px] border border-border/60 bg-white/78 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
+              className="group min-w-0 rounded-[22px] border border-border/60 bg-white/78 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-2">
@@ -90,7 +90,7 @@ export function EvidenceManager({
                 </span>
               </div>
 
-              <div className="mt-4 rounded-[20px] bg-muted/75 p-4">
+              <div className="mt-4 rounded-[18px] bg-muted/75 p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   {file.status === "accepted" ? (
                     <FileCheck2 className="size-4 text-primary" />
@@ -105,14 +105,14 @@ export function EvidenceManager({
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[18px] bg-muted/60 p-3">
+                <div className="rounded-[16px] bg-muted/60 p-3">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     <UploadCloud className="size-4 text-primary" />
                     Upload state
                   </div>
                   <p className="mt-2 text-sm text-foreground">{file.status.replaceAll("_", " ")}</p>
                 </div>
-                <div className="rounded-[18px] bg-muted/60 p-3">
+                <div className="rounded-[16px] bg-muted/60 p-3">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     <FileStack className="size-4 text-primary" />
                     Category

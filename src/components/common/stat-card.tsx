@@ -12,19 +12,19 @@ export function StatCard({
   icon: ReactNode;
 }) {
   return (
-    <div className="surface-panel interactive-lift relative flex h-full min-h-[9.5rem] overflow-hidden p-5 transition-transform duration-300">
-      <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/5 blur-2xl" />
-      <div className="relative flex w-full flex-col gap-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 space-y-2">
-            <p className="text-sm leading-6 text-muted-foreground">{label}</p>
-            <p className="text-[2rem] font-black leading-none tracking-tight text-primary">{value}</p>
+    <div className="surface-panel interactive-lift relative flex h-full min-h-[8.25rem] overflow-hidden p-4 transition-transform duration-300 sm:p-5">
+      <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-primary/5 blur-2xl" />
+      <div className="relative flex w-full flex-col gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1.5">
+            <p className="text-sm leading-5 text-muted-foreground">{label}</p>
+            <p className="text-[1.85rem] font-black leading-none tracking-tight text-primary">{value}</p>
           </div>
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-[18px] bg-accent text-accent-foreground">
             {icon}
           </div>
         </div>
-        <p className="max-w-[22ch] text-sm leading-6 text-muted-foreground">{change}</p>
+        <p className="max-w-[24ch] text-sm leading-5 text-muted-foreground">{change}</p>
       </div>
     </div>
   );

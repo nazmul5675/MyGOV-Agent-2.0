@@ -265,7 +265,7 @@ Firebase admin variables for secure session exchange:
 
 ```env
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_APP_MODE=live
+NEXT_PUBLIC_APP_MODE=prototype
 APP_SESSION_SECRET=replace-with-a-long-random-string
 MONGODB_URI=replace-with-your-mongodb-uri
 MONGODB_DB_NAME=mygov_agent_2

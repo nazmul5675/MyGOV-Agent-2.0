@@ -1,6 +1,5 @@
 import {
   Bell,
-  Globe2,
   LayoutDashboard,
   ShieldCheck,
   Sparkles,
@@ -15,53 +14,54 @@ export type AppNavItem = {
   label: string;
   shortLabel?: string;
   icon: LucideIcon;
+  matchPrefixes?: string[];
 };
 
 export const roleNavigation: Record<UserRole, AppNavItem[]> = {
   citizen: [
     {
       href: "/dashboard",
-      label: "Dashboard",
+      label: "Command Center",
       shortLabel: "Home",
       icon: LayoutDashboard,
+      matchPrefixes: ["/dashboard", "/cases"],
     },
     {
       href: "/cases/new",
-      label: "Create Case",
+      label: "New Case",
       shortLabel: "New",
       icon: Sparkles,
+      matchPrefixes: ["/cases/new"],
     },
     {
       href: "/notifications",
-      label: "Notifications",
+      label: "Alerts",
       shortLabel: "Alerts",
       icon: Bell,
+      matchPrefixes: ["/notifications"],
     },
     {
       href: "/profile",
-      label: "Profile",
-      shortLabel: "Profile",
+      label: "Account",
+      shortLabel: "Account",
       icon: UserRound,
+      matchPrefixes: ["/profile"],
     },
   ],
   admin: [
     {
       href: "/admin",
-      label: "Operations Dashboard",
-      shortLabel: "Ops",
+      label: "Control Center",
+      shortLabel: "Admin",
       icon: ShieldCheck,
+      matchPrefixes: ["/admin"],
     },
     {
       href: "/profile",
-      label: "Profile",
-      shortLabel: "Profile",
+      label: "Account",
+      shortLabel: "Account",
       icon: UserRound,
-    },
-    {
-      href: "/",
-      label: "Public Site",
-      shortLabel: "Site",
-      icon: Globe2,
+      matchPrefixes: ["/profile"],
     },
   ],
 };

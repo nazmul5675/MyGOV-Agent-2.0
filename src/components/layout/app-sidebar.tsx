@@ -16,7 +16,7 @@ export function AppSidebar({
   const homeHref = role === "admin" ? "/admin" : "/dashboard";
 
   return (
-    <aside className="glass-panel hidden w-[272px] shrink-0 flex-col rounded-[30px] p-4 lg:flex">
+    <aside className="glass-panel hidden w-[256px] shrink-0 flex-col rounded-[28px] p-3.5 lg:flex">
       <Link
         href={homeHref}
         className="flex items-center gap-3 rounded-[22px] px-2 py-2.5 transition-colors hover:bg-white/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
@@ -34,18 +34,20 @@ export function AppSidebar({
           </div>
         </div>
       </Link>
-      <nav className="mt-6 space-y-1.5">
+      <nav className="mt-5 space-y-1.5">
         {roleNavigation[role].map((item) => {
           const Icon = item.icon;
-          const active =
-            currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+          const matchPrefixes = item.matchPrefixes || [item.href];
+          const active = matchPrefixes.some(
+            (prefix) => currentPath === prefix || currentPath.startsWith(`${prefix}/`)
+          );
 
           return (
             <Link
               key={`${role}-${item.href}`}
               href={item.href}
               className={cn(
-                "flex min-w-0 items-center gap-3 rounded-[20px] px-3.5 py-2.5 text-sm font-medium transition-all",
+                "flex min-w-0 items-center gap-3 rounded-[18px] px-3.5 py-2.5 text-sm font-medium transition-all",
                 active
                   ? "bg-primary text-primary-foreground shadow-[0_14px_28px_rgba(0,30,64,0.18)]"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -57,15 +59,15 @@ export function AppSidebar({
           );
         })}
       </nav>
-      <div className="mt-auto rounded-[24px] bg-primary px-4 py-4.5 text-primary-foreground">
+      <div className="mt-auto rounded-[22px] bg-primary px-4 py-4 text-primary-foreground">
         <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
           System readiness
         </p>
-        <p className="mt-2 font-heading text-xl font-bold tracking-tight">
-          Ready to route
+        <p className="mt-2 font-heading text-lg font-bold tracking-tight">
+          Workspace ready
         </p>
-        <p className="mt-2.5 text-sm leading-6 text-primary-foreground/75">
-          Live case routing, file handling, and assistant guidance are available from this workspace.
+        <p className="mt-2 text-sm leading-6 text-primary-foreground/75">
+          Case routing, file handling, and assistant guidance stay available from this shell.
         </p>
       </div>
     </aside>

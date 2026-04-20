@@ -250,7 +250,7 @@ export function LoginForm() {
           </p>
           {missingClientVars.length && !isPrototypeMode() ? (
             <FormMessage
-              message={`Missing client env vars: ${missingClientVars.join(", ")}`}
+              message={`Missing client env vars: ${missingClientVars.join(", ")}. Add the Firebase client envs for live auth, or switch NEXT_PUBLIC_APP_MODE=prototype for the judge/demo login flow.`}
             />
           ) : null}
         </div>
