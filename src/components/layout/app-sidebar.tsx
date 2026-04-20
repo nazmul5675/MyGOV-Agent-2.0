@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppModeBadge } from "@/components/common/app-mode-badge";
 import { LogoMark } from "@/components/common/logo-mark";
 import type { UserRole } from "@/lib/types";
 import { roleNavigation } from "@/lib/navigation";
@@ -23,6 +24,9 @@ export function AppSidebar({
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
             {role === "admin" ? "Admin Workspace" : "Citizen Workspace"}
           </p>
+          <div className="mt-2">
+            <AppModeBadge />
+          </div>
         </div>
       </div>
       <nav className="mt-8 space-y-2">

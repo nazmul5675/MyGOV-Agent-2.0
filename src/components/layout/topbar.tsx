@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bell, LogOut } from "lucide-react";
 
+import { AppModeBadge } from "@/components/common/app-mode-badge";
 import type { AppSession } from "@/lib/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
@@ -26,9 +27,12 @@ export function Topbar({
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
             {session.role === "admin" ? "Admin portal" : "Citizen portal"}
           </p>
-          <p className="font-heading text-xl font-bold tracking-tight text-foreground">
-            {title}
-          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <p className="font-heading text-xl font-bold tracking-tight text-foreground">
+              {title}
+            </p>
+            <AppModeBadge />
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <Link

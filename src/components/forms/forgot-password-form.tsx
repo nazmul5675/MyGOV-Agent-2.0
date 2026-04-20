@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { FormMessage } from "@/components/auth/form-message";
+import { AppModeBadge } from "@/components/common/app-mode-badge";
 import { SuccessBlock } from "@/components/auth/success-block";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +63,7 @@ export function ForgotPasswordForm() {
   return (
     <Card className="surface-panel border-white/50 bg-white/82">
       <CardHeader className="space-y-2">
+        <AppModeBadge />
         <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
           Reset your password
         </CardTitle>

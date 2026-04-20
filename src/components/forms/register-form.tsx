@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { FormMessage } from "@/components/auth/form-message";
+import { AppModeBadge } from "@/components/common/app-mode-badge";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -133,6 +134,7 @@ export function RegisterForm() {
   return (
     <Card className="surface-panel border-white/50 bg-white/82">
       <CardHeader className="space-y-2">
+        <AppModeBadge />
         <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
           Create your citizen account
         </CardTitle>

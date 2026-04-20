@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { FormMessage } from "@/components/auth/form-message";
+import { AppModeBadge } from "@/components/common/app-mode-badge";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -167,6 +168,14 @@ export function LoginForm() {
   return (
     <Card className="surface-panel border-white/50 bg-white/82">
       <CardHeader className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <AppModeBadge />
+          {nextPath ? (
+            <span className="rounded-full bg-accent px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-foreground">
+              Secure redirect ready
+            </span>
+          ) : null}
+        </div>
         <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
           Sign in securely
         </CardTitle>
@@ -175,6 +184,11 @@ export function LoginForm() {
             ? "Use a seeded demo account or a newly registered citizen account to enter the workspace instantly."
             : "Use your Firebase account to enter the citizen or admin workspace with a server-issued session cookie."}
         </p>
+        {nextPath ? (
+          <p className="text-xs leading-6 text-muted-foreground">
+            After sign-in, you will continue to <span className="font-semibold text-foreground">{nextPath}</span>.
+          </p>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-6">
         <form
