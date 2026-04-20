@@ -6,17 +6,33 @@ Hero flow:
 
 `citizen login -> dashboard -> upload evidence -> create/open case -> AI help -> admin review -> status update -> citizen sees live change`
 
-## Stack
+## 🚀 Live Demo
 
-- Next.js App Router
-- TypeScript
-- Tailwind CSS
-- Firebase Auth for login/register/password reset/identity
-- Firebase Admin for server-side token/session verification
-- MongoDB for application data
-- MongoDB GridFS for file/blob storage
-- Gemini for server-side assistant and summaries
-- Leaflet/OpenStreetMap for frontend map rendering
+**Live Hosting Link:** [Your Live Deployed Link Here]
+
+### 🔑 Test Credentials
+
+Use the following credentials to explore both sides of the platform:
+
+**Citizen Portal** (File reports, upload evidence, chat with AI assistant)
+- **Email:** `nazmulhasandh@gmail.com`
+- **Password:** `nazmulhasandh@gmail.com1`
+
+**Admin Console** (Review evidence, manage files, post review notes)
+- **Email:** `first.admin@mygov.local`
+- **Password:** `Admin12345!`
+
+## 💻 Tech Stack
+
+- **Framework:** [Next.js App Router](https://nextjs.org/)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/) & [Lucide Icons](https://lucide.dev/)
+- **Authentication:** [Firebase Auth](https://firebase.google.com/) (Client auth & Server-side verification via Admin SDK)
+- **Database:** [MongoDB](https://www.mongodb.com/) (Application data, Users, Case Timelines, Prompts)
+- **File Storage:** [MongoDB GridFS](https://www.mongodb.com/docs/manual/core/gridfs/) (Secure evidence storage)
+- **Artificial Intelligence:** [Google Gemini](https://deepmind.google/technologies/gemini/) (Server-side case assistant, issue summaries)
+- **Maps:** [Leaflet](https://leafletjs.com/) & OpenStreetMap (Frontend coordinate mapping)
+- **Validation:** [Zod](https://zod.dev/)
 
 ## Final Backend Architecture
 
