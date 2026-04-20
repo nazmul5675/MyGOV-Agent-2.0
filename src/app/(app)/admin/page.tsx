@@ -150,7 +150,7 @@ export default async function AdminDashboardPage() {
                 Start with the buckets that matter most: fresh intake, citizen follow-up, urgent packets, and cases that have quietly stalled.
               </p>
             </div>
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-4 2xl:grid-cols-2">
               {[
                 {
                   title: "Recent incoming",
@@ -194,7 +194,7 @@ export default async function AdminDashboardPage() {
                           className="block rounded-[20px] bg-muted/75 p-4 transition-colors hover:bg-accent"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="font-semibold text-foreground">{item.title}</p>
+                            <p className="line-clamp-2 font-semibold text-foreground">{item.title}</p>
                             <span className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
                               {item.status.replaceAll("_", " ")}
                             </span>

@@ -128,14 +128,14 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
             </div>
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="relative w-full max-w-xl">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search users by name, email, or UID"
-                className="h-12 rounded-full pl-11"
-              />
-            </div>
+                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search users by name, email, or UID"
+                  className="h-12 rounded-full pl-11"
+                />
+              </div>
               <div className="flex flex-wrap gap-2">
                 {(["all", "citizen", "admin"] as const).map((item) => (
                   <button
@@ -180,14 +180,14 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                   key={user.uid}
                   className="surface-panel interactive-lift min-w-0 p-5 sm:p-6"
                 >
-                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(19rem,0.95fr)_auto] xl:items-center">
+                  <div className="space-y-5 2xl:grid 2xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.95fr)_auto] 2xl:items-center 2xl:gap-5 2xl:space-y-0">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
                           <h3 className="truncate text-xl font-bold tracking-tight text-foreground">
                             {user.fullName}
                           </h3>
-                          <p className="mt-1 break-all text-sm text-muted-foreground">
+                          <p className="mt-1 break-words text-sm text-muted-foreground">
                             {user.email}
                           </p>
                         </div>
@@ -217,7 +217,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                       </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                    <div className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
                       <div className="rounded-[20px] bg-muted/75 p-3.5">
                         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                           Related cases
@@ -244,10 +244,10 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 xl:flex-col xl:items-stretch xl:justify-center">
+                    <div className="flex flex-wrap gap-2 2xl:flex-col 2xl:items-stretch 2xl:justify-center">
                       <Button
                         variant="outline"
-                        className="rounded-full px-4 xl:w-full"
+                        className="rounded-full px-4 2xl:w-full"
                         onClick={() => setSelectedUser(user)}
                       >
                         <UserRound className="size-4" />
@@ -255,7 +255,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                       </Button>
                       <Button
                         variant={user.role === "admin" ? "outline" : "default"}
-                        className="rounded-full px-4 xl:w-full"
+                        className="rounded-full px-4 2xl:w-full"
                         onClick={() => setPendingRoleTarget(user)}
                       >
                         <UserCog className="size-4" />
@@ -296,7 +296,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                       <p className="truncate text-xl font-bold text-foreground">
                         {selectedUser.fullName}
                       </p>
-                      <p className="break-all text-sm text-muted-foreground">
+                      <p className="break-words text-sm text-muted-foreground">
                         {selectedUser.email}
                       </p>
                     </div>

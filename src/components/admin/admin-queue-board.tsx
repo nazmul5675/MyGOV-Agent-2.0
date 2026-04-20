@@ -102,7 +102,7 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
       </div>
 
       {filteredCases.length ? (
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-5 2xl:grid-cols-2">
           {filteredCases.map((item) => (
             <article
               key={item.id}
@@ -151,18 +151,20 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
                 </p>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+              <div className="space-y-3">
                 <div className="space-y-3">
                   <div className="flex items-start gap-2 text-sm text-muted-foreground">
                     <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span className="line-clamp-2">{item.location}</span>
                   </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  <div className="grid gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground sm:grid-cols-2">
                     <span>{item.intake.missingDocuments.length} missing docs</span>
-                    <span>Updated {new Date(item.updatedAt).toLocaleDateString("en-GB")}</span>
+                    <span className="sm:text-right">
+                      Updated {new Date(item.updatedAt).toLocaleDateString("en-GB")}
+                    </span>
                   </div>
                 </div>
-                <div className="min-w-[8.25rem] rounded-[18px] bg-muted/75 p-3">
+                <div className="rounded-[18px] bg-muted/75 p-3">
                   <Progress value={item.progress} className="gap-2">
                     <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       <span>Progress</span>
