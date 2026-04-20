@@ -11,6 +11,7 @@ import {
   touchUserActivity,
   upsertUserProfile,
 } from "@/lib/repositories/users";
+import { createFirebaseSessionCookie } from "@/lib/services/auth";
 import { registerProfileSchema, registerSchema } from "@/lib/validation/auth";
 
 export async function POST(request: Request) {
@@ -23,12 +24,12 @@ export async function POST(request: Request) {
         password: body.password,
       });
       const sessionToken = await createPrototypeSessionToken({
-        uid: user.uid,
+        uid: user.firebaseUid,
         email: user.email,
         name: user.fullName,
         role: user.role,
       });
-      await touchUserActivity(user.uid);
+      await touchUserActivity(user.firebaseUid);
       const response = NextResponse.json({
         ok: true,
         role: user.role,
@@ -108,8 +109,7 @@ export async function POST(request: Request) {
           : "MongoDB profile bootstrap was skipped.";
     }
 
-    const expiresIn = 60 * 60 * 24 * 5 * 1000;
-    const sessionCookie = await adminAuth.createSessionCookie(body.idToken, { expiresIn });
+    const { sessionCookie, maxAgeSeconds } = await createFirebaseSessionCookie(body.idToken);
     const response = NextResponse.json({
       ok: true,
       role: "citizen",
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
-      maxAge: expiresIn / 1000,
+      maxAge: maxAgeSeconds,
     });
 
     return response;

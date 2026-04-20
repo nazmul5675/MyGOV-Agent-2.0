@@ -1,204 +1,145 @@
 # MyGOV Agent 2.0
 
-MyGOV Agent 2.0 is a production-shaped GovTech case-management MVP for citizens and admins. It gives citizens one clear service entry point, keeps files and case progress visible, uses Gemini for case-aware help, and gives admins an operational review workspace instead of a decorative dashboard.
+MyGOV Agent 2.0 is a GovTech case-management MVP built in a single Next.js App Router repo. The frontend routes stay intact while the backend now runs through Next route handlers, MongoDB repositories/services, MongoDB GridFS for uploaded files, Firebase Auth for identity, and Gemini for server-side AI help.
 
-## Why This Matters
+Hero flow:
 
-Public service journeys often break down because people do not know:
+`citizen login -> dashboard -> upload evidence -> create/open case -> AI help -> admin review -> status update -> citizen sees live change`
 
-- where to start
-- what documents are still missing
-- what the current status actually means
-- which agency is handling the case
-- what to do next
-
-MyGOV Agent 2.0 turns that into a single case workflow with:
-
-- one citizen entry point
-- guided AI assistance
-- visible evidence handling
-- timeline-based status clarity
-- admin review operations in the same product
-
-## Product Roles
-
-- `citizen`
-- `admin`
-
-Citizens can create and track cases, upload evidence, view location context, ask the assistant for help, and follow next-step guidance. Admins can review the queue, inspect evidence, request more documents, add internal notes, update case status, and monitor operational activity.
-
-## Core Experience
-
-### Citizen command center
-
-- welcome state with active case context
-- recent cases and next best actions
-- AI assistant for documents, explanations, and next steps
-- uploaded files overview with review states
-- reminders, notifications, and recent activity
-- direct CTA to create a new case
-
-### Citizen case workspace
-
-- case summary and status
-- file evidence workspace
-- event timeline
-- missing document checklist
-- Leaflet location context
-- AI helper tied to the case
-
-### Admin control center
-
-- queue overview
-- review workload and urgent items
-- file review surface
-- AI-ready operational summaries
-- user management and role control
-- recent activity
-- direct navigation into case review
-
-### Admin case workspace
-
-- citizen context
-- case summary and urgency
-- evidence review actions
-- internal note capture
-- status update actions
-- timeline and map context
-- AI review helper
-
-### Admin user management
-
-- protected `/admin/users` console
-- search and filter by role, status, and account identity
-- inspect profile completeness and related case counts
-- promote citizen to admin or demote admin to citizen with confirmation
-- audit role changes in admin activity history
-
-## Architecture
+## Stack
 
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- Zod
-- Firebase Auth for identity, login, register, forgot-password, and session exchange
-- Firebase Storage for file uploads in live mode
-- MongoDB as the source of truth for application data
-- Gemini for assistant responses and summaries
-- Leaflet + OpenStreetMap for map and location context
+- Firebase Auth for login/register/password reset/identity
+- Firebase Admin for server-side token/session verification
+- MongoDB for application data
+- MongoDB GridFS for file/blob storage
+- Gemini for server-side assistant and summaries
+- Leaflet/OpenStreetMap for frontend map rendering
 
-## Data Architecture
+## Final Backend Architecture
 
-MongoDB is the source of truth for application data.
+- `src/app/api/*`: thin route handlers
+- `src/lib/auth/*`: session and identity helpers
+- `src/lib/config/*`: app/env config
+- `src/lib/security/*`: errors and authorization helpers
+- `src/lib/repositories/*`: MongoDB data access
+- `src/lib/services/*`: business logic
+- `src/lib/storage/gridfs.ts`: GridFS upload/delete/download helpers
+- `src/lib/ai/*`: Gemini prompts and model calls
+- `src/lib/audit/*`: audit helpers
+- `src/lib/validation/*`: Zod schemas
+- `src/types/*`: typed document models
 
-Primary collections:
+## Identity And Data Boundaries
+
+- Firebase Auth: client sign-in, registration, password reset, auth state
+- Firebase Admin: verify ID tokens, create/verify session cookies, read Firebase UID
+- MongoDB: users, cases, case events, file metadata, notifications, reminders, chat, admin notes, role audit logs
+- MongoDB GridFS: uploaded evidence blobs
+- Gemini: server-side AI only
+- Leaflet: frontend-only map UI
+
+There is no separate Express backend, no Firestore dependency, and no Firebase Storage dependency in the runtime upload flow.
+
+## Role Model
+
+Supported roles:
+
+- `citizen`
+- `admin`
+
+Rules:
+
+- public registration always creates `citizen`
+- admin cannot self-register publicly
+- citizen routes resolve to `/dashboard`
+- admin routes resolve to `/admin`
+- role is resolved from MongoDB user records, not from client-selected state
+- role changes are admin-only and written to `role_audit_logs`
+- self-demotion and last-admin removal are blocked
+
+## MongoDB Collections
 
 - `users`
 - `cases`
 - `case_events`
-- `files`
+- `files_metadata`
 - `notifications`
 - `reminders`
 - `chat_messages`
 - `admin_notes`
+- `role_audit_logs`
 
-Firebase remains responsible for:
+GridFS bucket collections:
 
-- authentication identity
-- password reset
-- session bootstrap
-- file upload and storage
+- `<GRIDFS_BUCKET_NAME>.files`
+- `<GRIDFS_BUCKET_NAME>.chunks`
 
-File blobs are not stored in MongoDB. Only file metadata, review state, and workflow context are stored there.
+## File Storage Model
 
-## Repository Layer
+- file blobs are stored in MongoDB GridFS
+- file metadata is stored in `files_metadata`
+- each file metadata record links the case, owner, review state, and GridFS blob id
+- file preview/download is served through `GET /api/files/[id]`
 
-MongoDB-backed repositories live under [`src/lib/repositories`](src/lib/repositories):
+Metadata fields include:
 
-- `users.ts`
-- `cases.ts`
-- `files.ts`
-- `notifications.ts`
-- `chat.ts`
-- `bootstrap.ts`
+- `id`
+- `fileId`
+- `gridFsFileId`
+- `caseId`
+- `ownerUid`
+- `filename`
+- `mimeType`
+- `size`
+- `category`
+- `uploadedAt`
+- `reviewStatus`
+- `reviewNote`
+- `uploadedByRole`
 
-Shared MongoDB connection logic lives in [`src/lib/mongodb.ts`](src/lib/mongodb.ts).
+## Current Backend Capabilities
 
-On first run, the repository bootstrap seeds MongoDB from the structured demo dataset in `src/data/prototype` if the main collections are empty. That keeps the demo flow stable while making MongoDB the actual runtime store.
+### Auth
 
-## Auth and Demo Access
+- Firebase ID token exchange in `/api/auth/login`
+- server-issued session cookie for protected routes
+- Mongo-backed app user resolution by `firebaseUid`
+- citizen/admin protected routing
 
-The app supports two operating modes:
+### Cases And Timeline
 
-- `live`
-- `prototype`
+- citizen case creation
+- citizen own-case reads
+- admin queue reads
+- admin case detail reads
+- admin case actions
+- automatic `case_events` writes for creation, uploads, status changes, doc requests, and review actions
 
-### Live mode
+### Files
 
-- Firebase Auth handles login, register, and forgot-password
-- MongoDB stores user profile and application data
-- Firebase Storage handles real uploads
-- public registration always creates `citizen` accounts
-- admins sign in through the shared login with assigned credentials
-- citizen users land on `/dashboard`
-- admin users land on `/admin`
+- live uploads flow through `POST /api/uploads`
+- blobs are stored in GridFS
+- metadata is stored in MongoDB
+- file streaming uses `GET /api/files/[id]`
+- admin review updates write review status and notes back to MongoDB
 
-### Demo mode
+### Admin Operations
 
-- stable seeded demo credentials are available for judges
-- session cookies are still server-validated
-- MongoDB still stores the application data
-- uploads use the demo upload path for presentation stability
+- admin user list/search/filter
+- user detail reads
+- citizen/admin role changes
+- dedicated role audit logging
 
-Default env examples are set to `prototype` so the judge-friendly seeded demo flow works out of the box. Switch to `live` when you want Firebase-backed sign-in and uploads.
+### AI Layer
 
-## Demo Credentials
+- Gemini runs server-side only
+- case-aware prompts include summaries, status, files, and missing docs
+- graceful fallback remains available for demo stability
 
-Demo credentials are shown directly in the login UI when `NEXT_PUBLIC_APP_MODE=prototype`.
-
-Primary demo flow:
-
-- Citizen: `aisyah.rahman@mygov-demo.my` / `DemoCitizen123`
-- Admin: `amir.fauzi@mygov-demo.my` / `DemoAdmin123`
-
-## AI Integration
-
-Gemini integration lives in:
-
-- [`src/lib/ai/gemini.ts`](src/lib/ai/gemini.ts)
-
-Assistant fallback logic lives in:
-
-- [`src/lib/assistant.ts`](src/lib/assistant.ts)
-
-The assistant is case-aware and file-aware. It is used for:
-
-- document guidance
-- missing document suggestions
-- citizen-friendly summaries
-- admin summaries
-- next-step explanation
-- issue clarification
-
-If `GEMINI_API_KEY` is unavailable, the app falls back to a built-in workflow guide so the product still demos reliably.
-
-## Leaflet Location Flow
-
-Leaflet/OpenStreetMap components live in:
-
-- [`src/components/maps/location-picker-card.tsx`](src/components/maps/location-picker-card.tsx)
-- [`src/components/maps/location-preview-card.tsx`](src/components/maps/location-preview-card.tsx)
-- [`src/components/maps/leaflet-preview-map.tsx`](src/components/maps/leaflet-preview-map.tsx)
-- [`src/lib/maps/leaflet.ts`](src/lib/maps/leaflet.ts)
-
-Location UX supports:
-
-- case creation location selection
-- citizen case location preview
-- admin review map context
-- address, coordinates, and supporting location details
-
-## Route Map
+## Route Overview
 
 Public routes:
 
@@ -221,71 +162,66 @@ Admin routes:
 - `/admin/cases/[id]`
 - `/admin/users`
 
-## Judge Demo Flow
+Backend routes:
 
-Recommended hero flow:
+- `/api/auth/login`
+- `/api/auth/register`
+- `/api/auth/logout`
+- `/api/cases`
+- `/api/cases/[id]`
+- `/api/cases/[id]/evidence`
+- `/api/uploads`
+- `/api/files/[id]`
+- `/api/admin/cases/[id]/actions`
+- `/api/admin/cases/[id]/files`
+- `/api/admin/users/[id]/role`
+- `/api/assistant/messages`
+- `/api/users`
+- `/api/notifications`
+- `/api/profile`
+- `/api/health`
 
-1. Sign in as the citizen demo account.
-2. Open `/dashboard`.
-3. Show active case context, reminders, next actions, files, and the AI assistant.
-4. Ask the assistant what documents are still needed.
-5. Open the flood-relief case.
-6. Show the timeline, evidence states, location map, and next-step guidance.
-7. Switch to the admin demo account.
-8. Open `/admin`.
-9. Show queue visibility, file review workload, and AI summary cards.
-10. Open the same case in `/admin/cases/[id]`.
-11. Review evidence, add an internal note, request more documents or update status.
-12. Open `/admin/users` and show safe role control and user oversight.
-13. Return to the citizen side and show that the workflow context is coherent.
+## Hero Demo Flow
 
-Secondary “No Wrong Door” proof:
-
-- public complaint flows such as pothole or streetlamp issues are also supported through the same case model.
+1. Citizen signs in with Firebase Auth.
+2. `/dashboard` loads MongoDB-backed cases and reminders.
+3. Citizen opens `/cases/new`.
+4. Evidence uploads through the Next backend into GridFS.
+5. Case creation stores metadata in MongoDB and writes timeline events.
+6. Citizen opens `/cases/[id]` and sees uploads, timeline, and AI help.
+7. Admin opens `/admin` and `/admin/cases/[id]`.
+8. Admin reviews files, updates status, or requests more documents.
+9. Citizen sees updated status, file review notes, and timeline changes.
 
 ## Environment Variables
 
-Copy `.env.local.example` to `.env.local`.
+Use `.env.local` for local development. Never commit real values.
 
-Required core variables:
+Required app vars:
 
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_APP_MODE`
 - `APP_SESSION_SECRET`
 - `MONGODB_URI`
 - `MONGODB_DB_NAME`
+- `GRIDFS_BUCKET_NAME`
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL`
+- `SESSION_COOKIE_NAME`
 
-Firebase client variables for live auth and uploads:
+Firebase client auth vars:
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 
-Firebase admin variables for secure session exchange:
+Firebase admin verification vars:
 
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
-- `FIREBASE_STORAGE_BUCKET`
-- `SESSION_COOKIE_NAME`
-
-### Example
-
-```env
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_APP_MODE=live
-APP_SESSION_SECRET=replace-with-a-long-random-string
-MONGODB_URI=replace-with-your-mongodb-uri
-MONGODB_DB_NAME=mygov_agent_2
-GEMINI_API_KEY=replace-with-your-gemini-api-key
-GEMINI_MODEL=gemini-2.5-flash-lite
-SESSION_COOKIE_NAME=mygov_session
-```
 
 ## Local Setup
 
@@ -294,21 +230,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
-
-## Scripts
-
-```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
-npm run typecheck
-```
-
-## Validation
-
-Run after each milestone:
+Validation:
 
 ```bash
 npm run lint
@@ -316,32 +238,39 @@ npm run typecheck
 npm run build
 ```
 
-## AI Usage Disclosure
+Optional admin bootstrap:
 
-- Gemini powers assistant responses when configured.
-- The fallback assistant uses local workflow guidance when Gemini is unavailable.
-- Seed demo data is used only to bootstrap MongoDB for presentation stability.
-- The product does not claim fully automated policy adjudication or document forensics.
+```bash
+npm run seed:admin -- --email admin@example.com --password "StrongPass123!" --name "First Admin"
+```
 
-## Repo Hygiene
+## Demo Mode vs Live Mode
 
-Do not include these in handoff packages:
+- `prototype`: seeded MongoDB data plus stable demo auth/upload behavior
+- `live`: Firebase Auth + Firebase Admin verification + MongoDB + GridFS + Gemini
 
-- `.env`
-- `.env.local`
-- `.git`
-- `.next`
-- `node_modules`
-- cache folders
-- build artifacts
+## Security Notes
 
-## Submission Positioning
+- Firebase Admin runs server-side only
+- Gemini keys stay server-side only
+- route handlers validate payloads with Zod
+- protected routes verify the session before mutation
+- file blobs are stored in GridFS, not in normal Mongo collections
+- role changes are audited
 
-This repo is intended to feel deployable next, not just presentable:
+## AI-Assisted Development Disclosure
 
-- real auth path
-- Mongo-backed application data
-- Firebase-backed identity and file storage
-- Gemini-centered assistance
-- Leaflet-powered location context
-- polished citizen and admin workflows
+This repository includes AI-assisted implementation work. AI tooling was used to help generate, refactor, and document parts of the codebase. Final integration, project-specific adaptation, and validation were performed inside the repo workflow.
+
+## Attribution
+
+- Next.js
+- Firebase Auth
+- MongoDB
+- Gemini
+- Leaflet
+- OpenStreetMap
+
+## License
+
+No license file is included yet. Add one before public redistribution if your submission requires it.

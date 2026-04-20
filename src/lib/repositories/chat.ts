@@ -29,7 +29,7 @@ export async function listChatMessagesForThread(input: {
 
   const records = await chatMessages
     .find({
-      userId: input.userId,
+      userUid: input.userId,
       threadKey: input.threadKey,
     })
     .sort({ createdAt: 1 })
@@ -44,7 +44,7 @@ export async function appendChatMessageRecord(record: ChatMessageDocument) {
   return {
     id: record.id,
     role: record.role,
-    body: record.body,
+    body: record.content,
     createdAt: record.createdAt,
     caseId: record.caseId,
     threadKey: record.threadKey,

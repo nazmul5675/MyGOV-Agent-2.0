@@ -1,22 +1,20 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { toast } from "sonner";
 
 import { isPrototypeMode } from "@/lib/config/app-mode";
-import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
-import { firebaseStorage } from "@/lib/firebase/client";
 import type { EvidenceFile } from "@/lib/types";
 
 interface UploadState {
   id: string;
+  gridFsFileId?: string;
   name: string;
   kind: EvidenceFile["kind"];
   size: number;
   progress: number;
   status: "queued" | "uploading" | "uploaded" | "error";
   downloadUrl?: string;
-  storagePath?: string;
   contentType?: string;
 }
 
@@ -32,6 +30,16 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const maxUploadBytes = 10 * 1024 * 1024;
+
+function isSupportedFile(file: File) {
+  return (
+    file.type.startsWith("image/") ||
+    file.type === "application/pdf" ||
+    file.type.startsWith("audio/")
+  );
+}
+
 export function useFileUploads() {
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const queuedFilesRef = useRef<Record<string, File>>({});
@@ -40,7 +48,21 @@ export function useFileUploads() {
   const queueFiles = (files: FileList | null) => {
     if (!files) return [];
 
-    const queued = Array.from(files).map((file) => ({
+    const validFiles = Array.from(files).filter((file) => {
+      if (!isSupportedFile(file)) {
+        toast.error(`${file.name} is not a supported file type. Use image, PDF, or audio files.`);
+        return false;
+      }
+
+      if (file.size > maxUploadBytes) {
+        toast.error(`${file.name} is larger than 10 MB and cannot be uploaded.`);
+        return false;
+      }
+
+      return true;
+    });
+
+    const queued = validFiles.map((file) => ({
       id: `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: file.name,
       kind: inferKind(file),
@@ -82,8 +104,6 @@ export function useFileUploads() {
           ...item,
           file: queuedFilesRef.current[item.id],
         }));
-    const storage = firebaseStorage;
-
     const results: EvidenceFile[] = [];
 
     if (isPrototypeMode()) {
@@ -107,8 +127,6 @@ export function useFileUploads() {
 
         const previewUrl = URL.createObjectURL(file);
         objectUrlRef.current[entry.id] = previewUrl;
-        const storagePath = `prototype/${userId}/${caseId}/${entry.id}-${entry.name}`;
-
         setUploads((current) =>
           current.map((item) =>
             item.id === entry.id
@@ -117,7 +135,6 @@ export function useFileUploads() {
                   progress: 100,
                   status: "uploaded",
                   downloadUrl: previewUrl,
-                  storagePath,
                 }
               : item
           )
@@ -132,7 +149,6 @@ export function useFileUploads() {
           uploadedAt: new Date().toISOString(),
           status: "uploaded",
           downloadUrl: previewUrl,
-          storagePath,
           contentType: entry.contentType,
         });
       }
@@ -140,149 +156,53 @@ export function useFileUploads() {
       return results;
     }
 
-    const imgbbKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-
     for (const entry of queued) {
       const file = "file" in entry && entry.file instanceof File ? entry.file : null;
       if (!file) continue;
 
-      const isImage = entry.kind === "photo" || entry.contentType?.startsWith("image/");
+      setUploads((current) =>
+        current.map((item) =>
+          item.id === entry.id ? { ...item, status: "uploading", progress: 12 } : item
+        )
+      );
 
-      if (isImage) {
-        const result = await new Promise<EvidenceFile>(async (resolve, reject) => {
-          setUploads((current) =>
-            current.map((item) =>
-              item.id === entry.id ? { ...item, progress: 25, status: "uploading" } : item
-            )
-          );
+      const formData = new FormData();
+      formData.append("caseId", caseId);
+      formData.append("file", file, file.name);
 
-          try {
-            const formData = new FormData();
-            formData.append("image", file);
-            
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
-              method: "POST",
-              body: formData,
-            });
+      const response = await fetch("/api/uploads", {
+        method: "POST",
+        body: formData,
+      });
 
-            if (!res.ok) throw new Error(`ImgBB error: ${res.statusText}`);
-
-            setUploads((current) =>
-              current.map((item) =>
-                item.id === entry.id ? { ...item, progress: 75 } : item
-              )
-            );
-
-            const data = await res.json();
-            const downloadUrl = data.data.url;
-
-            setUploads((current) =>
-              current.map((item) =>
-                item.id === entry.id
-                  ? {
-                      ...item,
-                      progress: 100,
-                      status: "uploaded",
-                      downloadUrl,
-                      storagePath: `imgbb-${data.data.id}`,
-                    }
-                  : item
-              )
-            );
-
-            resolve({
-              id: entry.id,
-              name: entry.name,
-              kind: entry.kind,
-              sizeLabel: formatFileSize(entry.size),
-              sizeBytes: entry.size,
-              uploadedAt: new Date().toISOString(),
-              status: "uploaded",
-              downloadUrl,
-              storagePath: `imgbb-${data.data.id}`,
-              contentType: entry.contentType,
-            });
-          } catch (error) {
-            setUploads((current) =>
-              current.map((item) =>
-                item.id === entry.id ? { ...item, status: "error" } : item
-              )
-            );
-            reject(error);
-          }
-        });
-        results.push(result);
-      } else {
-        if (!storage) {
-          const missingVars = getMissingFirebaseClientVars();
-          setUploads((current) => current.map((item) => ({ ...item, status: "error" })));
-          throw new Error(
-            `Firebase Storage is not configured for non-image uploads. Missing: ${missingVars.join(", ")}`
-          );
-        }
-
-        const storagePath = `cases/${userId}/${caseId}/${entry.id}-${entry.name}`;
-        const storageRef = ref(storage, storagePath);
-        const task = uploadBytesResumable(storageRef, file, {
-          contentType: entry.contentType,
-        });
-
-        const result = await new Promise<EvidenceFile>((resolve, reject) => {
-          task.on(
-            "state_changed",
-            (snapshot) => {
-              const progress = Math.round(
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-              );
-              setUploads((current) =>
-                current.map((item) =>
-                  item.id === entry.id
-                    ? { ...item, progress, status: "uploading", storagePath }
-                    : item
-                )
-              );
-            },
-            () => {
-              setUploads((current) =>
-                current.map((item) =>
-                  item.id === entry.id ? { ...item, status: "error" } : item
-                )
-              );
-              reject(new Error(`Upload failed for ${entry.name}`));
-            },
-            async () => {
-              const downloadUrl = await getDownloadURL(task.snapshot.ref);
-              setUploads((current) =>
-                current.map((item) =>
-                  item.id === entry.id
-                    ? {
-                        ...item,
-                        progress: 100,
-                        status: "uploaded",
-                        downloadUrl,
-                        storagePath,
-                      }
-                    : item
-                )
-              );
-              resolve({
-                id: entry.id,
-                name: entry.name,
-                kind: entry.kind,
-                sizeLabel: formatFileSize(entry.size),
-                sizeBytes: entry.size,
-                uploadedAt: new Date().toISOString(),
-                status: "uploaded",
-                downloadUrl,
-                storagePath,
-                contentType: entry.contentType,
-              });
-            }
-          );
-        });
-
-        results.push(result);
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        setUploads((current) =>
+          current.map((item) => (item.id === entry.id ? { ...item, status: "error" } : item))
+        );
+        throw new Error(body?.error || `Upload failed for ${entry.name}.`);
       }
+
+      const payload = (await response.json()) as { file: EvidenceFile };
+      const result = payload.file;
+
+      setUploads((current) =>
+        current.map((item) =>
+          item.id === entry.id
+            ? {
+                ...item,
+                id: result.id,
+                gridFsFileId: result.gridFsFileId,
+                progress: 100,
+                status: "uploaded",
+                downloadUrl: result.downloadUrl,
+                contentType: result.contentType,
+              }
+            : item
+        )
+      );
+
+      results.push(result);
     }
 
     return results;
@@ -307,17 +227,14 @@ export function useFileUploads() {
         return;
       }
 
-      const storage = firebaseStorage;
-      if (!storage) return;
+      const fileIds = files.map((file) => file.id).filter(Boolean);
+      if (!fileIds.length) return;
 
-      await Promise.all(
-        files
-          .map((file) => file.storagePath)
-          .filter((path): path is string => Boolean(path))
-          .map(async (path) => {
-            await deleteObject(ref(storage, path)).catch(() => undefined);
-          })
-      );
+      await fetch("/api/uploads", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileIds }),
+      }).catch(() => undefined);
     },
     resetUploads: () => {
       Object.values(objectUrlRef.current).forEach((url) => URL.revokeObjectURL(url));

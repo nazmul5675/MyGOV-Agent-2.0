@@ -32,11 +32,11 @@ export const evidenceMetadataSchema = z.object({
   files: z.array(
     z.object({
       id: z.string().min(2),
+      gridFsFileId: z.string().min(2).optional(),
       name: z.string().min(1),
       kind: evidenceKindSchema,
       size: z.number().nonnegative(),
-      downloadUrl: z.string().url().optional(),
-      storagePath: z.string().min(1).optional(),
+      downloadUrl: z.string().min(1).optional(),
       contentType: z.string().optional(),
     })
   ),

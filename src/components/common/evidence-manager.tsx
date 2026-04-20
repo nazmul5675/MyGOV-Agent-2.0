@@ -61,44 +61,52 @@ export function EvidenceManager({
       </div>
 
       {files.length ? (
-        <div className={cn("mt-5 grid gap-4", dense ? "xl:grid-cols-1" : "lg:grid-cols-2")}>
+        <div className={cn("mt-5 grid gap-4", dense ? "xl:grid-cols-1" : "2xl:grid-cols-1")}>
           {files.map((file) => (
             <article
               key={file.id}
-              className="group min-w-0 rounded-[24px] border border-border/60 bg-white/78 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
+              className="group min-w-0 rounded-[24px] border border-border/60 bg-white/78 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)] sm:p-5"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 space-y-2">
-                  <p className="line-clamp-2 text-[15px] font-semibold leading-6 text-foreground break-all">
-                    {file.name}
+                  <p className="line-clamp-2 text-[15px] font-semibold leading-6 text-foreground">
+                    <span className="break-words">{file.name}</span>
                   </p>
-                  <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                    <span className="capitalize">{file.kind.replace("_", " ")}</span>
-                    <span>{file.sizeLabel}</span>
-                    <span>{formatDate(file.uploadedAt)}</span>
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span className="whitespace-nowrap rounded-full bg-muted/70 px-2.5 py-1 capitalize">
+                      {file.kind.replace("_", " ")}
+                    </span>
+                    <span className="whitespace-nowrap rounded-full bg-muted/70 px-2.5 py-1">{file.sizeLabel}</span>
+                    <span className="whitespace-nowrap rounded-full bg-muted/70 px-2.5 py-1">
+                      {formatDate(file.uploadedAt)}
+                    </span>
                   </div>
                 </div>
-                <FileStatusBadge status={file.status} />
+                <div className="shrink-0">
+                  <FileStatusBadge status={file.status} />
+                </div>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em]">
-                <span className="rounded-full bg-accent/75 px-3 py-1.5 text-accent-foreground">
+                <span className="whitespace-nowrap rounded-full bg-accent/75 px-3 py-1.5 text-accent-foreground">
                   {file.category || "Uncategorized"}
                 </span>
                 {file.reviewedBy ? (
-                  <span className="rounded-full bg-muted px-3 py-1.5 text-muted-foreground">
+                  <span className="whitespace-nowrap rounded-full bg-muted px-3 py-1.5 text-muted-foreground">
                     reviewed
                   </span>
                 ) : null}
               </div>
 
-              <div className="mt-4 grid gap-3 xl:grid-cols-[11rem_minmax(0,1fr)]">
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[18px] bg-muted/60 p-3">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     <UploadCloud className="size-4 text-primary" />
                     Upload state
                   </div>
-                  <p className="mt-2 text-sm text-foreground">{file.status.replaceAll("_", " ")}</p>
+                  <p className="mt-2 text-sm capitalize text-foreground">
+                    {file.status.replaceAll("_", " ")}
+                  </p>
                 </div>
                 <div className="rounded-[18px] bg-muted/60 p-3">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -107,7 +115,7 @@ export function EvidenceManager({
                   </div>
                   <p className="mt-2 text-sm text-foreground">{file.category || "Uncategorized"}</p>
                 </div>
-                <div className="rounded-[20px] bg-muted/75 p-4">
+                <div className="rounded-[20px] bg-muted/75 p-4 sm:col-span-2">
                   <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                     {file.status === "accepted" ? (
                       <FileCheck2 className="size-4 text-primary" />

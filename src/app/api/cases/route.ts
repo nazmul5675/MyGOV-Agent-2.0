@@ -1,26 +1,46 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
 
 import { readSession } from "@/lib/auth/session";
-import { createCaseRecord } from "@/lib/repositories/cases";
+import { getAdminDashboardData, listCitizenCases } from "@/lib/repositories/cases";
+import { assertRole } from "@/lib/services/auth";
+import { createCitizenCase } from "@/lib/services/cases";
+import { handleRouteError, unauthorized } from "@/lib/security/api";
 import { createCaseRequestSchema } from "@/lib/validation/cases";
+
+export async function GET() {
+  try {
+    const session = await readSession();
+    if (!session) throw unauthorized();
+
+    if (session.role === "admin") {
+      const data = await getAdminDashboardData();
+      return NextResponse.json({
+        cases: data.queue,
+        stats: data.stats,
+      });
+    }
+
+    const cases = await listCitizenCases(session.uid);
+    return NextResponse.json({ cases });
+  } catch (error) {
+    return handleRouteError(error, "Unable to load cases.");
+  }
+}
 
 export async function POST(request: Request) {
   try {
     const session = await readSession();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session.role !== "citizen") {
-      return NextResponse.json({ error: "Only citizens can create cases." }, { status: 403 });
-    }
+    if (!session) throw unauthorized();
+    assertRole(session, "citizen");
     const body = createCaseRequestSchema.parse(await request.json());
 
-    const created = await createCaseRecord({
-      id: body.caseId,
+    const created = await createCitizenCase({
+      session,
+      caseId: body.caseId,
       title: body.title,
-      type: body.caseType,
+      caseType: body.caseType,
       location: body.location,
+      description: body.description,
       locationMeta: {
         locationText: body.location,
         formattedAddress: body.formattedAddress,
@@ -30,10 +50,7 @@ export async function POST(request: Request) {
         timezoneId: body.timezoneId,
         nearbyLandmark: body.nearbyLandmark,
       },
-      summary: body.description,
-      citizenId: session.uid,
-      citizenName: session.name,
-      evidence: body.files,
+      files: body.files,
     });
 
     return NextResponse.json({
@@ -41,13 +58,6 @@ export async function POST(request: Request) {
       role: session.role,
     });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json({ error: error.issues[0]?.message || "Invalid request." }, { status: 400 });
-    }
-
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to create case." },
-      { status: 500 }
-    );
+    return handleRouteError(error, "Unable to create case.");
   }
 }

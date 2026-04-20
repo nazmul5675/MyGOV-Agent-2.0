@@ -98,8 +98,8 @@ export default async function AdminCaseDetailPage({
         description="Review the citizen packet, manage evidence, log internal notes, and make the next decision from one protected control surface."
       />
 
-      <section className="grid gap-6 xl:grid-cols-[292px_minmax(0,1fr)_336px]">
-        <aside className="space-y-6">
+      <section className="grid gap-6 xl:grid-cols-12">
+        <aside className="space-y-6 xl:col-span-4 2xl:col-span-3">
           <div className="surface-panel p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
               Case overview
@@ -178,7 +178,7 @@ export default async function AdminCaseDetailPage({
           />
         </aside>
 
-        <div className="space-y-6">
+        <div className="space-y-6 xl:col-span-8 2xl:col-span-6">
           <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground sm:p-7">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
@@ -196,7 +196,7 @@ export default async function AdminCaseDetailPage({
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 min-[1680px]:grid-cols-3">
             <div className="surface-panel p-5">
               <div className="flex items-center gap-2 text-primary">
                 <UserRound className="size-4" />
@@ -270,7 +270,7 @@ export default async function AdminCaseDetailPage({
                 AI decision support
               </p>
             </div>
-            <div className="mt-4 grid gap-4 xl:grid-cols-3">
+            <div className="mt-4 grid gap-4 xl:grid-cols-2 min-[1680px]:grid-cols-3">
               <div className="rounded-[22px] bg-muted/75 p-4">
                 <p className="text-sm font-semibold text-foreground">Issue summary</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -322,21 +322,24 @@ export default async function AdminCaseDetailPage({
           </div>
         </div>
 
-        <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
+        <div className="space-y-6 xl:col-span-12 2xl:col-span-3 2xl:sticky 2xl:top-6 2xl:self-start">
           <AdminReviewPanel caseId={item.id} initialNote={item.latestInternalNote} />
-          <AssistantPanel
-            caseId={item.id}
-            initialMessages={messages || []}
-            title="AI review helper"
-            subtitle="Use the assistant to summarize the packet, check for missing documents, and prepare a clearer citizen-facing follow-up note."
-            suggestedPrompts={[
-              "Draft an officer summary for this case",
-              "Summarize the uploaded files",
-              "What documents are still missing?",
-              "What should the admin do next?",
-            ]}
-          />
         </div>
+      </section>
+
+      <section className="surface-panel p-5 sm:p-6">
+        <AssistantPanel
+          caseId={item.id}
+          initialMessages={messages || []}
+          title="AI review helper"
+          subtitle="Use the assistant to summarize the packet, check for missing documents, and prepare a clearer citizen-facing follow-up note."
+          suggestedPrompts={[
+            "Draft an officer summary for this case",
+            "Summarize the uploaded files",
+            "What documents are still missing?",
+            "What should the admin do next?",
+          ]}
+        />
       </section>
     </div>
   );

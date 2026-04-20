@@ -15,14 +15,13 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { createCaseAction } from "@/lib/actions/cases";
 import { useFileUploads } from "@/hooks/use-file-uploads";
 import { isPrototypeMode } from "@/lib/config/app-mode";
-import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { createCaseSchema } from "@/lib/validation/cases";
 import { AssistantPanel } from "@/components/common/assistant-panel";
 import { Button } from "@/components/ui/button";
@@ -56,7 +55,6 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
     cleanupUploadedFiles,
     resetUploads,
   } = useFileUploads();
-  const missingClientVars = getMissingFirebaseClientVars();
   const prototypeMode = isPrototypeMode();
   const form = useForm<FormValues>({
     resolver: zodResolver(createCaseSchema),
@@ -72,6 +70,10 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
     () => `${uploads.length} files attached`,
     [uploads.length]
   );
+  const caseTypeValue = useWatch({
+    control: form.control,
+    name: "caseType",
+  });
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
@@ -85,11 +87,11 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
           caseId,
           files: uploadedEvidence.map((item) => ({
             id: item.id,
+            gridFsFileId: item.gridFsFileId,
             name: item.name,
             kind: item.kind,
             size: item.sizeBytes || 0,
             downloadUrl: item.downloadUrl,
-            storagePath: item.storagePath,
             contentType: item.contentType,
           })),
         });
@@ -137,7 +139,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             <div className="grid gap-2">
               <Label>Case type</Label>
               <Select
-                value={form.watch("caseType")}
+                value={caseTypeValue}
                 onValueChange={(value) =>
                   form.setValue("caseType", value as FormValues["caseType"], {
                     shouldValidate: true,
@@ -192,7 +194,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               <p className="mt-2 text-sm text-muted-foreground">
                 {prototypeMode
                   ? "Photos, documents, and voice notes use the demo upload path with realistic progress, status, and metadata so the judge flow stays stable."
-                  : "Photos, documents, and voice notes upload into Firebase Storage when credentials are connected, with metadata saved against the case."}
+                  : "Photos, documents, and voice notes upload through the protected MyGOV backend into MongoDB GridFS, with metadata saved against the case."}
               </p>
             </div>
             <div className="self-start rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -216,17 +218,14 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 id="evidence-files"
                 type="file"
                 multiple
+                accept="image/*,application/pdf,audio/*"
                 className="hidden"
-                onChange={(event) => queueFiles(event.target.files)}
+                onChange={(event) => {
+                  queueFiles(event.target.files);
+                  event.currentTarget.value = "";
+                }}
               />
             </label>
-            {missingClientVars.length && !prototypeMode ? (
-              <div className="rounded-[24px] border border-destructive/20 bg-[#fff1ed] p-4 text-sm leading-7 text-[#9a3b2f]">
-                Live uploads require Firebase client config. Missing:{" "}
-                {missingClientVars.join(", ")}
-              </div>
-            ) : null}
-
             <div className="grid gap-3 md:grid-cols-3">
               {[
                 { label: "Photo proof", icon: ImagePlus },

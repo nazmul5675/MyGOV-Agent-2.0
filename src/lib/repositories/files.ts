@@ -10,34 +10,37 @@ function toPlainFile(record: FileDocument) {
 }
 
 export async function listFilesForCase(caseId: string) {
-  const { files } = await getMongoCollections();
-  const records = await files.find({ caseId }).sort({ uploadedAt: -1 }).toArray();
+  const { filesMetadata } = await getMongoCollections();
+  const records = await filesMetadata.find({ caseId }).sort({ uploadedAt: -1 }).toArray();
   return records.map(toPlainFile);
 }
 
 export async function listFilesForCases(caseIds: string[]) {
   if (!caseIds.length) return [];
-  const { files } = await getMongoCollections();
-  const records = await files.find({ caseId: { $in: caseIds } }).sort({ uploadedAt: -1 }).toArray();
+  const { filesMetadata } = await getMongoCollections();
+  const records = await filesMetadata.find({ caseId: { $in: caseIds } }).sort({ uploadedAt: -1 }).toArray();
   return records.map(toPlainFile);
 }
 
-export async function listFilesForUser(userId: string) {
-  const { files } = await getMongoCollections();
-  const records = await files.find({ ownerUid: userId }).sort({ uploadedAt: -1 }).toArray();
+export async function listFilesForUser(userUid: string) {
+  const { filesMetadata } = await getMongoCollections();
+  const records = await filesMetadata.find({ ownerUid: userUid }).sort({ uploadedAt: -1 }).toArray();
   return records.map(toPlainFile);
+}
+
+export async function getFileById(fileId: string) {
+  const { filesMetadata } = await getMongoCollections();
+  const record = await filesMetadata.findOne({ id: fileId });
+  return record ? toPlainFile(record) : null;
 }
 
 export async function insertFiles(records: FileDocument[]) {
   if (!records.length) return;
-  const { files } = await getMongoCollections();
-  await files.insertMany(records, { ordered: false });
+  const { filesMetadata } = await getMongoCollections();
+  await filesMetadata.insertMany(records, { ordered: false });
 }
 
-export async function updateFileById(
-  fileId: string,
-  update: Partial<FileDocument>
-) {
-  const { files } = await getMongoCollections();
-  await files.updateOne({ id: fileId }, { $set: update });
+export async function updateFileById(fileId: string, update: Partial<FileDocument>) {
+  const { filesMetadata } = await getMongoCollections();
+  await filesMetadata.updateOne({ id: fileId }, { $set: update });
 }

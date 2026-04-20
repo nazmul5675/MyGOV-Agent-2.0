@@ -16,7 +16,7 @@ import type {
 } from "@/lib/types";
 import { appendChatMessageRecord, listChatMessagesForThread } from "@/lib/repositories/chat";
 import { getMongoCollections } from "@/lib/repositories/bootstrap";
-import { insertFiles, listFilesForCase, listFilesForCases, updateFileById } from "@/lib/repositories/files";
+import { insertFiles, listFilesForCase, updateFileById } from "@/lib/repositories/files";
 import {
   createNotificationForUser,
   createReminderForUser,
@@ -24,11 +24,7 @@ import {
   listRemindersForUser,
 } from "@/lib/repositories/notifications";
 import { getAdminUserOverview } from "@/lib/repositories/users";
-import type {
-  CaseDocument,
-  ChatMessageDocument,
-  FileDocument,
-} from "@/types/models";
+import type { AdminNoteDocument, CaseDocument, ChatMessageDocument, FileDocument } from "@/types/models";
 
 function toPlainRecord<T extends object>(record: T) {
   const plain = { ...(record as T & { _id?: unknown }) };
@@ -46,8 +42,90 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function sortEvents(events: CaseEvent[]) {
-  return events.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+function mapFileToEvidence(file: FileDocument): EvidenceFile {
+  return {
+    id: file.id,
+    gridFsFileId: file.gridFsFileId,
+    caseId: file.caseId,
+    ownerUid: file.ownerUid,
+    name: file.filename,
+    kind: file.kind,
+    sizeLabel: formatFileSize(file.size),
+    sizeBytes: file.size,
+    uploadedAt: file.uploadedAt,
+    status: file.reviewStatus,
+    category: file.category,
+    reviewedAt: file.reviewedAt,
+    reviewedBy: file.reviewedBy,
+    notes: file.reviewNote,
+    downloadUrl: file.gridFsFileId ? `/api/files/${file.id}` : undefined,
+    contentType: file.mimeType,
+  };
+}
+
+function mapEvent(record: {
+  id: string;
+  eventType: string;
+  label: string;
+  description: string;
+  createdAt: string;
+  metadata?: Record<string, string | number | boolean | string[] | null>;
+  actorUid?: string;
+}) {
+  return {
+    id: record.id,
+    type:
+      record.eventType === "upload" || record.eventType === "routing" || record.eventType === "note"
+        ? record.eventType
+        : "status",
+    title: record.label,
+    description: record.description,
+    createdAt: record.createdAt,
+    actor:
+      typeof record.metadata?.actorName === "string" ? record.metadata.actorName : "MyGOV",
+    actorId: record.actorUid,
+  } satisfies CaseEvent;
+}
+
+function normalizeCaseIntake(base: CaseDocument): CaseItem["intake"] {
+  const fallbackMissingDocuments = Array.isArray(base.missingDocuments)
+    ? base.missingDocuments
+    : [];
+  const intake = base.intake || {
+    citizenSummary: base.summary,
+    adminSummary: base.adminSummary || base.summary,
+    category: "General",
+    urgency: "medium" as const,
+    missingDocuments: fallbackMissingDocuments,
+    structuredIntake: {},
+  };
+
+  return {
+    citizenSummary:
+      typeof intake.citizenSummary === "string" && intake.citizenSummary.trim()
+        ? intake.citizenSummary
+        : base.summary,
+    adminSummary:
+      (typeof base.adminSummary === "string" && base.adminSummary.trim()
+        ? base.adminSummary
+        : undefined) ||
+      (typeof intake.adminSummary === "string" && intake.adminSummary.trim()
+        ? intake.adminSummary
+        : base.summary),
+    category:
+      typeof intake.category === "string" && intake.category.trim()
+        ? intake.category
+        : "General",
+    urgency:
+      intake.urgency === "low" || intake.urgency === "high" ? intake.urgency : "medium",
+    missingDocuments: Array.isArray(intake.missingDocuments)
+      ? intake.missingDocuments
+      : fallbackMissingDocuments,
+    structuredIntake:
+      intake.structuredIntake && typeof intake.structuredIntake === "object"
+        ? intake.structuredIntake
+        : {},
+  };
 }
 
 function compareByCreatedAtDesc<T extends { createdAt: string }>(left: T, right: T) {
@@ -58,84 +136,79 @@ function compareByUploadedAtDesc<T extends { uploadedAt: string }>(left: T, righ
   return right.uploadedAt.localeCompare(left.uploadedAt);
 }
 
-function groupByCaseId<T extends { caseId: string }>(items: T[]) {
-  return items.reduce<Record<string, T[]>>((accumulator, item) => {
-    accumulator[item.caseId] ||= [];
-    accumulator[item.caseId].push(item);
-    return accumulator;
-  }, {});
-}
-
 async function listCaseEvents(caseIds: string[]) {
   if (!caseIds.length) return [];
   const { caseEvents } = await getMongoCollections();
   const records = await caseEvents.find({ caseId: { $in: caseIds } }).sort({ createdAt: 1 }).toArray();
-  return records.map(toPlainRecord);
+  return records.map((record) => mapEvent(toPlainRecord(record)));
 }
 
-async function hydrateCases(baseCases: CaseDocument[]): Promise<CaseItem[]> {
-  if (!baseCases.length) return [];
-
-  const caseIds = baseCases.map((item) => item.id);
-  const [files, events, reminders] = await Promise.all([
-    listFilesForCases(caseIds),
-    listCaseEvents(caseIds),
-    (async () => {
-      const { reminders } = await getMongoCollections();
-      return reminders.find({ caseId: { $in: caseIds } }).sort({ createdAt: -1 }).toArray();
-    })(),
+async function hydrateSingleCase(base: CaseDocument): Promise<CaseItem> {
+  const [evidence, timeline, reminders] = await Promise.all([
+    listFilesForCase(base.id),
+    listCaseEvents([base.id]),
+    listRemindersForCase(base.id),
   ]);
+  const intake = normalizeCaseIntake(base);
 
-  const filesByCaseId = groupByCaseId(files);
-  const eventsByCaseId = groupByCaseId(events);
-  const remindersByCaseId = groupByCaseId(reminders);
-
-  return baseCases.map((base) => ({
-    ...toPlainRecord(base),
-    evidence: (filesByCaseId[base.id] || []).sort(compareByUploadedAtDesc),
-    timeline: sortEvents(eventsByCaseId[base.id] || []),
-    reminders: (remindersByCaseId[base.id] || []).map((item) => item.body),
-  }));
+  return {
+    id: base.id,
+    reference: base.reference,
+    title: base.title,
+    type: base.type,
+    status: base.status,
+    location: base.location,
+    locationMeta: base.locationMeta
+      ? {
+          locationText: base.locationMeta.locationText,
+          formattedAddress: base.locationMeta.formattedAddress,
+          placeId: base.locationMeta.placeId,
+          lat: base.locationMeta.lat,
+          lng: base.locationMeta.lng,
+          timezoneId: base.locationMeta.timezoneId,
+          nearbyLandmark: base.locationMeta.nearbyLandmark,
+          mapZoom: base.locationMeta.mapZoom,
+        }
+      : undefined,
+    createdAt: base.createdAt,
+    updatedAt: base.updatedAt,
+    summary: base.summary,
+    citizenId: base.citizenUid,
+    citizenName: base.citizenName,
+    assignedUnit: base.assignedUnit,
+    progress: base.progress,
+    reminders: reminders.map((item) => item.body),
+    evidence: evidence.map(mapFileToEvidence),
+    timeline,
+    intake,
+    latestInternalNote: base.latestInternalNote,
+    updatedBy: base.updatedBy,
+  };
 }
 
 async function listAllCases() {
   const { cases } = await getMongoCollections();
   const records = await cases.find({}).sort({ updatedAt: -1 }).toArray();
-  return hydrateCases(records.map(toPlainRecord));
+  return Promise.all(records.map((record) => hydrateSingleCase(toPlainRecord(record))));
 }
 
-async function listCasesForCitizen(citizenId: string) {
+async function listCasesForCitizen(citizenUid: string) {
   const { cases } = await getMongoCollections();
-  const records = await cases.find({ citizenId }).sort({ updatedAt: -1 }).toArray();
-  return hydrateCases(records.map(toPlainRecord));
+  const records = await cases.find({ citizenUid }).sort({ updatedAt: -1 }).toArray();
+  return Promise.all(records.map((record) => hydrateSingleCase(toPlainRecord(record))));
 }
 
 async function getCaseById(caseId: string) {
   const { cases } = await getMongoCollections();
   const record = await cases.findOne({ id: caseId });
-
   if (!record) return null;
-
-  const [evidence, timeline, reminders] = await Promise.all([
-    listFilesForCase(caseId),
-    listCaseEvents([caseId]),
-    listRemindersForCase(caseId),
-  ]);
-
-  return {
-    ...toPlainRecord(record),
-    evidence,
-    timeline: sortEvents(timeline),
-    reminders: reminders.map((item) => item.body),
-  } satisfies CaseItem;
+  return hydrateSingleCase(toPlainRecord(record));
 }
 
 function computeCitizenStats(cases: CaseItem[]): DashboardStat[] {
   const total = cases.length;
   const active = cases.filter((item) =>
-    ["submitted", "reviewing", "need_more_docs", "routed", "in_progress"].includes(
-      item.status
-    )
+    ["submitted", "reviewing", "need_more_docs", "routed", "in_progress"].includes(item.status)
   ).length;
   const needsAction = cases.filter((item) => item.status === "need_more_docs").length;
   const resolved = cases.filter((item) => item.status === "resolved").length;
@@ -150,11 +223,7 @@ function computeCitizenStats(cases: CaseItem[]): DashboardStat[] {
 
 function computeAdminStats(
   cases: CaseItem[],
-  userOverview?: {
-    totalUsers: number;
-    totalAdmins: number;
-    newCitizensThisWeek: number;
-  }
+  userOverview?: { totalUsers: number; totalAdmins: number; newCitizensThisWeek: number }
 ): DashboardStat[] {
   const total = cases.length;
   const needsReview = cases.filter((item) => ["submitted", "reviewing"].includes(item.status)).length;
@@ -192,38 +261,24 @@ function computeAdminStats(
   ];
 }
 
-export async function getCitizenDashboardData(
-  session: AppSession
-): Promise<CitizenDashboardData> {
+export async function getCitizenDashboardData(session: AppSession): Promise<CitizenDashboardData> {
   const cases = await listCasesForCitizen(session.uid);
   const activeCase =
     cases.find((item) =>
-      ["submitted", "reviewing", "need_more_docs", "routed", "in_progress"].includes(
-        item.status
-      )
+      ["submitted", "reviewing", "need_more_docs", "routed", "in_progress"].includes(item.status)
     ) || null;
-  const recentFiles = cases
-    .flatMap((item) => item.evidence)
-    .sort(compareByUploadedAtDesc)
-    .slice(0, 6);
-  const recentActivity = cases
-    .flatMap((item) => item.timeline)
-    .sort(compareByCreatedAtDesc)
-    .slice(0, 6);
-  const reminders: NotificationItem[] = (await listRemindersForUser(session.uid))
-    .slice(0, 4)
-    .map((item) => ({
-      id: item.id,
-      title: item.title,
-      body: item.body,
-      createdAt: item.createdAt,
-      read: item.read,
-      tone: item.tone,
-      actionHref: item.actionHref,
-    }));
-  const missingDocuments = Array.from(
-    new Set(cases.flatMap((item) => item.intake.missingDocuments))
-  ).slice(0, 4);
+  const recentFiles = cases.flatMap((item) => item.evidence).sort(compareByUploadedAtDesc).slice(0, 6);
+  const recentActivity = cases.flatMap((item) => item.timeline).sort(compareByCreatedAtDesc).slice(0, 6);
+  const reminders: NotificationItem[] = (await listRemindersForUser(session.uid)).slice(0, 4).map((item) => ({
+    id: item.id,
+    title: item.title,
+    body: item.body,
+    createdAt: item.createdAt,
+    read: item.read,
+    tone: item.kind,
+    actionHref: item.actionHref,
+  }));
+  const missingDocuments = Array.from(new Set(cases.flatMap((item) => item.intake.missingDocuments))).slice(0, 4);
 
   return {
     stats: computeCitizenStats(cases),
@@ -264,23 +319,11 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     .filter((file) => ["uploaded", "under_review", "needs_replacement"].includes(file.status))
     .sort(compareByUploadedAtDesc)
     .slice(0, 8);
-  const recentActivity = queue
-    .flatMap((item) => item.timeline)
-    .sort(compareByCreatedAtDesc)
-    .slice(0, 8);
+  const recentActivity = queue.flatMap((item) => item.timeline).sort(compareByCreatedAtDesc).slice(0, 8);
   const queueBuckets = {
-    recentIncoming: queue
-      .filter((item) => item.status === "submitted")
-      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-      .slice(0, 4),
-    needsCitizenResponse: queue
-      .filter((item) => item.status === "need_more_docs")
-      .sort(compareByCreatedAtDesc)
-      .slice(0, 4),
-    urgentCases: queue
-      .filter((item) => item.intake.urgency === "high" && item.status !== "resolved")
-      .sort(compareByCreatedAtDesc)
-      .slice(0, 4),
+    recentIncoming: queue.filter((item) => item.status === "submitted").slice(0, 4),
+    needsCitizenResponse: queue.filter((item) => item.status === "need_more_docs").slice(0, 4),
+    urgentCases: queue.filter((item) => item.intake.urgency === "high" && item.status !== "resolved").slice(0, 4),
     stalledCases: queue
       .filter((item) => {
         const updated = Date.parse(item.updatedAt);
@@ -319,27 +362,28 @@ export interface CreateCasePayload {
   citizenName: string;
   evidence: Array<{
     id: string;
+    gridFsFileId?: string;
     name: string;
     kind: EvidenceFile["kind"];
     size: number;
     downloadUrl?: string;
-    storagePath?: string;
     contentType?: string;
   }>;
 }
 
 export function buildEvidenceFile(input: {
   id: string;
+  gridFsFileId?: string;
   name: string;
   kind: EvidenceFile["kind"];
   size: number;
   uploadedAt?: string;
   downloadUrl?: string;
-  storagePath?: string;
   contentType?: string;
 }): EvidenceFile {
   return {
     id: input.id,
+    gridFsFileId: input.gridFsFileId,
     name: input.name,
     kind: input.kind,
     sizeLabel: formatFileSize(input.size),
@@ -347,7 +391,6 @@ export function buildEvidenceFile(input: {
     uploadedAt: input.uploadedAt || isoNow(),
     status: "uploaded",
     downloadUrl: input.downloadUrl,
-    storagePath: input.storagePath,
     contentType: input.contentType,
   };
 }
@@ -360,13 +403,31 @@ function createCaseReference() {
 
 export async function appendCaseEvent(
   caseId: string,
-  event: Omit<CaseEvent, "id">
+  event: {
+    type: "status" | "note" | "upload" | "routing";
+    title: string;
+    description: string;
+    createdAt: string;
+    actor: string;
+    actorId?: string;
+    actorRole?: "citizen" | "admin";
+    metadata?: Record<string, string | number | boolean | string[] | null>;
+  }
 ) {
   const { caseEvents } = await getMongoCollections();
   await caseEvents.insertOne({
     id: `evt-${randomUUID().slice(0, 8)}`,
     caseId,
-    ...event,
+    actorUid: event.actorId,
+    actorRole: event.actorRole,
+    eventType: event.type,
+    label: event.title,
+    description: event.description,
+    createdAt: event.createdAt,
+    metadata: {
+      ...(event.metadata || {}),
+      actorName: event.actor,
+    },
   });
 }
 
@@ -374,26 +435,27 @@ export async function createCaseRecord(payload: CreateCasePayload) {
   const { cases } = await getMongoCollections();
   const createdAt = isoNow();
   const evidence: FileDocument[] = payload.evidence.map((item) => ({
-    ...buildEvidenceFile({
-      id: item.id,
-      name: item.name,
-      kind: item.kind,
-      size: item.size,
-      uploadedAt: createdAt,
-      downloadUrl: item.downloadUrl,
-      storagePath: item.storagePath,
-      contentType: item.contentType,
-    }),
+    id: item.id,
+    fileId: item.id,
+    gridFsFileId: item.gridFsFileId,
     caseId: payload.id,
     ownerUid: payload.citizenId,
+    filename: item.name,
+    mimeType: item.contentType,
+    size: item.size,
+    uploadedAt: createdAt,
     category:
       item.kind === "photo"
         ? "Evidence photo"
         : item.kind === "voice_note"
           ? "Voice note"
           : "Supporting document",
+    kind: item.kind,
+    reviewStatus: "uploaded",
+    uploadedByRole: "citizen",
   }));
 
+  const missingDocuments = evidence.length ? [] : ["At least one supporting file"];
   const caseRecord: CaseDocument = {
     id: payload.id,
     reference: createCaseReference(),
@@ -405,10 +467,13 @@ export async function createCaseRecord(payload: CreateCasePayload) {
     createdAt,
     updatedAt: createdAt,
     summary: payload.summary,
-    citizenId: payload.citizenId,
+    citizenUid: payload.citizenId,
     citizenName: payload.citizenName,
     assignedUnit: "MyGOV Digital Triage Desk",
     progress: evidence.length ? 28 : 18,
+    evidenceCount: evidence.length,
+    missingDocuments,
+    currentStep: "submitted",
     intake: {
       citizenSummary: payload.summary,
       adminSummary: `New ${payload.type.replaceAll("_", " ")} case created by ${payload.citizenName}. Evidence packet is ready for triage review.`,
@@ -419,7 +484,7 @@ export async function createCaseRecord(payload: CreateCasePayload) {
             ? "Renewal support"
             : "Public complaint",
       urgency: payload.type === "flood_relief" ? "high" : "medium",
-      missingDocuments: evidence.length ? [] : ["At least one supporting file"],
+      missingDocuments,
       structuredIntake: {
         channel: "citizen-web",
         capturedAt: createdAt,
@@ -447,16 +512,18 @@ export async function createCaseRecord(payload: CreateCasePayload) {
     createdAt,
     actor: payload.citizenName,
     actorId: payload.citizenId,
+    actorRole: "citizen",
   });
 
   for (const file of evidence) {
     await appendCaseEvent(payload.id, {
       type: "upload",
       title: "Evidence uploaded",
-      description: `${file.name} was attached to the case packet.`,
+      description: `${file.filename} was attached to the case packet.`,
       createdAt,
       actor: payload.citizenName,
       actorId: payload.citizenId,
+      actorRole: "citizen",
     });
   }
 
@@ -494,9 +561,20 @@ export async function addEvidenceToCase(caseId: string, evidence: EvidenceFile[]
   if (!caseRecord) throw new Error("Case not found.");
 
   const files: FileDocument[] = evidence.map((item) => ({
-    ...item,
+    id: item.id,
+    fileId: item.id,
+    gridFsFileId: item.gridFsFileId,
     caseId,
-    ownerUid: caseRecord.citizenId,
+    ownerUid: caseRecord.citizenUid,
+    filename: item.name,
+    mimeType: item.contentType,
+    size: item.sizeBytes || 0,
+    uploadedAt: item.uploadedAt,
+    category:
+      item.kind === "photo" ? "Evidence photo" : item.kind === "voice_note" ? "Voice note" : "Supporting document",
+    kind: item.kind,
+    reviewStatus: "uploaded",
+    uploadedByRole: "citizen",
   }));
 
   await insertFiles(files);
@@ -506,7 +584,9 @@ export async function addEvidenceToCase(caseId: string, evidence: EvidenceFile[]
       $set: {
         updatedAt: isoNow(),
         progress: Math.min(100, Math.max(caseRecord.progress, 36)),
-        updatedBy: caseRecord.citizenId,
+        updatedBy: caseRecord.citizenUid,
+        evidenceCount: caseRecord.evidenceCount + files.length,
+        missingDocuments: [],
         "intake.missingDocuments": [],
       },
     }
@@ -516,10 +596,11 @@ export async function addEvidenceToCase(caseId: string, evidence: EvidenceFile[]
     await appendCaseEvent(caseId, {
       type: "upload",
       title: "Evidence uploaded",
-      description: `${item.name} was added to the case.`,
+      description: `${item.filename} was added to the case.`,
       createdAt: item.uploadedAt,
       actor: caseRecord.citizenName,
-      actorId: caseRecord.citizenId,
+      actorId: caseRecord.citizenUid,
+      actorRole: "citizen",
     });
   }
 }
@@ -541,24 +622,26 @@ export interface AdminCaseActionPayload {
 
 const actionConfig: Record<
   AdminCaseActionPayload["action"],
-  { status?: CaseStatus; title: string; type: CaseEvent["type"]; progress?: number }
+  { status?: CaseStatus; title: string; type: "status" | "note" | "routing"; progress?: number; currentStep?: string }
 > = {
-  approve: { status: "reviewing", title: "Approved for review", type: "status", progress: 42 },
-  reject: { status: "rejected", title: "Case rejected", type: "status", progress: 100 },
+  approve: { status: "reviewing", title: "Approved for review", type: "status", progress: 42, currentStep: "reviewing" },
+  reject: { status: "rejected", title: "Case rejected", type: "status", progress: 100, currentStep: "rejected" },
   request_more_documents: {
     status: "need_more_docs",
     title: "More documents requested",
     type: "note",
     progress: 54,
+    currentStep: "waiting_for_citizen",
   },
-  route: { status: "routed", title: "Case routed", type: "routing", progress: 70 },
+  route: { status: "routed", title: "Case routed", type: "routing", progress: 70, currentStep: "routed" },
   mark_in_progress: {
     status: "in_progress",
     title: "Work in progress",
     type: "status",
     progress: 82,
+    currentStep: "in_progress",
   },
-  resolve: { status: "resolved", title: "Case resolved", type: "status", progress: 100 },
+  resolve: { status: "resolved", title: "Case resolved", type: "status", progress: 100, currentStep: "resolved" },
   internal_note: { title: "Internal note added", type: "note" },
 };
 
@@ -571,41 +654,44 @@ export async function applyAdminCaseAction(payload: AdminCaseActionPayload) {
   const now = isoNow();
   const nextMissingDocuments =
     payload.action === "request_more_documents" && payload.note
-      ? Array.from(new Set([...caseRecord.intake.missingDocuments, payload.note]))
-      : caseRecord.intake.missingDocuments;
+      ? Array.from(new Set([...caseRecord.missingDocuments, payload.note]))
+      : caseRecord.missingDocuments;
 
-  const nextUpdate: Partial<CaseDocument> & {
-    "intake.missingDocuments"?: string[];
-  } = {
+  const nextUpdate: Partial<CaseDocument> & { "intake.missingDocuments"?: string[] } = {
     updatedAt: now,
     updatedBy: payload.actorId,
+    missingDocuments: nextMissingDocuments,
   };
 
   if (config.status) nextUpdate.status = config.status;
   if (typeof config.progress === "number") nextUpdate.progress = config.progress;
+  if (config.currentStep) nextUpdate.currentStep = config.currentStep;
   if (payload.note) nextUpdate.latestInternalNote = payload.note;
-  if (nextMissingDocuments !== caseRecord.intake.missingDocuments) {
+  if (nextMissingDocuments !== caseRecord.missingDocuments) {
     nextUpdate["intake.missingDocuments"] = nextMissingDocuments;
   }
 
   await cases.updateOne({ id: payload.caseId }, { $set: nextUpdate });
 
   if (payload.note) {
-    await adminNotes.insertOne({
+    const noteRecord: AdminNoteDocument = {
       id: `note-${randomUUID().slice(0, 8)}`,
       caseId: payload.caseId,
-      actorId: payload.actorId,
+      actorUid: payload.actorId,
+      actorRole: "admin",
       actorName: payload.actorName,
       note: payload.note,
       action: payload.action,
       createdAt: now,
-    });
+      visibleInTimeline: payload.action !== "internal_note",
+    };
+    await adminNotes.insertOne(noteRecord);
   }
 
   if (payload.action === "request_more_documents" && payload.note) {
     await createReminderForUser({
       caseId: payload.caseId,
-      userId: caseRecord.citizenId,
+      userId: caseRecord.citizenUid,
       title: "More information needed",
       body: payload.note,
       createdAt: now,
@@ -622,19 +708,15 @@ export async function applyAdminCaseAction(payload: AdminCaseActionPayload) {
     createdAt: now,
     actor: payload.actorName,
     actorId: payload.actorId,
+    actorRole: "admin",
   });
 
-  await createNotificationForUser(caseRecord.citizenId, {
+  await createNotificationForUser(caseRecord.citizenUid, {
     title: config.title,
     body: payload.note || `${caseRecord.title} was updated by the review team.`,
     createdAt: now,
     read: false,
-    tone:
-      payload.action === "reject"
-        ? "warning"
-        : payload.action === "resolve"
-          ? "success"
-          : "info",
+    tone: payload.action === "reject" ? "warning" : payload.action === "resolve" ? "success" : "info",
     actionHref: `/cases/${payload.caseId}`,
   });
 
@@ -649,40 +731,36 @@ export async function updateEvidenceReviewStatus(input: {
   actorName: string;
   actorId: string;
 }) {
-  const { cases, files } = await getMongoCollections();
+  const { cases, filesMetadata } = await getMongoCollections();
   const [file, caseRecord] = await Promise.all([
-    files.findOne({ id: input.fileId, caseId: input.caseId }),
+    filesMetadata.findOne({ id: input.fileId, caseId: input.caseId }),
     cases.findOne({ id: input.caseId }),
   ]);
 
-  if (!file || !caseRecord) {
-    throw new Error("File record not found.");
-  }
+  if (!file || !caseRecord) throw new Error("File record not found.");
 
   const now = isoNow();
   await updateFileById(input.fileId, {
-    status: input.status,
-    notes: input.note || file.notes,
+    reviewStatus: input.status,
+    reviewNote: input.note || file.reviewNote,
     reviewedAt: now,
     reviewedBy: input.actorId,
   });
 
-  const caseUpdate: Partial<CaseDocument> & {
-    "intake.missingDocuments"?: string[];
-  } = {
+  const caseUpdate: Partial<CaseDocument> & { "intake.missingDocuments"?: string[] } = {
     updatedAt: now,
     updatedBy: input.actorId,
   };
 
   if (input.status === "needs_replacement" && input.note) {
     caseUpdate.status = "need_more_docs";
-    caseUpdate["intake.missingDocuments"] = Array.from(
-      new Set([...caseRecord.intake.missingDocuments, input.note])
-    );
+    caseUpdate.currentStep = "waiting_for_replacement";
+    caseUpdate.missingDocuments = Array.from(new Set([...caseRecord.missingDocuments, input.note]));
+    caseUpdate["intake.missingDocuments"] = caseUpdate.missingDocuments;
 
     await createReminderForUser({
       caseId: input.caseId,
-      userId: caseRecord.citizenId,
+      userId: caseRecord.citizenUid,
       title: "Replacement file needed",
       body: input.note,
       createdAt: now,
@@ -691,9 +769,9 @@ export async function updateEvidenceReviewStatus(input: {
       actionHref: `/cases/${input.caseId}`,
     });
 
-    await createNotificationForUser(caseRecord.citizenId, {
+    await createNotificationForUser(caseRecord.citizenUid, {
       title: "A file needs replacement",
-      body: `${file.name} needs a better copy before the case can move forward.`,
+      body: `${file.filename} needs a better copy before the case can move forward.`,
       createdAt: now,
       read: false,
       tone: "warning",
@@ -707,26 +785,23 @@ export async function updateEvidenceReviewStatus(input: {
     type: "note",
     title: "File review updated",
     description: input.note
-      ? `${file.name} marked as ${input.status}: ${input.note}`
-      : `${file.name} marked as ${input.status}.`,
+      ? `${file.filename} marked as ${input.status}: ${input.note}`
+      : `${file.filename} marked as ${input.status}.`,
     createdAt: now,
     actor: input.actorName,
     actorId: input.actorId,
+    actorRole: "admin",
   });
 
   return { ok: true };
 }
 
 export async function listCaseAssistantMessages(caseId: string): Promise<AssistantMessage[]> {
-  const records = await listChatMessagesForThread({
-    caseId,
-    threadKey: `case:${caseId}`,
-  });
-
+  const records = await listChatMessagesForThread({ caseId, threadKey: `case:${caseId}` });
   return records.map((item) => ({
     id: item.id,
     role: item.role,
-    body: item.body,
+    body: item.content,
     createdAt: item.createdAt,
     caseId: item.caseId,
     threadKey: item.threadKey,
@@ -735,15 +810,11 @@ export async function listCaseAssistantMessages(caseId: string): Promise<Assista
 }
 
 export async function listDashboardAssistantMessages(userId: string): Promise<AssistantMessage[]> {
-  const records = await listChatMessagesForThread({
-    userId,
-    threadKey: "dashboard",
-  });
-
+  const records = await listChatMessagesForThread({ userId, threadKey: "dashboard" });
   return records.map((item) => ({
     id: item.id,
     role: item.role,
-    body: item.body,
+    body: item.content,
     createdAt: item.createdAt,
     caseId: item.caseId,
     threadKey: item.threadKey,
@@ -757,17 +828,22 @@ export async function appendAssistantMessage(input: {
   body: string;
   caseId?: string;
   attachments?: string[];
+  model?: string;
+  source?: "gemini" | "prototype-fallback";
 }) {
   const createdAt = isoNow();
   const record: ChatMessageDocument = {
     id: `chat-${randomUUID().slice(0, 8)}`,
-    userId: input.userId,
+    userUid: input.userId,
     role: input.role,
-    body: input.body,
+    senderType: input.role === "assistant" ? "assistant" : "citizen",
+    content: input.body,
+    model: input.model,
     createdAt,
     caseId: input.caseId,
     threadKey: input.caseId ? `case:${input.caseId}` : "dashboard",
     attachments: input.attachments || [],
+    metadata: input.source ? { source: input.source } : {},
   };
 
   return appendChatMessageRecord(record);

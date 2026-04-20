@@ -143,7 +143,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                 <div className="flex flex-wrap gap-2">
                   {(["all", "citizen", "admin"] as const).map((item) => (
                     <button
-                      key={item}
+                      key={`role-${item}`}
                       type="button"
                       onClick={() => setRoleFilter(item)}
                       className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${roleFilter === item
@@ -159,7 +159,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                 <div className="flex flex-wrap gap-2">
                   {(["all", "active", "invited", "disabled"] as const).map((item) => (
                     <button
-                      key={item}
+                      key={`status-${item}`}
                       type="button"
                       onClick={() => setStatusFilter(item)}
                       className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${statusFilter === item
@@ -181,10 +181,11 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
           <div className="space-y-4">
             {filteredUsers.map((user) => {
               const accountStatus = user.accountStatus || "active";
+              const userCardKey = user.uid || user.id || user.email;
 
               return (
                 <article
-                  key={user.uid}
+                  key={userCardKey}
                   className="surface-panel interactive-lift min-w-0 p-5 sm:p-6"
                 >
                   <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-start">
@@ -227,7 +228,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                       </div>
 
                       <div className="grid gap-16 sm:grid-cols-3">
-                        <div className="rounded-[20px] w-24 bg-muted/75 p-4">
+                        <div key={`${user.uid}-cases`} className="rounded-[20px] w-24 bg-muted/75 p-4">
                           <p className="text-xs uppercase tracking-[.18em] text-muted-foreground">
                             Related cases
                           </p>
@@ -236,7 +237,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                           </p>
                         </div>
 
-                        <div className="rounded-[20px] w-24  bg-muted/75 p-4">
+                        <div key={`${user.uid}-open-cases`} className="rounded-[20px] w-24  bg-muted/75 p-4">
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                             Open cases
                           </p>
@@ -245,7 +246,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                           </p>
                         </div>
 
-                        <div className="rounded-[20px] w-24 bg-muted/75 p-4">
+                        <div key={`${user.uid}-profile`} className="rounded-[20px] w-24 bg-muted/75 p-4">
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                             Profile score
                           </p>

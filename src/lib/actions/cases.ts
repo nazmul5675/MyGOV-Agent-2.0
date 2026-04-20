@@ -7,11 +7,11 @@ type AdminActionInput = z.infer<typeof adminActionSchema>;
 
 interface EvidencePayload {
   id: string;
+  gridFsFileId?: string;
   name: string;
   kind: EvidenceFile["kind"];
   size: number;
   downloadUrl?: string;
-  storagePath?: string;
   contentType?: string;
 }
 

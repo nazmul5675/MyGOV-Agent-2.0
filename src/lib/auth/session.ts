@@ -4,18 +4,14 @@ import { redirect } from "next/navigation";
 import { isPrototypeMode } from "@/lib/config/app-mode";
 import { sessionCookieName } from "@/lib/constants";
 import { verifyPrototypeSessionToken } from "@/lib/auth/prototype-session";
-import {
-  getAdminAuth,
-  getAuthUserRecord,
-  getUserRoleFromAuth,
-} from "@/lib/firebase/admin";
-import { getUserProfileByUid } from "@/lib/repositories/users";
+import { getAdminAuth } from "@/lib/firebase/admin";
+import { getUserProfileByUid, touchUserActivity } from "@/lib/repositories/users";
+import { resolveAppUserByFirebaseUid } from "@/lib/services/auth";
 import type { AppSession, UserRole } from "@/lib/types";
 
 export async function readSession() {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(sessionCookieName)?.value;
-
   if (!sessionToken) return null;
 
   if (isPrototypeMode()) {
@@ -42,33 +38,9 @@ export async function readSession() {
 
   try {
     const decoded = await adminAuth.verifySessionCookie(sessionToken, true);
-    const roleFromClaims =
-      typeof decoded.role === "string" ? (decoded.role as UserRole) : null;
-    const authUser = await getAuthUserRecord(decoded.uid).catch(() => null);
-    const profileRecord = await getUserProfileByUid(decoded.uid).catch(() => null);
-    const role =
-      roleFromClaims ||
-      profileRecord?.role ||
-      (await getUserRoleFromAuth(decoded.uid).catch(() => null)) ||
-      (profileRecord && typeof profileRecord.role === "string"
-        ? (profileRecord.role as UserRole)
-        : null);
-
-    if (!role) return null;
-
-    return {
-      uid: decoded.uid,
-      email:
-        decoded.email ||
-        authUser?.email ||
-        String(profileRecord?.email || ""),
-      name:
-        (typeof profileRecord?.fullName === "string" && profileRecord.fullName) ||
-        authUser?.displayName ||
-        decoded.name ||
-        "MyGOV User",
-      role,
-    } satisfies AppSession;
+    const session = await resolveAppUserByFirebaseUid(decoded.uid);
+    await touchUserActivity(decoded.uid);
+    return session;
   } catch {
     return null;
   }

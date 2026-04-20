@@ -1,46 +1,19 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
 
 import { generateGeminiAssistantReply, hasGeminiKey } from "@/lib/ai/gemini";
 import { readSession } from "@/lib/auth/session";
 import { buildAssistantFallbackNotice, buildAssistantReply } from "@/lib/assistant";
-import {
-  appendAssistantMessage,
-  getAdminCaseById,
-  getCitizenCaseById,
-  listCaseAssistantMessages,
-  listDashboardAssistantMessages,
-} from "@/lib/repositories/cases";
+import { getAssistantHistory, appendAssistantConversation } from "@/lib/services/cases";
+import { handleRouteError, unauthorized } from "@/lib/security/api";
 import { assistantMessageSchema } from "@/lib/validation/cases";
 
 export async function POST(request: Request) {
   try {
     const session = await readSession();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) throw unauthorized();
 
     const body = assistantMessageSchema.parse(await request.json());
-    const caseItem = body.caseId
-      ? session.role === "admin"
-        ? await getAdminCaseById(body.caseId)
-        : await getCitizenCaseById(session.uid, body.caseId)
-      : null;
-
-    if (body.caseId && !caseItem) {
-      return NextResponse.json({ error: "Case context could not be loaded." }, { status: 404 });
-    }
-
-    const userMessage = await appendAssistantMessage({
-      userId: session.uid,
-      role: "user",
-      body: body.body,
-      caseId: body.caseId,
-    });
-
-    const history = body.caseId
-      ? await listCaseAssistantMessages(body.caseId)
-      : await listDashboardAssistantMessages(session.uid);
+    const { caseItem, history } = await getAssistantHistory({ session, caseId: body.caseId });
 
     const geminiConfigured = hasGeminiKey();
     let assistantBody: string;
@@ -95,12 +68,14 @@ export async function POST(request: Request) {
       });
     }
 
-    const assistantMessage = await appendAssistantMessage({
-      userId: session.uid,
-      role: "assistant",
-      body: assistantBody,
+    const { userMessage, assistantMessage } = await appendAssistantConversation({
+      session,
+      body: body.body,
       caseId: body.caseId,
+      assistantBody,
       attachments,
+      model: assistantMeta.model,
+      source: assistantMeta.source,
     });
 
     return NextResponse.json({
@@ -109,16 +84,6 @@ export async function POST(request: Request) {
       assistantMeta,
     });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: error.issues[0]?.message || "Invalid message." },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to send message." },
-      { status: 500 }
-    );
+    return handleRouteError(error, "Unable to send message.");
   }
 }

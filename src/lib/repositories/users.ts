@@ -1,10 +1,9 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
-
+import { computeProfileCompleteness } from "@/lib/audit/logger";
 import { setAuthUserRole } from "@/lib/firebase/admin";
-import { getMongoCollections } from "@/lib/repositories/bootstrap";
 import { normalizeUserRole } from "@/lib/firebase/roles";
+import { getMongoCollections } from "@/lib/repositories/bootstrap";
 import type {
   AdminManagedUser,
   AdminUsersDashboardData,
@@ -13,15 +12,7 @@ import type {
   UserProfile,
   UserRole,
 } from "@/lib/types";
-import type { AdminNoteDocument, UserDocument } from "@/types/models";
-
-function slugifyName(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
-}
+import type { UserDocument } from "@/types/models";
 
 function toPlainRecord<T extends object>(record: T) {
   const plain = { ...(record as T & { _id?: unknown }) };
@@ -29,15 +20,21 @@ function toPlainRecord<T extends object>(record: T) {
   return plain as T;
 }
 
+function resolveUserUid(record: Partial<Pick<UserDocument, "firebaseUid" | "uid" | "id">>) {
+  return record.firebaseUid || record.uid || record.id || "";
+}
+
 function toUserProfile(record: UserDocument): UserProfile {
   const plainRecord = toPlainRecord(record);
+  const resolvedUid = resolveUserUid(plainRecord);
+
   return {
-    id: plainRecord.id,
-    uid: plainRecord.uid,
+    id: plainRecord.id || resolvedUid,
+    uid: resolvedUid,
     email: plainRecord.email,
     fullName: plainRecord.fullName,
     role: plainRecord.role,
-    accountStatus: plainRecord.accountStatus || "active",
+    accountStatus: plainRecord.accountStatus,
     dateOfBirth: plainRecord.dateOfBirth,
     phoneNumber: plainRecord.phoneNumber,
     addressText: plainRecord.addressText,
@@ -47,19 +44,6 @@ function toUserProfile(record: UserDocument): UserProfile {
     lastActiveAt: plainRecord.lastActiveAt,
     profileCompleteness: computeProfileCompleteness(plainRecord),
   };
-}
-
-function computeProfileCompleteness(record: Partial<UserDocument>) {
-  const checks = [
-    Boolean(record.fullName?.trim()),
-    Boolean(record.email?.trim()),
-    Boolean(record.phoneNumber?.trim()),
-    Boolean(record.addressText?.trim()),
-    Boolean(record.dateOfBirth?.trim()),
-    Boolean(record.documents?.length),
-  ];
-
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
 
 function compareByDateDesc<T extends { updatedAt?: string; createdAt?: string }>(left: T, right: T) {
@@ -94,24 +78,37 @@ function buildUserStats(users: AdminManagedUser[]): DashboardStat[] {
 }
 
 async function listRoleChangeAudit() {
-  const { adminNotes } = await getMongoCollections();
-  const records = await adminNotes
-    .find({ targetUserId: { $exists: true }, action: { $in: ["promote_to_admin", "demote_to_citizen"] } })
-    .sort({ createdAt: -1 })
-    .limit(8)
-    .toArray();
-  return records.map(toPlainRecord);
+  const { roleAuditLogs, users } = await getMongoCollections();
+  const records = await roleAuditLogs.find({}).sort({ createdAt: -1 }).limit(8).toArray();
+
+  return Promise.all(
+    records.map(async (record) => {
+      const plain = toPlainRecord(record);
+      const actor = await users.findOne({ firebaseUid: plain.changedByUid });
+      return {
+        id: plain.id,
+        title:
+          plain.nextRole === "admin" ? "Role promoted to admin" : "Role demoted to citizen",
+        description:
+          plain.reason ||
+          `${plain.targetUserUid} moved from ${plain.previousRole} to ${plain.nextRole}.`,
+        createdAt: plain.createdAt,
+        actor: actor?.fullName || plain.changedByUid,
+        actorId: plain.changedByUid,
+      };
+    })
+  );
 }
 
 async function countCasesByUserId(userIds: string[]) {
   const { cases } = await getMongoCollections();
-  const records = await cases.find({ citizenId: { $in: userIds } }).toArray();
+  const records = await cases.find({ citizenUid: { $in: userIds } }).toArray();
 
   return records.reduce<Record<string, { total: number; open: number }>>((acc, item) => {
-    acc[item.citizenId] ||= { total: 0, open: 0 };
-    acc[item.citizenId].total += 1;
+    acc[item.citizenUid] ||= { total: 0, open: 0 };
+    acc[item.citizenUid].total += 1;
     if (item.status !== "resolved" && item.status !== "rejected") {
-      acc[item.citizenId].open += 1;
+      acc[item.citizenUid].open += 1;
     }
     return acc;
   }, {});
@@ -125,7 +122,6 @@ function toAdminManagedUser(
 
   return {
     ...profile,
-    accountStatus: profile.accountStatus || "active",
     profileCompleteness: profile.profileCompleteness ?? computeProfileCompleteness(record),
     casesCount: counts.total,
     openCasesCount: counts.open,
@@ -134,7 +130,6 @@ function toAdminManagedUser(
 
 export async function getUserProfile(session: AppSession): Promise<UserProfile> {
   const user = await getUserProfileByUid(session.uid);
-
   if (!user) {
     throw new Error(`User profile ${session.uid} is missing from the MongoDB users collection.`);
   }
@@ -144,7 +139,9 @@ export async function getUserProfile(session: AppSession): Promise<UserProfile> 
 
 export async function getUserProfileByUid(uid: string) {
   const { users } = await getMongoCollections();
-  const record = await users.findOne({ uid });
+  const record = await users.findOne({
+    $or: [{ firebaseUid: uid }, { uid }, { id: uid }],
+  });
   return record ? toPlainRecord(record) : null;
 }
 
@@ -163,16 +160,19 @@ export async function upsertUserProfile(
   const now = new Date().toISOString();
   const email = data.email.trim().toLowerCase();
 
-  const existing = await users.findOne({ uid });
+  const existing = await users.findOne({
+    $or: [{ firebaseUid: uid }, { uid }, { id: uid }],
+  });
   const role = normalizeUserRole(data.role) || existing?.role || "citizen";
 
   if (existing) {
     await users.updateOne(
-      { uid },
+      { id: existing.id },
       {
         $set: {
           email,
           fullName: data.fullName.trim(),
+          uid,
           role,
           accountStatus: existing.accountStatus || "active",
           dateOfBirth: data.dateOfBirth,
@@ -188,6 +188,7 @@ export async function upsertUserProfile(
   await users.insertOne({
     id: uid,
     uid,
+    firebaseUid: uid,
     email,
     fullName: data.fullName.trim(),
     role,
@@ -212,7 +213,9 @@ export async function touchUserActivity(uid: string) {
   const { users } = await getMongoCollections();
   const now = new Date().toISOString();
   await users.updateOne(
-    { uid },
+    {
+      $or: [{ firebaseUid: uid }, { uid }, { id: uid }],
+    },
     {
       $set: {
         lastActiveAt: now,
@@ -228,9 +231,7 @@ export async function getAdminUserOverview() {
   return {
     totalUsers: data.users.length,
     totalAdmins: data.users.filter((user) => user.role === "admin").length,
-    newCitizensThisWeek: Number(
-      data.stats.find((item) => item.label === "New this week")?.value || 0
-    ),
+    newCitizensThisWeek: Number(data.stats.find((item) => item.label === "New this week")?.value || 0),
     recentRoleChanges: data.recentRoleChanges,
   };
 }
@@ -238,32 +239,26 @@ export async function getAdminUserOverview() {
 export async function getAdminUsersDashboardData(): Promise<AdminUsersDashboardData> {
   const { users } = await getMongoCollections();
   const records = (await users.find({}).toArray()).map(toPlainRecord);
-  const caseCounts = await countCasesByUserId(records.map((record) => record.uid));
+  const resolvedUserIds = records.map((record) => resolveUserUid(record));
+  const caseCounts = await countCasesByUserId(resolvedUserIds);
   const managedUsers = records
     .map((record) =>
-      toAdminManagedUser(record, caseCounts[record.uid] || { total: 0, open: 0 })
+      toAdminManagedUser(record, caseCounts[resolveUserUid(record)] || { total: 0, open: 0 })
     )
     .sort(compareByDateDesc);
-  const roleAudit = await listRoleChangeAudit();
 
   return {
     stats: buildUserStats(managedUsers),
     users: managedUsers,
-    recentRoleChanges: roleAudit.map((item) => ({
-      id: item.id,
-      title:
-        item.action === "promote_to_admin" ? "Role promoted to admin" : "Role demoted to citizen",
-      description: item.note,
-      createdAt: item.createdAt,
-      actor: item.actorName,
-      actorId: item.actorId,
-    })),
+    recentRoleChanges: await listRoleChangeAudit(),
   };
 }
 
 export async function getManagedUserById(uid: string) {
   const { users } = await getMongoCollections();
-  const record = await users.findOne({ uid });
+  const record = await users.findOne({
+    $or: [{ firebaseUid: uid }, { uid }, { id: uid }],
+  });
   if (!record) return null;
 
   const counts = await countCasesByUserId([uid]);
@@ -276,15 +271,17 @@ export async function updateUserRole(input: {
   actorId: string;
   actorName: string;
 }) {
-  const { users, adminNotes } = await getMongoCollections();
-  const targetUser = await users.findOne({ uid: input.targetUid });
+  const { users } = await getMongoCollections();
+  const targetUser = await users.findOne({
+    $or: [{ firebaseUid: input.targetUid }, { uid: input.targetUid }, { id: input.targetUid }],
+  });
 
   if (!targetUser) {
     throw new Error("User account not found.");
   }
 
   if (targetUser.role === input.nextRole) {
-    return { ok: true, role: targetUser.role };
+    return { ok: true, changed: false, role: targetUser.role, previousRole: targetUser.role };
   }
 
   if (input.actorId === input.targetUid && targetUser.role === "admin" && input.nextRole === "citizen") {
@@ -300,7 +297,7 @@ export async function updateUserRole(input: {
 
   const now = new Date().toISOString();
   await users.updateOne(
-    { uid: input.targetUid },
+    { id: targetUser.id },
     {
       $set: {
         role: input.nextRole,
@@ -312,20 +309,20 @@ export async function updateUserRole(input: {
 
   await setAuthUserRole(input.targetUid, input.nextRole);
 
-  const previousRole = targetUser.role;
-  const auditRecord: AdminNoteDocument = {
-    id: `note-${randomUUID().slice(0, 8)}`,
-    targetUserId: input.targetUid,
-    actorId: input.actorId,
-    actorName: input.actorName,
-    action: input.nextRole === "admin" ? "promote_to_admin" : "demote_to_citizen",
-    note: `${targetUser.fullName} moved from ${previousRole} to ${input.nextRole}.`,
-    createdAt: now,
+  return {
+    ok: true,
+    changed: true,
+    role: input.nextRole,
+    previousRole: targetUser.role,
   };
+}
 
-  await adminNotes.insertOne(auditRecord);
-
-  return { ok: true, role: input.nextRole };
+function slugifyName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
 }
 
 export async function createPrototypeUser(input: {
@@ -345,7 +342,7 @@ export async function createPrototypeUser(input: {
   let uid = `citizen-${slugBase}`;
   let counter = 2;
 
-  while (await users.findOne({ uid })) {
+  while (await users.findOne({ firebaseUid: uid })) {
     uid = `citizen-${slugBase}-${counter}`;
     counter += 1;
   }
@@ -354,6 +351,7 @@ export async function createPrototypeUser(input: {
   const user: UserDocument = {
     id: uid,
     uid,
+    firebaseUid: uid,
     email,
     fullName: input.fullName.trim(),
     role: "citizen",
@@ -366,4 +364,20 @@ export async function createPrototypeUser(input: {
 
   await users.insertOne(user);
   return user;
+}
+
+export async function searchManagedUsers(query?: string) {
+  const data = await getAdminUsersDashboardData();
+  const normalized = query?.trim().toLowerCase();
+  if (!normalized) return data.users;
+
+  return data.users.filter((user) =>
+    [user.fullName, user.email, user.uid].join(" ").toLowerCase().includes(normalized)
+  );
+}
+
+export async function listRoleAuditLogs(limit = 25) {
+  const { roleAuditLogs } = await getMongoCollections();
+  const records = await roleAuditLogs.find({}).sort({ createdAt: -1 }).limit(limit).toArray();
+  return records.map(toPlainRecord);
 }

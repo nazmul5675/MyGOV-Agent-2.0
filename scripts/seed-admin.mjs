@@ -89,18 +89,27 @@ try {
 
   // ── Upsert MongoDB profile ───────────────────────────────────────────────
   const now = new Date().toISOString();
-  const existingProfile = await users.findOne({ uid });
+  const existingProfile = await users.findOne({ firebaseUid: uid });
 
   if (existingProfile) {
     await users.updateOne(
-      { uid },
-      { $set: { role: "admin", fullName: name, email: email.toLowerCase(), updatedAt: now } }
+      { firebaseUid: uid },
+      {
+        $set: {
+          role: "admin",
+          fullName: name,
+          email: email.toLowerCase(),
+          accountStatus: "active",
+          updatedAt: now,
+        },
+      }
     );
     console.log(`✅ MongoDB profile updated for ${uid}`);
   } else {
     await users.insertOne({
       id: uid,
       uid,
+      firebaseUid: uid,
       email: email.toLowerCase(),
       fullName: name,
       role: "admin",

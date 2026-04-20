@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
 
 import { readSession } from "@/lib/auth/session";
 import { upsertUserProfile } from "@/lib/repositories/users";
+import { handleRouteError, unauthorized } from "@/lib/security/api";
 import { profileBasicsSchema } from "@/lib/validation/profile";
 
 export async function PATCH(request: Request) {
   try {
     const session = await readSession();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) throw unauthorized();
 
     const body = profileBasicsSchema.parse(await request.json());
 
@@ -25,16 +23,6 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: error.issues[0]?.message || "Invalid profile update." },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to update profile." },
-      { status: 500 }
-    );
+    return handleRouteError(error, "Unable to update profile.");
   }
 }

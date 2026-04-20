@@ -14,35 +14,39 @@ function toPlainRecord<T extends object>(record: T) {
 }
 
 export async function createNotificationForUser(
-  userId: string,
+  userUid: string,
   notification: Omit<NotificationItem, "id">
 ) {
   const { notifications } = await getMongoCollections();
 
   await notifications.insertOne({
     id: `notif-${Math.random().toString(36).slice(2, 10)}`,
-    userId,
-    ...notification,
+    userUid,
+    title: notification.title,
+    body: notification.body,
+    kind: notification.tone,
+    read: notification.read,
+    createdAt: notification.createdAt,
+    relatedCaseId: notification.actionHref?.startsWith("/cases/")
+      ? notification.actionHref.split("/").pop()
+      : undefined,
+    actionHref: notification.actionHref,
   });
 }
 
-export async function listNotificationsForUser(
-  userId: string
-): Promise<NotificationItem[]> {
+export async function listNotificationsForUser(userUid: string): Promise<NotificationItem[]> {
   const { notifications } = await getMongoCollections();
-  const items = await notifications.find({ userId }).toArray();
+  const items = await notifications.find({ userUid }).toArray();
 
-  return items
-    .sort(compareByCreatedAtDesc)
-    .map((item) => ({
-      id: item.id,
-      title: item.title,
-      body: item.body,
-      createdAt: item.createdAt,
-      read: item.read,
-      tone: item.tone,
-      actionHref: item.actionHref,
-    }));
+  return items.sort(compareByCreatedAtDesc).map((item) => ({
+    id: item.id,
+    title: item.title,
+    body: item.body,
+    createdAt: item.createdAt,
+    read: item.read,
+    tone: item.kind,
+    actionHref: item.actionHref,
+  }));
 }
 
 export async function createReminderForUser(input: {
@@ -59,13 +63,20 @@ export async function createReminderForUser(input: {
 
   await reminders.insertOne({
     id: `reminder-${Math.random().toString(36).slice(2, 10)}`,
-    ...input,
+    caseId: input.caseId,
+    userUid: input.userId,
+    title: input.title,
+    body: input.body,
+    kind: input.tone,
+    read: input.read,
+    createdAt: input.createdAt,
+    actionHref: input.actionHref,
   });
 }
 
-export async function listRemindersForUser(userId: string) {
+export async function listRemindersForUser(userUid: string) {
   const { reminders } = await getMongoCollections();
-  const records = await reminders.find({ userId }).sort({ createdAt: -1 }).toArray();
+  const records = await reminders.find({ userUid }).sort({ createdAt: -1 }).toArray();
   return records.map(toPlainRecord);
 }
 

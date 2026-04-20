@@ -66,6 +66,7 @@ export interface CaseEvent {
 
 export interface EvidenceFile {
   id: string;
+  gridFsFileId?: string;
   caseId?: string;
   ownerUid?: string;
   name: string;
@@ -79,7 +80,6 @@ export interface EvidenceFile {
   reviewedBy?: string;
   notes?: string;
   downloadUrl?: string;
-  storagePath?: string;
   contentType?: string;
 }
 
