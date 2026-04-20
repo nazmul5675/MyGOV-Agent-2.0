@@ -7,10 +7,9 @@ import { verifyPrototypeSessionToken } from "@/lib/auth/prototype-session";
 import {
   getAdminAuth,
   getAuthUserRecord,
-  getUserProfileRecord,
-  getUserRole,
   getUserRoleFromAuth,
 } from "@/lib/firebase/admin";
+import { getUserProfileByUid } from "@/lib/repositories/users";
 import type { AppSession, UserRole } from "@/lib/types";
 
 export async function readSession() {
@@ -35,13 +34,14 @@ export async function readSession() {
     const roleFromClaims =
       typeof decoded.role === "string" ? (decoded.role as UserRole) : null;
     const authUser = await getAuthUserRecord(decoded.uid).catch(() => null);
-    const profileRecord = await getUserProfileRecord(decoded.uid).catch(() => null);
+    const profileRecord = await getUserProfileByUid(decoded.uid).catch(() => null);
     const role =
       roleFromClaims ||
+      profileRecord?.role ||
       (await getUserRoleFromAuth(decoded.uid).catch(() => null)) ||
       (profileRecord && typeof profileRecord.role === "string"
         ? (profileRecord.role as UserRole)
-        : await getUserRole(decoded.uid).catch(() => null));
+        : null);
 
     if (!role) return null;
 

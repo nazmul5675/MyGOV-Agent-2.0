@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 import { createPrototypeSessionToken } from "@/lib/auth/prototype-session";
 import { isPrototypeMode } from "@/lib/config/app-mode";
-import { getAdminAuth, getUserRole, getUserRoleFromAuth } from "@/lib/firebase/admin";
-import { getUserByEmail } from "@/lib/repositories/users";
+import { getAdminAuth, getUserRoleFromAuth } from "@/lib/firebase/admin";
+import { getUserByEmail, getUserProfileByUid, upsertUserProfile } from "@/lib/repositories/users";
 import { sessionCookieName } from "@/lib/constants";
 import { loginSchema, sessionExchangeSchema } from "@/lib/validation/auth";
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     if (!user || user.password !== body.password) {
       return NextResponse.json(
-        { error: "Incorrect email or password for the prototype account." },
+        { error: "Incorrect email or password for the demo account." },
         { status: 401 }
       );
     }
@@ -55,10 +55,11 @@ export async function POST(request: Request) {
   const decoded = await adminAuth.verifyIdToken(body.idToken, true);
   const roleFromClaims =
     typeof decoded.role === "string" ? decoded.role : null;
+  const profile = await getUserProfileByUid(decoded.uid).catch(() => null);
   const role =
+    profile?.role ||
     roleFromClaims ||
-    (await getUserRoleFromAuth(decoded.uid)) ||
-    (await getUserRole(decoded.uid));
+    (await getUserRoleFromAuth(decoded.uid));
 
   if (role !== "citizen" && role !== "admin") {
     return NextResponse.json(
@@ -69,6 +70,15 @@ export async function POST(request: Request) {
       { status: 403 }
     );
   }
+
+  await upsertUserProfile(decoded.uid, {
+    fullName: profile?.fullName || decoded.name || "MyGOV User",
+    email: decoded.email || profile?.email || "",
+    role,
+    dateOfBirth: profile?.dateOfBirth,
+    phoneNumber: profile?.phoneNumber,
+    addressText: profile?.addressText,
+  });
 
   const expiresIn = 60 * 60 * 24 * 5 * 1000;
   const sessionCookie = await adminAuth.createSessionCookie(body.idToken, { expiresIn });

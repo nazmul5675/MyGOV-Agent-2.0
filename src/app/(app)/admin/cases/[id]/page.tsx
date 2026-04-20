@@ -53,7 +53,7 @@ export default async function AdminCaseDetailPage({
     errorMessage =
       error instanceof Error
         ? error.message
-        : "The admin case detail page could not load live Firebase data.";
+        : "The admin case detail page could not load application data.";
   }
 
   if (errorMessage) {
@@ -62,7 +62,7 @@ export default async function AdminCaseDetailPage({
         <PageHeader
           eyebrow="Admin review"
           title="Live case review unavailable"
-          description="This page reads directly from Firestore for the case packet, evidence, and event history."
+          description="This page reads directly from MongoDB for the case packet, evidence, and event history."
         />
         <LiveDataState
           tone="setup"
@@ -227,7 +227,7 @@ export default async function AdminCaseDetailPage({
           <EvidenceManager
             files={item.evidence}
             title="Evidence workspace"
-            description="Uploaded evidence stays grouped with live review states, making it easier to decide whether to accept, route, or request a better copy."
+            description="Uploaded evidence stays grouped with current review states, making it easier to decide whether to accept, route, or request a better copy."
           />
 
           <EvidenceReviewPanel caseId={item.id} files={item.evidence} />

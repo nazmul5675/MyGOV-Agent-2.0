@@ -1,3 +1,7 @@
+import "server-only";
+
+import { randomUUID } from "node:crypto";
+
 import type {
   AdminDashboardData,
   AppSession,
@@ -10,29 +14,20 @@ import type {
   EvidenceFile,
   NotificationItem,
 } from "@/lib/types";
-import { createNotificationForUser } from "@/lib/repositories/notifications";
+import { appendChatMessageRecord, listChatMessagesForThread } from "@/lib/repositories/chat";
+import { getMongoCollections } from "@/lib/repositories/bootstrap";
+import { insertFiles, listFilesForCase, listFilesForCases, updateFileById } from "@/lib/repositories/files";
 import {
-  getPrototypeCaseById,
-  listPrototypeCases,
-  listPrototypeCasesForCitizen,
-  listPrototypeCaseEvents,
-  listPrototypeChatMessagesForThread,
-  listPrototypeFilesForCase,
-  listPrototypeRemindersForCase,
-  listPrototypeRemindersForUser,
-  pushPrototypeCase,
-  pushPrototypeCaseEvent,
-  pushPrototypeChatMessage,
-  pushPrototypeFiles,
-  pushPrototypeReminder,
-} from "@/lib/prototype/repository";
+  createNotificationForUser,
+  createReminderForUser,
+  listRemindersForCase,
+  listRemindersForUser,
+} from "@/lib/repositories/notifications";
 import type {
-  PrototypeAssistantMessageRecord,
-  PrototypeCaseEventRecord,
-  PrototypeCaseRecord,
-  PrototypeFileRecord,
-  PrototypeReminderRecord,
-} from "@/types/prototype";
+  CaseDocument,
+  ChatMessageDocument,
+  FileDocument,
+} from "@/types/models";
 
 function isoNow() {
   return new Date().toISOString();
@@ -48,41 +43,83 @@ function sortEvents(events: CaseEvent[]) {
   return events.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-function getCaseEvents(caseId: string): PrototypeCaseEventRecord[] {
-  return listPrototypeCaseEvents(caseId);
+function compareByCreatedAtDesc<T extends { createdAt: string }>(left: T, right: T) {
+  return right.createdAt.localeCompare(left.createdAt);
 }
 
-function getCaseFiles(caseId: string): PrototypeFileRecord[] {
-  return listPrototypeFilesForCase(caseId);
+function compareByUploadedAtDesc<T extends { uploadedAt: string }>(left: T, right: T) {
+  return right.uploadedAt.localeCompare(left.uploadedAt);
 }
 
-function getCaseReminders(caseId: string): PrototypeReminderRecord[] {
-  return listPrototypeRemindersForCase(caseId);
+function groupByCaseId<T extends { caseId: string }>(items: T[]) {
+  return items.reduce<Record<string, T[]>>((accumulator, item) => {
+    accumulator[item.caseId] ||= [];
+    accumulator[item.caseId].push(item);
+    return accumulator;
+  }, {});
 }
 
-function mapCaseRecord(base: PrototypeCaseRecord): CaseItem {
-  const timeline = sortEvents(
-    getCaseEvents(base.id).map((item) => ({
-      id: item.id,
-      type: item.type,
-      title: item.title,
-      description: item.description,
-      createdAt: item.createdAt,
-      actor: item.actor,
-      actorId: item.actorId,
-    }))
-  );
+async function listCaseEvents(caseIds: string[]) {
+  if (!caseIds.length) return [];
+  const { caseEvents } = await getMongoCollections();
+  return caseEvents.find({ caseId: { $in: caseIds } }).sort({ createdAt: 1 }).toArray();
+}
+
+async function hydrateCases(baseCases: CaseDocument[]): Promise<CaseItem[]> {
+  if (!baseCases.length) return [];
+
+  const caseIds = baseCases.map((item) => item.id);
+  const [files, events, reminders] = await Promise.all([
+    listFilesForCases(caseIds),
+    listCaseEvents(caseIds),
+    (async () => {
+      const { reminders } = await getMongoCollections();
+      return reminders.find({ caseId: { $in: caseIds } }).sort({ createdAt: -1 }).toArray();
+    })(),
+  ]);
+
+  const filesByCaseId = groupByCaseId(files);
+  const eventsByCaseId = groupByCaseId(events);
+  const remindersByCaseId = groupByCaseId(reminders);
+
+  return baseCases.map((base) => ({
+    ...base,
+    evidence: (filesByCaseId[base.id] || []).sort(compareByUploadedAtDesc),
+    timeline: sortEvents(eventsByCaseId[base.id] || []),
+    reminders: (remindersByCaseId[base.id] || []).map((item) => item.body),
+  }));
+}
+
+async function listAllCases() {
+  const { cases } = await getMongoCollections();
+  const records = await cases.find({}).sort({ updatedAt: -1 }).toArray();
+  return hydrateCases(records);
+}
+
+async function listCasesForCitizen(citizenId: string) {
+  const { cases } = await getMongoCollections();
+  const records = await cases.find({ citizenId }).sort({ updatedAt: -1 }).toArray();
+  return hydrateCases(records);
+}
+
+async function getCaseById(caseId: string) {
+  const { cases } = await getMongoCollections();
+  const record = await cases.findOne({ id: caseId });
+
+  if (!record) return null;
+
+  const [evidence, timeline, reminders] = await Promise.all([
+    listFilesForCase(caseId),
+    listCaseEvents([caseId]),
+    listRemindersForCase(caseId),
+  ]);
 
   return {
-    ...base,
-    evidence: getCaseFiles(base.id),
-    timeline,
-    reminders: getCaseReminders(base.id).map((item) => item.body),
-  };
-}
-
-function getAllCases() {
-  return listPrototypeCases().map(mapCaseRecord);
+    ...record,
+    evidence,
+    timeline: sortEvents(timeline),
+    reminders: reminders.map((item) => item.body),
+  } satisfies CaseItem;
 }
 
 function computeCitizenStats(cases: CaseItem[]): DashboardStat[] {
@@ -113,7 +150,7 @@ function computeAdminStats(cases: CaseItem[]): DashboardStat[] {
   const urgent = cases.filter((item) => item.intake.urgency === "high").length;
 
   return [
-    { label: "Total queue", value: String(total), change: "All seeded operational records" },
+    { label: "Total queue", value: String(total), change: "All operational records" },
     { label: "Needs review", value: String(needsReview), change: "Open packets awaiting action" },
     { label: "In progress", value: String(inProgress), change: "Already assigned to a desk" },
     { label: "Resolved", value: String(resolved), change: "Closed with citizen outcome" },
@@ -121,14 +158,10 @@ function computeAdminStats(cases: CaseItem[]): DashboardStat[] {
   ];
 }
 
-function getCasesForCitizen(citizenId: string) {
-  return listPrototypeCasesForCitizen(citizenId).map(mapCaseRecord);
-}
-
 export async function getCitizenDashboardData(
   session: AppSession
 ): Promise<CitizenDashboardData> {
-  const cases = getCasesForCitizen(session.uid);
+  const cases = await listCasesForCitizen(session.uid);
   const activeCase =
     cases.find((item) =>
       ["submitted", "reviewing", "need_more_docs", "routed", "in_progress"].includes(
@@ -137,13 +170,13 @@ export async function getCitizenDashboardData(
     ) || null;
   const recentFiles = cases
     .flatMap((item) => item.evidence)
-    .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
+    .sort(compareByUploadedAtDesc)
     .slice(0, 6);
   const recentActivity = cases
     .flatMap((item) => item.timeline)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .sort(compareByCreatedAtDesc)
     .slice(0, 6);
-  const reminders: NotificationItem[] = listPrototypeRemindersForUser(session.uid)
+  const reminders: NotificationItem[] = (await listRemindersForUser(session.uid))
     .slice(0, 4)
     .map((item) => ({
       id: item.id,
@@ -181,26 +214,24 @@ export async function getCitizenDashboardData(
 }
 
 export async function listCitizenCases(citizenId: string) {
-  return getCasesForCitizen(citizenId);
+  return listCasesForCitizen(citizenId);
 }
 
 export async function getCitizenCaseById(citizenId: string, caseId: string) {
-  const item = getAllCases().find(
-    (candidate) => candidate.id === caseId && candidate.citizenId === citizenId
-  );
-  return item || null;
+  const item = await getCaseById(caseId);
+  return item && item.citizenId === citizenId ? item : null;
 }
 
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
-  const queue = getAllCases();
+  const queue = await listAllCases();
   const filesNeedingReview = queue
     .flatMap((item) => item.evidence)
     .filter((file) => ["uploaded", "under_review", "needs_replacement"].includes(file.status))
-    .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
+    .sort(compareByUploadedAtDesc)
     .slice(0, 8);
   const recentActivity = queue
     .flatMap((item) => item.timeline)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .sort(compareByCreatedAtDesc)
     .slice(0, 8);
 
   return {
@@ -217,8 +248,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 }
 
 export async function getAdminCaseById(caseId: string) {
-  const item = getPrototypeCaseById(caseId);
-  return item ? mapCaseRecord(item) : null;
+  return getCaseById(caseId);
 }
 
 export interface CreateCasePayload {
@@ -275,16 +305,18 @@ export async function appendCaseEvent(
   caseId: string,
   event: Omit<CaseEvent, "id">
 ) {
-  pushPrototypeCaseEvent({
-    id: `evt-${Math.random().toString(36).slice(2, 10)}`,
+  const { caseEvents } = await getMongoCollections();
+  await caseEvents.insertOne({
+    id: `evt-${randomUUID().slice(0, 8)}`,
     caseId,
     ...event,
   });
 }
 
 export async function createCaseRecord(payload: CreateCasePayload) {
+  const { cases } = await getMongoCollections();
   const createdAt = isoNow();
-  const evidence = payload.evidence.map((item) => ({
+  const evidence: FileDocument[] = payload.evidence.map((item) => ({
     ...buildEvidenceFile({
       id: item.id,
       name: item.name,
@@ -303,9 +335,9 @@ export async function createCaseRecord(payload: CreateCasePayload) {
         : item.kind === "voice_note"
           ? "Voice note"
           : "Supporting document",
-  })) satisfies PrototypeFileRecord[];
+  }));
 
-  const caseRecord: PrototypeCaseRecord = {
+  const caseRecord: CaseDocument = {
     id: payload.id,
     reference: createCaseReference(),
     title: payload.title,
@@ -332,7 +364,7 @@ export async function createCaseRecord(payload: CreateCasePayload) {
       urgency: payload.type === "flood_relief" ? "high" : "medium",
       missingDocuments: evidence.length ? [] : ["At least one supporting file"],
       structuredIntake: {
-        channel: "prototype-web",
+        channel: "citizen-web",
         capturedAt: createdAt,
         locationText: payload.location,
         formattedAddress: payload.locationMeta?.formattedAddress || payload.location,
@@ -348,8 +380,8 @@ export async function createCaseRecord(payload: CreateCasePayload) {
     updatedBy: payload.citizenId,
   };
 
-  pushPrototypeCase(caseRecord);
-  pushPrototypeFiles(evidence);
+  await cases.insertOne(caseRecord);
+  await insertFiles(evidence);
 
   await appendCaseEvent(payload.id, {
     type: "status",
@@ -371,8 +403,7 @@ export async function createCaseRecord(payload: CreateCasePayload) {
     });
   }
 
-  pushPrototypeReminder({
-    id: `reminder-${Math.random().toString(36).slice(2, 10)}`,
+  await createReminderForUser({
     caseId: payload.id,
     userId: payload.citizenId,
     title: "Watch for triage updates",
@@ -394,26 +425,35 @@ export async function createCaseRecord(payload: CreateCasePayload) {
 
   const created = await getCitizenCaseById(payload.citizenId, payload.id);
   if (!created) {
-    throw new Error("Unable to read back the newly created prototype case.");
+    throw new Error("Unable to read back the newly created MongoDB case.");
   }
 
   return created;
 }
 
 export async function addEvidenceToCase(caseId: string, evidence: EvidenceFile[]) {
-  const caseRecord = getPrototypeCaseById(caseId);
+  const { cases } = await getMongoCollections();
+  const caseRecord = await cases.findOne({ id: caseId });
   if (!caseRecord) throw new Error("Case not found.");
 
-  const files = evidence.map((item) => ({
+  const files: FileDocument[] = evidence.map((item) => ({
     ...item,
     caseId,
     ownerUid: caseRecord.citizenId,
-  })) satisfies PrototypeFileRecord[];
+  }));
 
-  pushPrototypeFiles(files);
-  caseRecord.updatedAt = isoNow();
-  caseRecord.progress = Math.min(100, Math.max(caseRecord.progress, 36));
-  caseRecord.intake.missingDocuments = [];
+  await insertFiles(files);
+  await cases.updateOne(
+    { id: caseId },
+    {
+      $set: {
+        updatedAt: isoNow(),
+        progress: Math.min(100, Math.max(caseRecord.progress, 36)),
+        updatedBy: caseRecord.citizenId,
+        "intake.missingDocuments": [],
+      },
+    }
+  );
 
   for (const item of files) {
     await appendCaseEvent(caseId, {
@@ -466,24 +506,47 @@ const actionConfig: Record<
 };
 
 export async function applyAdminCaseAction(payload: AdminCaseActionPayload) {
-  const caseRecord = getPrototypeCaseById(payload.caseId);
+  const { adminNotes, cases } = await getMongoCollections();
+  const caseRecord = await cases.findOne({ id: payload.caseId });
   if (!caseRecord) throw new Error("Case not found.");
 
   const config = actionConfig[payload.action];
   const now = isoNow();
-  caseRecord.updatedAt = now;
-  caseRecord.updatedBy = payload.actorId;
+  const nextMissingDocuments =
+    payload.action === "request_more_documents" && payload.note
+      ? Array.from(new Set([...caseRecord.intake.missingDocuments, payload.note]))
+      : caseRecord.intake.missingDocuments;
 
-  if (config.status) caseRecord.status = config.status;
-  if (typeof config.progress === "number") caseRecord.progress = config.progress;
-  if (payload.note) caseRecord.latestInternalNote = payload.note;
+  const nextUpdate: Partial<CaseDocument> & {
+    "intake.missingDocuments"?: string[];
+  } = {
+    updatedAt: now,
+    updatedBy: payload.actorId,
+  };
+
+  if (config.status) nextUpdate.status = config.status;
+  if (typeof config.progress === "number") nextUpdate.progress = config.progress;
+  if (payload.note) nextUpdate.latestInternalNote = payload.note;
+  if (nextMissingDocuments !== caseRecord.intake.missingDocuments) {
+    nextUpdate["intake.missingDocuments"] = nextMissingDocuments;
+  }
+
+  await cases.updateOne({ id: payload.caseId }, { $set: nextUpdate });
+
+  if (payload.note) {
+    await adminNotes.insertOne({
+      id: `note-${randomUUID().slice(0, 8)}`,
+      caseId: payload.caseId,
+      actorId: payload.actorId,
+      actorName: payload.actorName,
+      note: payload.note,
+      action: payload.action,
+      createdAt: now,
+    });
+  }
 
   if (payload.action === "request_more_documents" && payload.note) {
-    caseRecord.intake.missingDocuments = Array.from(
-      new Set([...caseRecord.intake.missingDocuments, payload.note])
-    );
-    pushPrototypeReminder({
-      id: `reminder-${Math.random().toString(36).slice(2, 10)}`,
+    await createReminderForUser({
       caseId: payload.caseId,
       userId: caseRecord.citizenId,
       title: "More information needed",
@@ -529,27 +592,59 @@ export async function updateEvidenceReviewStatus(input: {
   actorName: string;
   actorId: string;
 }) {
-  const file = listPrototypeFilesForCase(input.caseId).find((item) => item.id === input.fileId);
-  const caseRecord = getPrototypeCaseById(input.caseId);
+  const { cases, files } = await getMongoCollections();
+  const [file, caseRecord] = await Promise.all([
+    files.findOne({ id: input.fileId, caseId: input.caseId }),
+    cases.findOne({ id: input.caseId }),
+  ]);
 
   if (!file || !caseRecord) {
     throw new Error("File record not found.");
   }
 
   const now = isoNow();
-  file.status = input.status;
-  file.notes = input.note || file.notes;
-  file.reviewedAt = now;
-  file.reviewedBy = input.actorId;
-  caseRecord.updatedAt = now;
-  caseRecord.updatedBy = input.actorId;
+  await updateFileById(input.fileId, {
+    status: input.status,
+    notes: input.note || file.notes,
+    reviewedAt: now,
+    reviewedBy: input.actorId,
+  });
+
+  const caseUpdate: Partial<CaseDocument> & {
+    "intake.missingDocuments"?: string[];
+  } = {
+    updatedAt: now,
+    updatedBy: input.actorId,
+  };
 
   if (input.status === "needs_replacement" && input.note) {
-    caseRecord.status = "need_more_docs";
-    caseRecord.intake.missingDocuments = Array.from(
+    caseUpdate.status = "need_more_docs";
+    caseUpdate["intake.missingDocuments"] = Array.from(
       new Set([...caseRecord.intake.missingDocuments, input.note])
     );
+
+    await createReminderForUser({
+      caseId: input.caseId,
+      userId: caseRecord.citizenId,
+      title: "Replacement file needed",
+      body: input.note,
+      createdAt: now,
+      tone: "warning",
+      read: false,
+      actionHref: `/cases/${input.caseId}`,
+    });
+
+    await createNotificationForUser(caseRecord.citizenId, {
+      title: "A file needs replacement",
+      body: `${file.name} needs a better copy before the case can move forward.`,
+      createdAt: now,
+      read: false,
+      tone: "warning",
+      actionHref: `/cases/${input.caseId}`,
+    });
   }
+
+  await cases.updateOne({ id: input.caseId }, { $set: caseUpdate });
 
   await appendCaseEvent(input.caseId, {
     type: "note",
@@ -566,35 +661,37 @@ export async function updateEvidenceReviewStatus(input: {
 }
 
 export async function listCaseAssistantMessages(caseId: string): Promise<AssistantMessage[]> {
-  return listPrototypeChatMessagesForThread({
+  const records = await listChatMessagesForThread({
     caseId,
     threadKey: `case:${caseId}`,
-  })
-    .map((item) => ({
-      id: item.id,
-      role: item.role,
-      body: item.body,
-      createdAt: item.createdAt,
-      caseId: item.caseId,
-      threadKey: item.threadKey,
-      attachments: item.attachments,
-    }));
+  });
+
+  return records.map((item) => ({
+    id: item.id,
+    role: item.role,
+    body: item.body,
+    createdAt: item.createdAt,
+    caseId: item.caseId,
+    threadKey: item.threadKey,
+    attachments: item.attachments,
+  }));
 }
 
 export async function listDashboardAssistantMessages(userId: string): Promise<AssistantMessage[]> {
-  return listPrototypeChatMessagesForThread({
+  const records = await listChatMessagesForThread({
     userId,
     threadKey: "dashboard",
-  })
-    .map((item) => ({
-      id: item.id,
-      role: item.role,
-      body: item.body,
-      createdAt: item.createdAt,
-      caseId: item.caseId,
-      threadKey: item.threadKey,
-      attachments: item.attachments,
-    }));
+  });
+
+  return records.map((item) => ({
+    id: item.id,
+    role: item.role,
+    body: item.body,
+    createdAt: item.createdAt,
+    caseId: item.caseId,
+    threadKey: item.threadKey,
+    attachments: item.attachments,
+  }));
 }
 
 export async function appendAssistantMessage(input: {
@@ -605,8 +702,8 @@ export async function appendAssistantMessage(input: {
   attachments?: string[];
 }) {
   const createdAt = isoNow();
-  const record: PrototypeAssistantMessageRecord = {
-    id: `chat-${Math.random().toString(36).slice(2, 10)}`,
+  const record: ChatMessageDocument = {
+    id: `chat-${randomUUID().slice(0, 8)}`,
     userId: input.userId,
     role: input.role,
     body: input.body,
@@ -616,14 +713,5 @@ export async function appendAssistantMessage(input: {
     attachments: input.attachments || [],
   };
 
-  pushPrototypeChatMessage(record);
-  return {
-    id: record.id,
-    role: record.role,
-    body: record.body,
-    createdAt: record.createdAt,
-    caseId: record.caseId,
-    threadKey: record.threadKey,
-    attachments: record.attachments,
-  };
+  return appendChatMessageRecord(record);
 }

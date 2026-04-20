@@ -84,7 +84,7 @@ export function buildAssistantFallbackNotice(input: {
   if (!input.hadGeminiKey) {
     return {
       source: "prototype-fallback",
-      notice: "Gemini is not configured yet, so the assistant is using the built-in prototype guide.",
+      notice: "Gemini is not configured yet, so the assistant is using the built-in workflow guide.",
     };
   }
 
@@ -92,7 +92,7 @@ export function buildAssistantFallbackNotice(input: {
     source: "prototype-fallback",
     notice:
       input.failure instanceof Error
-        ? `Gemini is temporarily unavailable, so the assistant switched to the built-in prototype guide.`
-        : "Gemini is temporarily unavailable, so the assistant switched to the built-in prototype guide.",
+        ? "Gemini is temporarily unavailable, so the assistant switched to the built-in workflow guide."
+        : "Gemini is temporarily unavailable, so the assistant switched to the built-in workflow guide.",
   };
 }

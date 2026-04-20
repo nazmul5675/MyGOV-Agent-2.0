@@ -1,11 +1,9 @@
+import "server-only";
+
+import { getMongoCollections } from "@/lib/repositories/bootstrap";
+import { normalizeUserRole } from "@/lib/firebase/roles";
 import type { AppSession, UserProfile, UserRole } from "@/lib/types";
-import {
-  getPrototypeUserByEmail,
-  getPrototypeUserByUid,
-  listPrototypeUsers,
-  pushPrototypeUser,
-} from "@/lib/prototype/repository";
-import type { PrototypeUserRecord } from "@/types/prototype";
+import type { UserDocument } from "@/types/models";
 
 function slugifyName(value: string) {
   return value
@@ -15,7 +13,7 @@ function slugifyName(value: string) {
     .slice(0, 48);
 }
 
-function toUserProfile(record: PrototypeUserRecord): UserProfile {
+function toUserProfile(record: UserDocument): UserProfile {
   return {
     id: record.id,
     uid: record.uid,
@@ -32,15 +30,18 @@ function toUserProfile(record: PrototypeUserRecord): UserProfile {
 }
 
 export async function getUserProfile(session: AppSession): Promise<UserProfile> {
-  const user = getPrototypeUserByUid(session.uid);
+  const user = await getUserProfileByUid(session.uid);
 
   if (!user) {
-    throw new Error(
-      `Prototype user ${session.uid} is missing from src/data/prototype/users.json.`
-    );
+    throw new Error(`User profile ${session.uid} is missing from the MongoDB users collection.`);
   }
 
   return toUserProfile(user);
+}
+
+export async function getUserProfileByUid(uid: string) {
+  const { users } = await getMongoCollections();
+  return users.findOne({ uid });
 }
 
 export async function upsertUserProfile(
@@ -54,26 +55,37 @@ export async function upsertUserProfile(
     addressText?: string;
   }
 ) {
-  const existing = getPrototypeUserByUid(uid);
+  const { users } = await getMongoCollections();
   const now = new Date().toISOString();
+  const email = data.email.trim().toLowerCase();
+
+  const existing = await users.findOne({ uid });
+  const role = normalizeUserRole(data.role) || existing?.role || "citizen";
 
   if (existing) {
-    existing.fullName = data.fullName;
-    existing.email = data.email;
-    existing.role = data.role || existing.role;
-    existing.dateOfBirth = data.dateOfBirth;
-    existing.phoneNumber = data.phoneNumber;
-    existing.addressText = data.addressText;
-    existing.updatedAt = now;
+    await users.updateOne(
+      { uid },
+      {
+        $set: {
+          email,
+          fullName: data.fullName.trim(),
+          role,
+          dateOfBirth: data.dateOfBirth,
+          phoneNumber: data.phoneNumber,
+          addressText: data.addressText,
+          updatedAt: now,
+        },
+      }
+    );
     return;
   }
 
-  pushPrototypeUser({
+  await users.insertOne({
     id: uid,
     uid,
-    email: data.email,
-    fullName: data.fullName,
-    role: data.role || "citizen",
+    email,
+    fullName: data.fullName.trim(),
+    role,
     password: "",
     dateOfBirth: data.dateOfBirth,
     phoneNumber: data.phoneNumber,
@@ -85,7 +97,8 @@ export async function upsertUserProfile(
 }
 
 export async function getUserByEmail(email: string) {
-  return getPrototypeUserByEmail(email);
+  const { users } = await getMongoCollections();
+  return users.findOne({ email: email.trim().toLowerCase() });
 }
 
 export async function createPrototypeUser(input: {
@@ -94,22 +107,24 @@ export async function createPrototypeUser(input: {
   password: string;
 }) {
   const email = input.email.trim().toLowerCase();
-  const users = listPrototypeUsers();
+  const { users } = await getMongoCollections();
+  const existing = await users.findOne({ email });
 
-  if (users.some((item) => item.email.toLowerCase() === email)) {
+  if (existing) {
     throw new Error("An account with this email already exists.");
   }
 
   const slugBase = slugifyName(input.fullName) || "citizen";
   let uid = `citizen-${slugBase}`;
   let counter = 2;
-  while (users.some((item) => item.uid === uid)) {
+
+  while (await users.findOne({ uid })) {
     uid = `citizen-${slugBase}-${counter}`;
     counter += 1;
   }
 
   const now = new Date().toISOString();
-  const user: PrototypeUserRecord = {
+  const user: UserDocument = {
     id: uid,
     uid,
     email,
@@ -121,6 +136,6 @@ export async function createPrototypeUser(input: {
     updatedAt: now,
   };
 
-  pushPrototypeUser(user);
+  await users.insertOne(user);
   return user;
 }

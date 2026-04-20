@@ -61,17 +61,19 @@ export function EvidenceManager({
       </div>
 
       {files.length ? (
-        <div className={cn("mt-5 grid gap-3", dense ? "xl:grid-cols-1" : "lg:grid-cols-2")}>
+        <div className={cn("mt-5 grid gap-4", dense ? "xl:grid-cols-1" : "lg:grid-cols-2")}>
           {files.map((file) => (
             <article
               key={file.id}
-              className="group min-w-0 rounded-[22px] border border-border/60 bg-white/75 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
+              className="group min-w-0 rounded-[24px] border border-border/60 bg-white/78 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-2">
-                  <p className="break-all font-semibold text-foreground">{file.name}</p>
+                  <p className="line-clamp-2 break-all text-[15px] font-semibold leading-6 text-foreground">
+                    {file.name}
+                  </p>
                   <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                    <span>{file.kind.replace("_", " ")}</span>
+                    <span className="capitalize">{file.kind.replace("_", " ")}</span>
                     <span>{file.sizeLabel}</span>
                     <span>{formatDate(file.uploadedAt)}</span>
                   </div>
@@ -79,35 +81,46 @@ export function EvidenceManager({
                 <FileStatusBadge status={file.status} />
               </div>
 
-              <div className="mt-4 grid gap-3 xl:grid-cols-3">
-                <div className="rounded-[18px] bg-muted/80 p-3">
-                  <UploadCloud className="size-4 text-primary" />
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Upload state
-                  </p>
-                  <p className="mt-1 text-sm text-foreground">{file.status.replaceAll("_", " ")}</p>
-                </div>
-                <div className="rounded-[18px] bg-muted/80 p-3">
-                  <FileStack className="size-4 text-primary" />
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Category
-                  </p>
-                  <p className="mt-1 text-sm text-foreground">{file.category || "Uncategorized"}</p>
-                </div>
-                <div className="rounded-[18px] bg-muted/80 p-3">
+              <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em]">
+                <span className="rounded-full bg-muted px-3 py-1.5 text-muted-foreground">
+                  {file.status.replaceAll("_", " ")}
+                </span>
+                <span className="rounded-full bg-accent/75 px-3 py-1.5 text-accent-foreground">
+                  {file.category || "Uncategorized"}
+                </span>
+              </div>
+
+              <div className="mt-4 rounded-[20px] bg-muted/75 p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   {file.status === "accepted" ? (
                     <FileCheck2 className="size-4 text-primary" />
                   ) : (
                     <FileWarning className="size-4 text-primary" />
                   )}
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Review note
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-foreground">
-                    {file.notes || "Awaiting a reviewer note."}
-                  </p>
+                  Review note
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {file.notes || "Awaiting a reviewer note."}
+                </p>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[18px] bg-muted/60 p-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    <UploadCloud className="size-4 text-primary" />
+                    Upload state
+                  </div>
+                  <p className="mt-2 text-sm text-foreground">{file.status.replaceAll("_", " ")}</p>
+                </div>
+                <div className="rounded-[18px] bg-muted/60 p-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    <FileStack className="size-4 text-primary" />
+                    Category
+                  </div>
+                  <p className="mt-2 text-sm text-foreground">{file.category || "Uncategorized"}</p>
                 </div>
               </div>
+
               {file.downloadUrl ? (
                 <a
                   href={file.downloadUrl}

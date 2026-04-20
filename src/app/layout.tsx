@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Inter, Public_Sans } from "next/font/google";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/app-providers";
 

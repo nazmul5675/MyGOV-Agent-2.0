@@ -210,12 +210,12 @@ export function RegisterForm() {
         <div className="rounded-[24px] border border-border/60 bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
           <div className="flex items-center gap-2 font-medium text-foreground">
             <ShieldCheck className="size-4 text-primary" />
-            {isPrototypeMode() ? "Prototype profile setup" : "Profile data stays in Firestore"}
+            {isPrototypeMode() ? "Demo account bootstrap" : "Profile data stays in MongoDB"}
           </div>
           <p className="mt-2">
             {isPrototypeMode()
-              ? "In prototype mode, registration creates a seeded citizen account in the in-memory demo store so the dashboard flow stays immediate and stable."
-              : "We store `fullName`, `dateOfBirth`, `phoneNumber`, and `addressText` in the Firestore profile document. Firebase Auth is used only for authentication credentials."}
+              ? "In demo mode, registration creates a citizen account in MongoDB and signs you in immediately so the dashboard flow stays stable for judges."
+              : "We store `fullName`, `dateOfBirth`, `phoneNumber`, and `addressText` in MongoDB. Firebase Auth is used only for authentication credentials."}
           </p>
         </div>
 

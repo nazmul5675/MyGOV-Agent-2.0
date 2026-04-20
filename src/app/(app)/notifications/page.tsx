@@ -33,7 +33,7 @@ export default async function NotificationsPage() {
     errorMessage =
       error instanceof Error
         ? error.message
-        : "The notifications page could not load live Firebase data.";
+        : "The notifications page could not load application data.";
   }
 
   if (errorMessage || !notifications) {
@@ -47,7 +47,7 @@ export default async function NotificationsPage() {
         <LiveDataState
           tone="setup"
           title="Live notifications are unavailable"
-          description={errorMessage || "The notifications page could not load live Firebase data."}
+          description={errorMessage || "The notifications page could not load application data."}
           action={
             <Link
               href="/notifications"
@@ -96,8 +96,8 @@ export default async function NotificationsPage() {
         }) : (
           <EmptyState
             icon={<BellRing className="size-5" />}
-            title="No live notifications yet"
-            description="New status changes, reminder nudges, and case follow-ups will appear here once Firestore notification records exist for this user."
+            title="No notifications yet"
+            description="New status changes, reminder nudges, and case follow-ups will appear here once notification records exist for this user."
           />
         )}
       </div>

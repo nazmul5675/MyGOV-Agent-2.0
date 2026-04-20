@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     errorMessage =
       error instanceof Error
         ? error.message
-        : "The dashboard could not load live Firebase data.";
+        : "The dashboard could not load application data.";
   }
 
   if (errorMessage || !data) {
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
         <LiveDataState
           tone="setup"
           title="Live dashboard data is unavailable"
-          description={errorMessage || "The dashboard could not load live Firebase data."}
+          description={errorMessage || "The dashboard could not load application data."}
           action={
             <Link
               href="/dashboard"
@@ -104,8 +104,8 @@ export default async function DashboardPage() {
       />
 
       <Reveal>
-        <section className="grid items-stretch gap-5 xl:grid-cols-12">
-          <div className="hero-gradient flex h-full flex-col justify-between rounded-[32px] p-6 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)] sm:p-8 xl:col-span-8">
+        <section className="space-y-5">
+          <div className="hero-gradient flex min-h-[24rem] flex-col justify-between rounded-[32px] p-6 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)] sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">
               Citizen command center
             </p>
@@ -140,7 +140,8 @@ export default async function DashboardPage() {
               </div>
             ) : null}
           </div>
-          <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 xl:col-span-4">
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard {...stats[0]} icon={<Files className="size-5" />} />
             <StatCard {...stats[1]} icon={<BellRing className="size-5" />} />
             <StatCard {...stats[2]} icon={<ShieldEllipsis className="size-5" />} />
@@ -185,7 +186,7 @@ export default async function DashboardPage() {
                       <EmptyState
                         icon={<BellRing className="size-5" />}
                         title="No live reminders right now"
-                        description="Notifications and status follow-ups will appear here as real Firestore updates are written for this account."
+                        description="Notifications and status follow-ups will appear here as new updates are written for this account."
                       />
                     )}
                   </div>
@@ -194,8 +195,8 @@ export default async function DashboardPage() {
             ) : (
               <EmptyState
                 icon={<Files className="size-5" />}
-                title="No live cases yet"
-                description="This account does not have any Firestore case records yet. Create your first live case to begin tracking updates."
+                title="No cases yet"
+                description="This account does not have any case records yet. Create your first case to begin tracking updates."
                 action={
                   <Link
                     href="/cases/new"
@@ -324,8 +325,8 @@ export default async function DashboardPage() {
       ) : null}
 
       <Reveal delay={0.1}>
-        <section className="grid gap-6 xl:grid-cols-12">
-          <div className="xl:col-span-7">
+        <section className="space-y-6">
+          <div>
             <AssistantPanel
               initialMessages={messages || []}
               title="AI helping chat box"
@@ -338,12 +339,12 @@ export default async function DashboardPage() {
               ]}
             />
           </div>
-          <div className="space-y-6 xl:col-span-5">
+
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
             <EvidenceManager
               files={recentFiles}
               title="Uploaded files overview"
-              description="Your most recent evidence stays visible here with live review states, so uploads feel like a managed workflow instead of hidden attachments."
-              dense
+              description="Your most recent evidence stays visible here with current review states, so uploads feel like a managed workflow instead of hidden attachments."
             />
             <section className="surface-panel p-6">
               <div className="flex items-center gap-3">

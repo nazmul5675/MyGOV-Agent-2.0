@@ -188,7 +188,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               </CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
                 {prototypeMode
-                  ? "Photos, documents, and voice notes upload into the polished prototype file flow with realistic progress, status, and metadata."
+                  ? "Photos, documents, and voice notes use the demo upload path with realistic progress, status, and metadata so the judge flow stays stable."
                   : "Photos, documents, and voice notes upload into Firebase Storage when credentials are connected, with metadata saved against the case."}
               </p>
             </div>

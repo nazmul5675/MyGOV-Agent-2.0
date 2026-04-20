@@ -1,6 +1,5 @@
 import { App, cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
 
 import { hasFirebaseAdminConfig } from "@/lib/firebase/config";
 import { normalizeUserRole } from "@/lib/firebase/roles";
@@ -31,38 +30,12 @@ export function getAdminAuth() {
   return app ? getAuth(app) : null;
 }
 
-export function getAdminDb() {
-  const app = getFirebaseAdminApp();
-  return app ? getFirestore(app) : null;
-}
-
-export async function getUserRole(uid: string): Promise<UserRole | null> {
-  const db = getAdminDb();
-  if (!db) return null;
-
-  const snapshot = await db.collection("users").doc(uid).get();
-  if (!snapshot.exists) return null;
-
-  const role = normalizeUserRole(snapshot.data()?.role);
-  return role;
-}
-
 export async function getUserRoleFromAuth(uid: string): Promise<UserRole | null> {
   const auth = getAdminAuth();
   if (!auth) return null;
 
   const user = await auth.getUser(uid);
   return normalizeUserRole(user.customClaims?.role);
-}
-
-export async function getUserProfileRecord(uid: string) {
-  const db = getAdminDb();
-  if (!db) return null;
-
-  const snapshot = await db.collection("users").doc(uid).get();
-  if (!snapshot.exists) return null;
-
-  return snapshot.data() || null;
 }
 
 export async function getAuthUserRecord(uid: string) {

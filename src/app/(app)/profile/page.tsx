@@ -31,7 +31,7 @@ export default async function ProfilePage({
     errorMessage =
       error instanceof Error
         ? error.message
-        : "The profile page could not load the Firestore user document.";
+        : "The profile page could not load the user profile.";
   }
 
   if (errorMessage || !profile) {
@@ -45,7 +45,7 @@ export default async function ProfilePage({
         <LiveDataState
           tone="setup"
           title="Live profile data is unavailable"
-          description={errorMessage || "The profile page could not load the Firestore user document."}
+          description={errorMessage || "The profile page could not load the user profile."}
           action={
             <Link
               href="/profile"
@@ -70,7 +70,7 @@ export default async function ProfilePage({
       <PageHeader
         eyebrow="Profile"
         title="Profile and identity readiness"
-        description="Profile details beyond login credentials live in Firestore, so the product can stay simple at sign-up and still support richer citizen context later."
+        description="Profile details beyond login credentials live in MongoDB, so the product can stay simple at sign-up and still support richer citizen context later."
       />
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -86,7 +86,7 @@ export default async function ProfilePage({
           </div>
           <p className="mt-6 max-w-xl text-sm leading-7 text-primary-foreground/82">
             Full name is collected during registration. Date of birth, phone number,
-            and location details are stored here in Firestore so onboarding stays
+            and location details are stored here in MongoDB so onboarding stays
             lightweight while age-aware and contact-aware flows remain possible later.
           </p>
         </div>

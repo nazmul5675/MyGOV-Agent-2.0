@@ -5,7 +5,7 @@ import { createPrototypeSessionToken } from "@/lib/auth/prototype-session";
 import { isPrototypeMode } from "@/lib/config/app-mode";
 import { sessionCookieName } from "@/lib/constants";
 import { getAdminAuth } from "@/lib/firebase/admin";
-import { createPrototypeUser, upsertUserProfile } from "@/lib/repositories/users";
+import { createPrototypeUser, getUserProfileByUid, upsertUserProfile } from "@/lib/repositories/users";
 import { registerProfileSchema, registerSchema } from "@/lib/validation/auth";
 
 export async function POST(request: Request) {
@@ -84,17 +84,21 @@ export async function POST(request: Request) {
     let warning: string | undefined;
 
     try {
+      const existing = await getUserProfileByUid(decoded.uid).catch(() => null);
       await upsertUserProfile(decoded.uid, {
         fullName: body.fullName,
         email,
         role: "citizen",
+        dateOfBirth: existing?.dateOfBirth,
+        phoneNumber: existing?.phoneNumber,
+        addressText: existing?.addressText,
       });
       profileCreated = true;
     } catch (profileError) {
       warning =
         profileError instanceof Error
           ? profileError.message
-          : "Firestore profile bootstrap was skipped.";
+          : "MongoDB profile bootstrap was skipped.";
     }
 
     const expiresIn = 60 * 60 * 24 * 5 * 1000;

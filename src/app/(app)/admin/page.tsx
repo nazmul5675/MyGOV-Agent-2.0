@@ -40,7 +40,7 @@ export default async function AdminDashboardPage() {
     errorMessage =
       error instanceof Error
         ? error.message
-        : "The admin dashboard could not load live Firebase data.";
+        : "The admin dashboard could not load application data.";
   }
 
   if (errorMessage || !data) {
@@ -54,7 +54,7 @@ export default async function AdminDashboardPage() {
         <LiveDataState
           tone="setup"
           title="Live admin queue is unavailable"
-          description={errorMessage || "The admin dashboard could not load live Firebase data."}
+          description={errorMessage || "The admin dashboard could not load application data."}
           action={
             <Link
               href="/admin"

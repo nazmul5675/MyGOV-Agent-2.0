@@ -18,7 +18,7 @@ export function AppModeBadge({
       )}
     >
       {mode === "prototype" ? <Sparkles className="size-3.5" /> : <Layers3 className="size-3.5" />}
-      {mode === "prototype" ? "Prototype mode" : "Live mode"}
+      {mode === "prototype" ? "Demo mode" : "Live mode"}
     </div>
   );
 }

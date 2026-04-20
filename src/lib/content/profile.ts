@@ -21,7 +21,7 @@ export function getProfileCards(input: {
       title: "Stored documents",
       body: input.documents.length
         ? input.documents.join(", ")
-        : "No stored documents are available in Firestore for this account yet.",
+        : "No stored documents are available in the application record for this account yet.",
     },
   ];
 }

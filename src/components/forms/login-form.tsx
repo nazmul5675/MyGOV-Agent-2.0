@@ -157,8 +157,8 @@ export function LoginForm() {
           {
             description:
               isPrototypeMode()
-                ? "Use one of the seeded demo accounts or create a new citizen account."
-                : "Double-check your email, password, and Firebase account role setup.",
+                ? "Use one of the seeded demo accounts or create a new demo citizen account."
+                : "Double-check your email, password, Firebase setup, and role assignment.",
           }
         );
       }
@@ -181,8 +181,8 @@ export function LoginForm() {
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
           {isPrototypeMode()
-            ? "Use a seeded demo account or a newly registered citizen account to enter the workspace instantly."
-            : "Use your Firebase account to enter the citizen or admin workspace with a server-issued session cookie."}
+            ? "Use a seeded demo account or a newly created demo citizen account to enter the workspace instantly."
+            : "Use your Firebase account to enter the citizen or admin workspace with a server-issued session cookie and Mongo-backed application data."}
         </p>
         {nextPath ? (
           <p className="text-xs leading-6 text-muted-foreground">
@@ -241,12 +241,12 @@ export function LoginForm() {
         <div className="rounded-[24px] border border-border/60 bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
           <div className="flex items-center gap-2 font-medium text-foreground">
             <LockKeyhole className="size-4 text-primary" />
-            {isPrototypeMode() ? "Prototype demo login" : "Firebase-only login"}
+            {isPrototypeMode() ? "Demo credential access" : "Firebase sign-in"}
           </div>
           <p className="mt-2">
             {isPrototypeMode()
-              ? "Use the seeded demo credentials to enter the citizen or admin workspace instantly with a stable prototype session."
-              : "Role access comes from Firebase custom claims or the Firestore `users/{uid}.role` field. Admin access is never self-selected."}
+              ? "Use the seeded demo credentials to enter the citizen or admin workspace instantly with a stable cookie-based session."
+              : "Identity comes from Firebase Auth, while role-aware profile and case data are read from MongoDB. Admin access is never self-selected."}
           </p>
           {missingClientVars.length && !isPrototypeMode() ? (
             <FormMessage

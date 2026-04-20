@@ -69,7 +69,7 @@ export function ForgotPasswordForm() {
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
           {isPrototypeMode()
-            ? "Enter the email address linked to your prototype account and we will simulate a reset handoff for the demo."
+            ? "Enter the email address linked to your demo account and we will simulate a reset handoff for the presentation flow."
             : "Enter the email address linked to your account and we will send a secure password reset link."}
         </p>
       </CardHeader>

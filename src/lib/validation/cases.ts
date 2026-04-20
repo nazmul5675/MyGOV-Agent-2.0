@@ -20,6 +20,12 @@ export const createCaseSchema = z.object({
   caseType: caseTypeSchema,
   location: z.string().min(6, "Add a location."),
   description: z.string().min(24, "Add a fuller description for faster routing."),
+  formattedAddress: z.string().trim().optional(),
+  placeId: z.string().trim().optional(),
+  lat: z.number().finite().optional(),
+  lng: z.number().finite().optional(),
+  timezoneId: z.string().trim().optional(),
+  nearbyLandmark: z.string().trim().optional(),
 });
 
 export const evidenceMetadataSchema = z.object({

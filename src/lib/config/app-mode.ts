@@ -1,6 +1,6 @@
 export type AppMode = "prototype" | "live";
 
-const DEFAULT_MODE: AppMode = "prototype";
+const DEFAULT_MODE: AppMode = "live";
 
 export function getAppMode(): AppMode {
   const raw =

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ExternalLink, MapPin, Navigation, TimerReset } from "lucide-react";
 
 import type { CaseLocationMeta } from "@/lib/types";
-import { buildMapsEmbedUrl } from "@/lib/maps/config";
+import { LeafletPreviewMap } from "@/components/maps/leaflet-preview-map";
+import { buildOpenStreetMapHref } from "@/lib/maps/leaflet";
 
 export function LocationPreviewCard({
   title = "Location preview",
@@ -15,16 +16,8 @@ export function LocationPreviewCard({
   location?: CaseLocationMeta | null;
   compact?: boolean;
 }) {
-  const embedUrl = buildMapsEmbedUrl(location);
   const resolvedAddress = location?.formattedAddress || location?.locationText;
-  const googleMapsHref =
-    location && typeof location.lat === "number" && typeof location.lng === "number"
-      ? `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`
-      : location
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            location.formattedAddress || location.locationText
-          )}`
-        : null;
+  const openStreetMapHref = buildOpenStreetMapHref(location);
 
   return (
     <section className="surface-panel overflow-hidden p-0">
@@ -36,14 +29,8 @@ export function LocationPreviewCard({
       </div>
 
       <div className={compact ? "aspect-[16/9] min-h-56 w-full" : "aspect-[4/3] min-h-64 w-full"}>
-        {embedUrl ? (
-          <iframe
-            title={title}
-            src={embedUrl}
-            className="h-full w-full border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+        {location && typeof location.lat === "number" && typeof location.lng === "number" ? (
+          <LeafletPreviewMap location={location} />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top_left,rgba(213,229,255,0.95),rgba(241,245,249,0.92)_50%,rgba(226,232,240,0.9))] px-6 text-center">
             <div className="space-y-3">
@@ -54,7 +41,7 @@ export function LocationPreviewCard({
                 {location?.locationText || "Location preview unavailable"}
               </p>
               <p className="max-w-sm text-sm leading-6 text-muted-foreground">
-                Add `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` to enable embedded map previews in this card.
+                Add coordinates to this case location to show an interactive OpenStreetMap preview.
               </p>
             </div>
           </div>
@@ -76,14 +63,14 @@ export function LocationPreviewCard({
                   ) : null}
                 </div>
               </div>
-              {googleMapsHref ? (
+              {openStreetMapHref ? (
                 <Link
-                  href={googleMapsHref}
+                  href={openStreetMapHref}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
                 >
-                  Open in Google Maps
+                  Open in OpenStreetMap
                   <ExternalLink className="size-4" />
                 </Link>
               ) : null}
@@ -126,14 +113,14 @@ export function LocationPreviewCard({
                   ) : null}
                 </div>
               </div>
-              {googleMapsHref ? (
+              {openStreetMapHref ? (
                 <Link
-                  href={googleMapsHref}
+                  href={openStreetMapHref}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
                 >
-                  Open in Google Maps
+                  Open in OpenStreetMap
                   <ExternalLink className="size-4" />
                 </Link>
               ) : null}

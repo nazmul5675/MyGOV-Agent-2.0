@@ -132,7 +132,7 @@ export default function LandingPage() {
                   { icon: Waves, title: "Flood relief", text: "High-confidence household intake with image and document support." },
                   { icon: FileStack, title: "Public complaint", text: "No-wrong-door routing with cleaner location and evidence capture." },
                   { icon: BellRing, title: "Reminder and renewal", text: "Proactive case starts for licenses, taxes, or benefit renewals." },
-                  { icon: ArrowRight, title: "Scalable workflow", text: "Route handlers, session cookies, prototype data modules, and AI-ready service boundaries." },
+                  { icon: ArrowRight, title: "Scalable workflow", text: "Route handlers, session cookies, MongoDB repositories, and AI-ready service boundaries." },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (

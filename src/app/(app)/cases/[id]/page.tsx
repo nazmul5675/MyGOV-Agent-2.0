@@ -55,7 +55,7 @@ export default async function CitizenCaseDetailPage({
     errorMessage =
       error instanceof Error
         ? error.message
-        : "The case detail page could not load live Firebase data.";
+        : "The case detail page could not load application data.";
   }
 
   if (errorMessage) {
@@ -64,7 +64,7 @@ export default async function CitizenCaseDetailPage({
         <PageHeader
           eyebrow="Case detail"
           title="Live case detail unavailable"
-          description="This page reads directly from Firestore and the case events subcollection."
+          description="This page reads directly from the MongoDB case workspace and event history."
         />
         <LiveDataState
           tone="setup"
@@ -155,7 +155,7 @@ export default async function CitizenCaseDetailPage({
           <EvidenceManager
             files={item.evidence}
             title="Uploaded files"
-            description="Every file linked to this case stays visible here with a live review state, so document handling feels like a real workflow instead of hidden attachments."
+            description="Every file linked to this case stays visible here with a current review state, so document handling feels like a real workflow instead of hidden attachments."
           />
 
           <section className="grid gap-4 md:grid-cols-3">
@@ -274,7 +274,7 @@ export default async function CitizenCaseDetailPage({
           caseId={item.id}
           initialMessages={messages || []}
           title="Contextual AI helper"
-          subtitle="This assistant is tied to the live case record, so you can ask what the current status means, what documents still matter, or what you should do next."
+          subtitle="This assistant is tied to the case record, so you can ask what the current status means, what documents still matter, or what you should do next."
           suggestedPrompts={[
             "What documents do I need?",
             "Help me explain my issue",

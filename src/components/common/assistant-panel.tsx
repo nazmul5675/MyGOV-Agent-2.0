@@ -244,7 +244,7 @@ export function AssistantPanel({
           <p className="min-w-0 text-xs leading-6 text-muted-foreground">
             {assistantMeta?.source === "gemini" && assistantMeta.model
               ? `Live Gemini is active with ${assistantMeta.model}.`
-              : "The assistant uses case and file context from the prototype data layer and upgrades to live Gemini responses whenever the API key is configured."}
+              : "The assistant uses case, file, and workflow context from the application data layer and upgrades to live Gemini responses whenever the API key is configured."}
           </p>
           <Button
             type="button"
