@@ -7,6 +7,12 @@ function compareByCreatedAtDesc<T extends { createdAt: string }>(left: T, right:
   return right.createdAt.localeCompare(left.createdAt);
 }
 
+function toPlainRecord<T extends object>(record: T) {
+  const plain = { ...(record as T & { _id?: unknown }) };
+  delete plain._id;
+  return plain as T;
+}
+
 export async function createNotificationForUser(
   userId: string,
   notification: Omit<NotificationItem, "id">
@@ -59,10 +65,12 @@ export async function createReminderForUser(input: {
 
 export async function listRemindersForUser(userId: string) {
   const { reminders } = await getMongoCollections();
-  return reminders.find({ userId }).sort({ createdAt: -1 }).toArray();
+  const records = await reminders.find({ userId }).sort({ createdAt: -1 }).toArray();
+  return records.map(toPlainRecord);
 }
 
 export async function listRemindersForCase(caseId: string) {
   const { reminders } = await getMongoCollections();
-  return reminders.find({ caseId }).sort({ createdAt: -1 }).toArray();
+  const records = await reminders.find({ caseId }).sort({ createdAt: -1 }).toArray();
+  return records.map(toPlainRecord);
 }

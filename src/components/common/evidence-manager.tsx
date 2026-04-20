@@ -65,11 +65,11 @@ export function EvidenceManager({
           {files.map((file) => (
             <article
               key={file.id}
-              className="group min-w-0 rounded-[22px] border border-border/60 bg-white/78 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
+              className="group min-w-0 rounded-[24px] border border-border/60 bg-white/78 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-2">
-                  <p className="line-clamp-2 break-all text-[15px] font-semibold leading-6 text-foreground">
+                  <p className="line-clamp-2 text-[15px] font-semibold leading-6 text-foreground break-all">
                     {file.name}
                   </p>
                   <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -82,42 +82,43 @@ export function EvidenceManager({
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em]">
-                <span className="rounded-full bg-muted px-3 py-1.5 text-muted-foreground">
-                  {file.status.replaceAll("_", " ")}
-                </span>
                 <span className="rounded-full bg-accent/75 px-3 py-1.5 text-accent-foreground">
                   {file.category || "Uncategorized"}
                 </span>
+                {file.reviewedBy ? (
+                  <span className="rounded-full bg-muted px-3 py-1.5 text-muted-foreground">
+                    reviewed
+                  </span>
+                ) : null}
               </div>
 
-              <div className="mt-4 rounded-[18px] bg-muted/75 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  {file.status === "accepted" ? (
-                    <FileCheck2 className="size-4 text-primary" />
-                  ) : (
-                    <FileWarning className="size-4 text-primary" />
-                  )}
-                  Review note
-                </div>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {file.notes || "Awaiting a reviewer note."}
-                </p>
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[16px] bg-muted/60 p-3">
+              <div className="mt-4 grid gap-3 xl:grid-cols-[11rem_minmax(0,1fr)]">
+                <div className="rounded-[18px] bg-muted/60 p-3">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     <UploadCloud className="size-4 text-primary" />
                     Upload state
                   </div>
                   <p className="mt-2 text-sm text-foreground">{file.status.replaceAll("_", " ")}</p>
                 </div>
-                <div className="rounded-[16px] bg-muted/60 p-3">
+                <div className="rounded-[18px] bg-muted/60 p-3">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     <FileStack className="size-4 text-primary" />
                     Category
                   </div>
                   <p className="mt-2 text-sm text-foreground">{file.category || "Uncategorized"}</p>
+                </div>
+                <div className="rounded-[20px] bg-muted/75 p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    {file.status === "accepted" ? (
+                      <FileCheck2 className="size-4 text-primary" />
+                    ) : (
+                      <FileWarning className="size-4 text-primary" />
+                    )}
+                    Review note
+                  </div>
+                  <p className="mt-2 line-clamp-4 text-sm leading-6 text-muted-foreground">
+                    {file.notes || "Awaiting a reviewer note."}
+                  </p>
                 </div>
               </div>
 

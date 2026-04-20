@@ -23,9 +23,9 @@ export function Topbar({
   const quickLinks = roleNavigation[session.role].slice(0, 3);
 
   return (
-    <div className="glass-panel flex flex-col gap-3 rounded-[26px] px-4 py-3.5">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0 space-y-2">
+    <div className="glass-panel flex flex-col gap-2.5 rounded-[24px] px-4 py-3">
+      <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0 space-y-1.5">
           <Link
             href={homeHref}
             className="flex items-center gap-3 rounded-[24px] px-1 py-1 transition-colors hover:bg-white/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 lg:hidden"
@@ -43,21 +43,21 @@ export function Topbar({
           <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
             {session.role === "admin" ? "Admin portal" : "Citizen portal"}
           </p>
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <p className="font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
               {title}
             </p>
             <AppModeBadge />
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2.5">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Link
             href={noticeHref}
             className="flex size-10 items-center justify-center rounded-full bg-accent text-accent-foreground transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(0,30,64,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
           >
             <Bell className="size-4" />
           </Link>
-          <div className="hidden min-w-0 items-center gap-2.5 rounded-full bg-white/70 px-2 py-1.5 sm:flex">
+          <div className="hidden min-w-0 items-center gap-2 rounded-full bg-white/70 px-2 py-1.5 sm:flex">
             <Avatar className="size-8">
               <AvatarFallback className="bg-primary text-primary-foreground">
                 {session.name
@@ -94,7 +94,7 @@ export function Topbar({
               key={`${session.role}-${item.href}`}
               href={item.href}
               className={cn(
-                "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all",
+                "rounded-full px-3 py-1.5 text-sm font-medium transition-all",
                 active
                   ? "bg-primary text-primary-foreground shadow-[0_10px_24px_rgba(0,30,64,0.16)]"
                   : "bg-white/70 text-muted-foreground hover:bg-accent hover:text-accent-foreground"

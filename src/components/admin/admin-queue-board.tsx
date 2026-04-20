@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
-import { ArrowRight, Search, ShieldAlert, Sparkles } from "lucide-react";
+import { ArrowRight, MapPin, Search, ShieldAlert, Sparkles } from "lucide-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { StatusBadge } from "@/components/common/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import type { CaseItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -105,59 +106,69 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
           {filteredCases.map((item) => (
             <article
               key={item.id}
-              className="surface-panel interactive-lift flex h-full min-w-0 flex-col gap-5 p-6"
+              className="surface-panel interactive-lift flex h-full min-w-0 flex-col gap-4 p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="break-all text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
                     {item.reference}
                   </p>
-                  <h3 className="mt-2 text-xl font-bold tracking-tight text-foreground">
+                  <h3 className="mt-2 line-clamp-2 text-xl font-bold tracking-tight text-foreground">
                     {item.title}
                   </h3>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {item.citizenName} / {item.location}
+                    {item.citizenName}
                   </p>
                 </div>
                 <StatusBadge status={item.status} />
               </div>
 
-              <p className="text-sm leading-7 text-muted-foreground">{item.intake.adminSummary}</p>
+              <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.16em]">
+                <span className="rounded-full bg-accent/70 px-3 py-1.5 text-accent-foreground">
+                  {item.type.replaceAll("_", " ")}
+                </span>
+                <span className="rounded-full bg-muted px-3 py-1.5 text-muted-foreground">
+                  {item.evidence.length} files
+                </span>
+                <span className="rounded-full bg-white/80 px-3 py-1.5 text-primary">
+                  {item.intake.urgency}
+                </span>
+              </div>
+
+              <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
+                {item.intake.adminSummary}
+              </p>
 
               <div className="rounded-[20px] border border-primary/10 bg-primary/[0.04] p-4 text-sm leading-7 text-muted-foreground">
                 <div className="flex items-center gap-2 text-foreground">
                   <Sparkles className="size-4 text-primary" />
                   <span className="font-semibold">AI summary focus</span>
                 </div>
-                <p className="mt-2">
+                <p className="mt-2 line-clamp-3 leading-6">
                   {item.intake.missingDocuments.length
                     ? `Prioritize ${item.intake.missingDocuments[0]} and check whether the current file packet already supports a citizen-facing follow-up.`
                     : "This packet looks structurally complete. Use the AI helper to draft an officer summary and route note before moving it forward."}
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[20px] bg-muted/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Evidence
-                  </p>
-                  <p className="mt-2 font-semibold text-foreground">{item.evidence.length} files</p>
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
+                    <span className="line-clamp-2">{item.location}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    <span>{item.intake.missingDocuments.length} missing docs</span>
+                    <span>Updated {new Date(item.updatedAt).toLocaleDateString("en-GB")}</span>
+                  </div>
                 </div>
-                <div className="rounded-[20px] bg-muted/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Missing docs
-                  </p>
-                  <p className="mt-2 font-semibold text-foreground">
-                    {item.intake.missingDocuments.length || 0}
-                  </p>
-                </div>
-                <div className="rounded-[20px] bg-muted/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Urgency
-                  </p>
-                  <p className="mt-2 font-semibold capitalize text-foreground">
-                    {item.intake.urgency}
-                  </p>
+                <div className="min-w-[8.25rem] rounded-[18px] bg-muted/75 p-3">
+                  <Progress value={item.progress} className="gap-2">
+                    <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <span>Progress</span>
+                      <span>{item.progress}%</span>
+                    </div>
+                  </Progress>
                 </div>
               </div>
 
@@ -179,7 +190,7 @@ export function AdminQueueBoard({ cases }: { cases: CaseItem[] }) {
                 href={`/admin/cases/${item.id}`}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
-                  "mt-auto w-full justify-between px-4 sm:w-auto"
+                  "mt-auto w-full justify-between rounded-full px-4 sm:w-auto"
                 )}
               >
                 Open review workspace

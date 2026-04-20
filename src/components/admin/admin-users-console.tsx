@@ -117,8 +117,17 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
     <>
       <div className="space-y-5">
         <section className="surface-panel p-5 sm:p-6">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="relative w-full max-w-xl">
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="font-heading text-2xl font-bold tracking-tight text-primary">
+                User directory
+              </h2>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Search across citizen and admin accounts, then inspect readiness, case load, and access level before making role changes.
+              </p>
+            </div>
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="relative w-full max-w-xl">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
@@ -127,121 +136,132 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                 className="h-12 rounded-full pl-11"
               />
             </div>
-            <div className="flex flex-wrap gap-2">
-              {(["all", "citizen", "admin"] as const).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setRoleFilter(item)}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
-                    roleFilter === item
-                      ? "bg-primary text-primary-foreground shadow-[0_14px_28px_rgba(0,30,64,0.18)]"
-                      : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                >
-                  {item === "all" ? "All roles" : item}
-                </button>
-              ))}
-              {(["all", "active", "invited", "disabled"] as const).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setStatusFilter(item)}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
-                    statusFilter === item
-                      ? "bg-primary text-primary-foreground shadow-[0_14px_28px_rgba(0,30,64,0.18)]"
-                      : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                >
-                  {item === "all" ? "All status" : item}
-                </button>
-              ))}
+              <div className="flex flex-wrap gap-2">
+                {(["all", "citizen", "admin"] as const).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setRoleFilter(item)}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                      roleFilter === item
+                        ? "bg-primary text-primary-foreground shadow-[0_14px_28px_rgba(0,30,64,0.18)]"
+                        : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    }`}
+                  >
+                    {item === "all" ? "All roles" : item}
+                  </button>
+                ))}
+                {(["all", "active", "invited", "disabled"] as const).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setStatusFilter(item)}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                      statusFilter === item
+                        ? "bg-primary text-primary-foreground shadow-[0_14px_28px_rgba(0,30,64,0.18)]"
+                        : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    }`}
+                  >
+                    {item === "all" ? "All status" : item}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
         {filteredUsers.length ? (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="space-y-4">
             {filteredUsers.map((user) => {
               const accountStatus = user.accountStatus || "active";
 
               return (
                 <article
                   key={user.uid}
-                  className="surface-panel interactive-lift flex min-w-0 flex-col gap-4 p-5 sm:p-6"
+                  className="surface-panel interactive-lift min-w-0 p-5 sm:p-6"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(19rem,0.95fr)_auto] xl:items-center">
                     <div className="min-w-0">
-                      <h3 className="truncate text-xl font-bold tracking-tight text-foreground">
-                        {user.fullName}
-                      </h3>
-                      <p className="mt-1 break-all text-sm text-muted-foreground">{user.email}</p>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-xl font-bold tracking-tight text-foreground">
+                            {user.fullName}
+                          </h3>
+                          <p className="mt-1 break-all text-sm text-muted-foreground">
+                            {user.email}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span
+                            className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${roleChipTone(user.role)}`}
+                          >
+                            {user.role}
+                          </span>
+                          <span
+                            className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusChipTone(accountStatus)}`}
+                          >
+                            {accountStatus}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 rounded-[22px] border border-primary/8 bg-primary/[0.04] p-4 text-sm">
+                        <div className="flex items-center gap-2 text-foreground">
+                          <Mail className="size-4 text-primary" />
+                          <span className="font-semibold">Account summary</span>
+                        </div>
+                        <div className="mt-3 grid gap-2 text-muted-foreground sm:grid-cols-2">
+                          <p>Created: {formatDate(user.createdAt)}</p>
+                          <p>Last active: {formatDate(user.lastActiveAt || user.updatedAt)}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${roleChipTone(user.role)}`}
+
+                    <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                      <div className="rounded-[20px] bg-muted/75 p-3.5">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                          Related cases
+                        </p>
+                        <p className="mt-2 text-xl font-bold text-foreground">
+                          {user.casesCount}
+                        </p>
+                      </div>
+                      <div className="rounded-[20px] bg-muted/75 p-3.5">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                          Open cases
+                        </p>
+                        <p className="mt-2 text-xl font-bold text-foreground">
+                          {user.openCasesCount}
+                        </p>
+                      </div>
+                      <div className="rounded-[20px] bg-muted/75 p-3.5">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                          Profile score
+                        </p>
+                        <p className="mt-2 text-xl font-bold text-foreground">
+                          {user.profileCompleteness}%
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 xl:flex-col xl:items-stretch xl:justify-center">
+                      <Button
+                        variant="outline"
+                        className="rounded-full px-4 xl:w-full"
+                        onClick={() => setSelectedUser(user)}
                       >
-                        {user.role}
-                      </span>
-                      <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusChipTone(accountStatus)}`}
+                        <UserRound className="size-4" />
+                        View details
+                      </Button>
+                      <Button
+                        variant={user.role === "admin" ? "outline" : "default"}
+                        className="rounded-full px-4 xl:w-full"
+                        onClick={() => setPendingRoleTarget(user)}
                       >
-                        {accountStatus}
-                      </span>
+                        <UserCog className="size-4" />
+                        {user.role === "admin" ? "Move to citizen" : "Promote to admin"}
+                      </Button>
                     </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-[20px] bg-muted/75 p-3.5">
-                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        Related cases
-                      </p>
-                      <p className="mt-2 text-xl font-bold text-foreground">{user.casesCount}</p>
-                    </div>
-                    <div className="rounded-[20px] bg-muted/75 p-3.5">
-                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        Open cases
-                      </p>
-                      <p className="mt-2 text-xl font-bold text-foreground">{user.openCasesCount}</p>
-                    </div>
-                    <div className="rounded-[20px] bg-muted/75 p-3.5">
-                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        Profile score
-                      </p>
-                      <p className="mt-2 text-xl font-bold text-foreground">
-                        {user.profileCompleteness}%
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 rounded-[22px] border border-primary/8 bg-primary/[0.04] p-4 text-sm">
-                    <div className="flex items-center gap-2 text-foreground">
-                      <Mail className="size-4 text-primary" />
-                      <span className="font-semibold">Account summary</span>
-                    </div>
-                    <div className="grid gap-2 text-muted-foreground sm:grid-cols-2">
-                      <p>Created: {formatDate(user.createdAt)}</p>
-                      <p>Last active: {formatDate(user.lastActiveAt || user.updatedAt)}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-auto flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      className="rounded-full px-4"
-                      onClick={() => setSelectedUser(user)}
-                    >
-                      <UserRound className="size-4" />
-                      View details
-                    </Button>
-                    <Button
-                      variant={user.role === "admin" ? "outline" : "default"}
-                      className="rounded-full px-4"
-                      onClick={() => setPendingRoleTarget(user)}
-                    >
-                      <UserCog className="size-4" />
-                      {user.role === "admin" ? "Move to citizen" : "Promote to admin"}
-                    </Button>
                   </div>
                 </article>
               );

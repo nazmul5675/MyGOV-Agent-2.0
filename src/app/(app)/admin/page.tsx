@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowRight,
   ClipboardCheck,
   Clock3,
   FileSearch,
@@ -95,7 +96,40 @@ export default async function AdminDashboardPage() {
       />
 
       <Reveal>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-9">
+        <section className="surface-panel p-5 sm:p-6">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                Operations pulse
+              </p>
+              <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-primary sm:text-3xl">
+                Review cases, evidence, and role-controlled access from one admin desk.
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                This console is tuned for queue movement: quick review counts, evidence pressure, AI-guided summaries, and cleaner access oversight.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/admin#queue"
+                className={cn(buttonVariants({ variant: "default" }), "rounded-full px-5")}
+              >
+                Open case queue
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href="/admin/users"
+                className={cn(buttonVariants({ variant: "outline" }), "rounded-full px-5")}
+              >
+                Manage users
+              </Link>
+            </div>
+          </div>
+        </section>
+      </Reveal>
+
+      <Reveal delay={0.03}>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           {stats.map((stat, index) => (
             <StatCard key={stat.label} {...stat} icon={statIcons[index]} />
           ))}
@@ -108,10 +142,14 @@ export default async function AdminDashboardPage() {
           className="grid gap-6 xl:grid-cols-[minmax(0,1.16fr)_minmax(22rem,0.84fr)]"
         >
           <div className="space-y-5">
-            <PageHeader
-              title="Workload buckets"
-              description="Start with the buckets that matter most: fresh intake, citizen follow-up, urgent packets, and cases that have quietly stalled."
-            />
+            <div className="space-y-1">
+              <h2 className="font-heading text-2xl font-bold tracking-tight text-primary">
+                Workload buckets
+              </h2>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Start with the buckets that matter most: fresh intake, citizen follow-up, urgent packets, and cases that have quietly stalled.
+              </p>
+            </div>
             <div className="grid gap-4 xl:grid-cols-2">
               {[
                 {
@@ -135,7 +173,7 @@ export default async function AdminDashboardPage() {
                   items: queueBuckets?.stalledCases || [],
                 },
               ].map((bucket) => (
-                <section key={bucket.title} className="surface-panel p-5 sm:p-6">
+                <section key={bucket.title} className="surface-panel p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-foreground">{bucket.title}</p>
@@ -149,14 +187,19 @@ export default async function AdminDashboardPage() {
                   </div>
                   <div className="mt-4 space-y-3">
                     {bucket.items.length ? (
-                      bucket.items.map((item) => (
+                      bucket.items.slice(0, 3).map((item) => (
                         <Link
                           key={item.id}
                           href={`/admin/cases/${item.id}`}
                           className="block rounded-[20px] bg-muted/75 p-4 transition-colors hover:bg-accent"
                         >
-                          <p className="font-semibold text-foreground">{item.title}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="font-semibold text-foreground">{item.title}</p>
+                            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+                              {item.status.replaceAll("_", " ")}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm text-muted-foreground">
                             {item.reference} / {item.location}
                           </p>
                         </Link>
@@ -171,21 +214,18 @@ export default async function AdminDashboardPage() {
               ))}
             </div>
 
-            <PageHeader
-              title="Case queue"
-              description="Use the full review queue when you need richer case context, stronger search, and direct entry into the review workspace."
-            />
+            <div className="space-y-1">
+              <h2 className="font-heading text-2xl font-bold tracking-tight text-primary">
+                Case queue
+              </h2>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Use the full review queue when you need stronger search, denser case context, and direct entry into the review workspace.
+              </p>
+            </div>
             <AdminQueueBoard cases={queue} />
           </div>
 
-          <div className="space-y-6">
-            <EvidenceManager
-              files={filesNeedingReview}
-              title="Files needing review"
-              description="This file manager turns uploads into a visible operational surface instead of buried attachments."
-              dense
-            />
-
+          <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
             <section className="surface-panel p-5 sm:p-6">
               <div className="flex items-center gap-3">
                 <Sparkles className="size-5 text-primary" />
@@ -201,6 +241,13 @@ export default async function AdminDashboardPage() {
                 ))}
               </div>
             </section>
+
+            <EvidenceManager
+              files={filesNeedingReview}
+              title="Files needing review"
+              description="This file manager turns uploads into a visible operational surface instead of buried attachments."
+              dense
+            />
 
             <section className="surface-panel p-5 sm:p-6">
               <div className="flex items-center gap-3">
@@ -271,10 +318,7 @@ export default async function AdminDashboardPage() {
       </Reveal>
 
       <Reveal delay={0.1}>
-        <section
-          id="activity"
-          className="grid gap-6 xl:grid-cols-[minmax(0,1.04fr)_minmax(22rem,0.96fr)]"
-        >
+        <section id="activity" className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(21rem,0.92fr)]">
           <div className="surface-panel p-5 sm:p-6">
             <div className="flex items-center gap-3">
               <Workflow className="size-5 text-primary" />

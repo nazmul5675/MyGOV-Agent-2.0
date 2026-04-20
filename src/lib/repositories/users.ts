@@ -23,22 +23,29 @@ function slugifyName(value: string) {
     .slice(0, 48);
 }
 
+function toPlainRecord<T extends object>(record: T) {
+  const plain = { ...(record as T & { _id?: unknown }) };
+  delete plain._id;
+  return plain as T;
+}
+
 function toUserProfile(record: UserDocument): UserProfile {
+  const plainRecord = toPlainRecord(record);
   return {
-    id: record.id,
-    uid: record.uid,
-    email: record.email,
-    fullName: record.fullName,
-    role: record.role,
-    accountStatus: record.accountStatus || "active",
-    dateOfBirth: record.dateOfBirth,
-    phoneNumber: record.phoneNumber,
-    addressText: record.addressText,
-    documents: record.documents,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-    lastActiveAt: record.lastActiveAt,
-    profileCompleteness: computeProfileCompleteness(record),
+    id: plainRecord.id,
+    uid: plainRecord.uid,
+    email: plainRecord.email,
+    fullName: plainRecord.fullName,
+    role: plainRecord.role,
+    accountStatus: plainRecord.accountStatus || "active",
+    dateOfBirth: plainRecord.dateOfBirth,
+    phoneNumber: plainRecord.phoneNumber,
+    addressText: plainRecord.addressText,
+    documents: plainRecord.documents,
+    createdAt: plainRecord.createdAt,
+    updatedAt: plainRecord.updatedAt,
+    lastActiveAt: plainRecord.lastActiveAt,
+    profileCompleteness: computeProfileCompleteness(plainRecord),
   };
 }
 
@@ -88,11 +95,12 @@ function buildUserStats(users: AdminManagedUser[]): DashboardStat[] {
 
 async function listRoleChangeAudit() {
   const { adminNotes } = await getMongoCollections();
-  return adminNotes
+  const records = await adminNotes
     .find({ targetUserId: { $exists: true }, action: { $in: ["promote_to_admin", "demote_to_citizen"] } })
     .sort({ createdAt: -1 })
     .limit(8)
     .toArray();
+  return records.map(toPlainRecord);
 }
 
 async function countCasesByUserId(userIds: string[]) {
@@ -136,7 +144,8 @@ export async function getUserProfile(session: AppSession): Promise<UserProfile> 
 
 export async function getUserProfileByUid(uid: string) {
   const { users } = await getMongoCollections();
-  return users.findOne({ uid });
+  const record = await users.findOne({ uid });
+  return record ? toPlainRecord(record) : null;
 }
 
 export async function upsertUserProfile(
@@ -195,7 +204,8 @@ export async function upsertUserProfile(
 
 export async function getUserByEmail(email: string) {
   const { users } = await getMongoCollections();
-  return users.findOne({ email: email.trim().toLowerCase() });
+  const record = await users.findOne({ email: email.trim().toLowerCase() });
+  return record ? toPlainRecord(record) : null;
 }
 
 export async function touchUserActivity(uid: string) {
@@ -227,7 +237,7 @@ export async function getAdminUserOverview() {
 
 export async function getAdminUsersDashboardData(): Promise<AdminUsersDashboardData> {
   const { users } = await getMongoCollections();
-  const records = await users.find({}).toArray();
+  const records = (await users.find({}).toArray()).map(toPlainRecord);
   const caseCounts = await countCasesByUserId(records.map((record) => record.uid));
   const managedUsers = records
     .map((record) =>
@@ -257,7 +267,7 @@ export async function getManagedUserById(uid: string) {
   if (!record) return null;
 
   const counts = await countCasesByUserId([uid]);
-  return toAdminManagedUser(record, counts[uid] || { total: 0, open: 0 });
+  return toAdminManagedUser(toPlainRecord(record), counts[uid] || { total: 0, open: 0 });
 }
 
 export async function updateUserRole(input: {

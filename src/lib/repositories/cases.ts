@@ -30,6 +30,12 @@ import type {
   FileDocument,
 } from "@/types/models";
 
+function toPlainRecord<T extends object>(record: T) {
+  const plain = { ...(record as T & { _id?: unknown }) };
+  delete plain._id;
+  return plain as T;
+}
+
 function isoNow() {
   return new Date().toISOString();
 }
@@ -63,7 +69,8 @@ function groupByCaseId<T extends { caseId: string }>(items: T[]) {
 async function listCaseEvents(caseIds: string[]) {
   if (!caseIds.length) return [];
   const { caseEvents } = await getMongoCollections();
-  return caseEvents.find({ caseId: { $in: caseIds } }).sort({ createdAt: 1 }).toArray();
+  const records = await caseEvents.find({ caseId: { $in: caseIds } }).sort({ createdAt: 1 }).toArray();
+  return records.map(toPlainRecord);
 }
 
 async function hydrateCases(baseCases: CaseDocument[]): Promise<CaseItem[]> {
@@ -84,7 +91,7 @@ async function hydrateCases(baseCases: CaseDocument[]): Promise<CaseItem[]> {
   const remindersByCaseId = groupByCaseId(reminders);
 
   return baseCases.map((base) => ({
-    ...base,
+    ...toPlainRecord(base),
     evidence: (filesByCaseId[base.id] || []).sort(compareByUploadedAtDesc),
     timeline: sortEvents(eventsByCaseId[base.id] || []),
     reminders: (remindersByCaseId[base.id] || []).map((item) => item.body),
@@ -94,13 +101,13 @@ async function hydrateCases(baseCases: CaseDocument[]): Promise<CaseItem[]> {
 async function listAllCases() {
   const { cases } = await getMongoCollections();
   const records = await cases.find({}).sort({ updatedAt: -1 }).toArray();
-  return hydrateCases(records);
+  return hydrateCases(records.map(toPlainRecord));
 }
 
 async function listCasesForCitizen(citizenId: string) {
   const { cases } = await getMongoCollections();
   const records = await cases.find({ citizenId }).sort({ updatedAt: -1 }).toArray();
-  return hydrateCases(records);
+  return hydrateCases(records.map(toPlainRecord));
 }
 
 async function getCaseById(caseId: string) {
@@ -116,7 +123,7 @@ async function getCaseById(caseId: string) {
   ]);
 
   return {
-    ...record,
+    ...toPlainRecord(record),
     evidence,
     timeline: sortEvents(timeline),
     reminders: reminders.map((item) => item.body),

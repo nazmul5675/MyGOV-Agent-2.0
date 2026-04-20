@@ -12,17 +12,17 @@ const iconMap = {
 
 export function Timeline({ events }: { events: CaseEvent[] }) {
   return (
-    <ol className="space-y-2.5">
+    <ol className="space-y-3.5">
       {events.map((event) => {
         const Icon = iconMap[event.type];
 
         return (
-          <li key={event.id} className="relative flex gap-3 pl-1">
-            <div className="absolute left-4.5 top-9 h-[calc(100%+0.6rem)] w-px bg-gradient-to-b from-primary/22 via-primary/10 to-transparent last:hidden" />
-            <div className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-[18px] bg-accent text-accent-foreground shadow-[0_10px_20px_rgba(12,74,132,0.10)]">
+          <li key={event.id} className="relative flex gap-3 pl-0.5">
+            <div className="absolute left-4.5 top-9.5 h-[calc(100%+0.95rem)] w-px bg-gradient-to-b from-primary/22 via-primary/10 to-transparent last:hidden" />
+            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground shadow-[0_12px_26px_rgba(12,74,132,0.12)]">
               <Icon className="size-4" />
             </div>
-            <div className="surface-panel min-w-0 flex-1 rounded-[22px] p-4 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
+            <div className="surface-panel min-w-0 flex-1 rounded-[24px] p-4 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
               <div className="min-w-0">
                 <div className="flex flex-col gap-1.5">
                   <h4 className="font-semibold text-foreground">{event.title}</h4>

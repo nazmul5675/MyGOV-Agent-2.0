@@ -92,7 +92,7 @@ export function AdminReviewPanel({
 
   return (
     <Card className="surface-panel top-6 xl:sticky">
-      <CardHeader>
+      <CardHeader className="pb-4">
         <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
           Decision center
         </CardTitle>
@@ -112,7 +112,7 @@ export function AdminReviewPanel({
         />
         <Button
           variant="outline"
-          className="h-auto w-full justify-start py-3 text-left whitespace-normal"
+          className="h-11 w-full justify-start rounded-2xl px-4 text-left whitespace-normal"
           disabled={isPending}
           onClick={() => runAction("internal_note")}
         >
@@ -123,11 +123,11 @@ export function AdminReviewPanel({
         </Button>
         <div className="grid gap-3">
           {actions.map((action) => (
-            <div key={action.value} className="space-y-2 rounded-[22px] bg-muted/60 p-3">
+            <div key={action.value} className="space-y-2 rounded-[22px] bg-muted/60 p-3.5">
               <Button
                 variant={action.tone}
                 size="default"
-                className="h-auto w-full justify-start rounded-2xl py-3 text-left whitespace-normal"
+                className="h-11 w-full justify-start rounded-2xl px-4 text-left whitespace-normal"
                 disabled={isPending}
                 onClick={() => runAction(action.value)}
               >

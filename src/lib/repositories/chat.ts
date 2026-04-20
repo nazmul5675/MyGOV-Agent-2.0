@@ -4,6 +4,12 @@ import type { AssistantMessage } from "@/lib/types";
 import { getMongoCollections } from "@/lib/repositories/bootstrap";
 import type { ChatMessageDocument } from "@/types/models";
 
+function toPlainChatMessage(record: ChatMessageDocument) {
+  const plain = { ...(record as ChatMessageDocument & { _id?: unknown }) };
+  delete plain._id;
+  return plain as ChatMessageDocument;
+}
+
 export async function listChatMessagesForThread(input: {
   userId?: string;
   caseId?: string;
@@ -12,21 +18,23 @@ export async function listChatMessagesForThread(input: {
   const { chatMessages } = await getMongoCollections();
 
   if (input.caseId) {
-    return chatMessages
+    const records = await chatMessages
       .find({
         $or: [{ caseId: input.caseId }, { threadKey: input.threadKey }],
       })
       .sort({ createdAt: 1 })
       .toArray();
+    return records.map(toPlainChatMessage);
   }
 
-  return chatMessages
+  const records = await chatMessages
     .find({
       userId: input.userId,
       threadKey: input.threadKey,
     })
     .sort({ createdAt: 1 })
     .toArray();
+  return records.map(toPlainChatMessage);
 }
 
 export async function appendChatMessageRecord(record: ChatMessageDocument) {
