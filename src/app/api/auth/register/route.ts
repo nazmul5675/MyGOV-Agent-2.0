@@ -5,7 +5,12 @@ import { createPrototypeSessionToken } from "@/lib/auth/prototype-session";
 import { isPrototypeMode } from "@/lib/config/app-mode";
 import { sessionCookieName } from "@/lib/constants";
 import { getAdminAuth } from "@/lib/firebase/admin";
-import { createPrototypeUser, getUserProfileByUid, upsertUserProfile } from "@/lib/repositories/users";
+import {
+  createPrototypeUser,
+  getUserProfileByUid,
+  touchUserActivity,
+  upsertUserProfile,
+} from "@/lib/repositories/users";
 import { registerProfileSchema, registerSchema } from "@/lib/validation/auth";
 
 export async function POST(request: Request) {
@@ -23,6 +28,7 @@ export async function POST(request: Request) {
         name: user.fullName,
         role: user.role,
       });
+      await touchUserActivity(user.uid);
       const response = NextResponse.json({
         ok: true,
         role: user.role,
@@ -93,6 +99,7 @@ export async function POST(request: Request) {
         phoneNumber: existing?.phoneNumber,
         addressText: existing?.addressText,
       });
+      await touchUserActivity(decoded.uid);
       profileCreated = true;
     } catch (profileError) {
       warning =

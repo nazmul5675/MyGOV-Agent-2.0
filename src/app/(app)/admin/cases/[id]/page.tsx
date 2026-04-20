@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   FileText,
   Layers3,
+  MapPin,
   Sparkles,
   UserRound,
 } from "lucide-react";
@@ -93,12 +94,36 @@ export default async function AdminCaseDetailPage({
     <div className="space-y-6">
       <PageHeader
         eyebrow={item.reference}
-        title="Decision center"
-        description="A live operations workspace for case review, evidence management, admin notes, and AI-ready guidance."
+        title="Admin review workspace"
+        description="Review the citizen packet, manage evidence, log internal notes, and make the next decision from one protected control surface."
       />
 
-      <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
+      <section className="grid gap-6 xl:grid-cols-[312px_minmax(0,1fr)_360px]">
         <aside className="space-y-6">
+          <div className="surface-panel p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+              Case overview
+            </p>
+            <div className="mt-4 space-y-3">
+              {[
+                { label: "Case ID", value: item.reference },
+                { label: "Case type", value: item.type.replaceAll("_", " ") },
+                { label: "Assigned desk", value: item.assignedUnit },
+                { label: "Created", value: new Date(item.createdAt).toLocaleDateString("en-GB") },
+                { label: "Updated", value: new Date(item.updatedAt).toLocaleDateString("en-GB") },
+              ].map((entry) => (
+                <div key={entry.label} className="rounded-[20px] bg-muted/80 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {entry.label}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold capitalize text-foreground">
+                    {entry.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="surface-panel p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
               Citizen summary
@@ -171,7 +196,14 @@ export default async function AdminCaseDetailPage({
             </p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="surface-panel p-5">
+              <div className="flex items-center gap-2 text-primary">
+                <UserRound className="size-4" />
+                <span className="text-sm font-semibold">Citizen</span>
+              </div>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.citizenName}</p>
+            </div>
             <div className="surface-panel p-5">
               <div className="flex items-center gap-2 text-primary">
                 <Layers3 className="size-4" />
@@ -201,6 +233,13 @@ export default async function AdminCaseDetailPage({
                   : "No missing docs flagged"}
               </p>
             </div>
+            <div className="surface-panel p-5">
+              <div className="flex items-center gap-2 text-primary">
+                <MapPin className="size-4" />
+                <span className="text-sm font-semibold">Location</span>
+              </div>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.location}</p>
+            </div>
           </div>
 
           <div className="grid gap-5 md:grid-cols-3">
@@ -221,6 +260,41 @@ export default async function AdminCaseDetailPage({
                 Timeline depth
               </p>
               <p className="mt-2 text-3xl font-bold text-foreground">{item.timeline.length}</p>
+            </div>
+          </div>
+
+          <div className="surface-panel p-6">
+            <div className="flex items-center gap-3">
+              <Sparkles className="size-5 text-primary" />
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                AI decision support
+              </p>
+            </div>
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+              <div className="rounded-[22px] bg-muted/75 p-4">
+                <p className="text-sm font-semibold text-foreground">Issue summary</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {item.intake.adminSummary}
+                </p>
+              </div>
+              <div className="rounded-[22px] bg-muted/75 p-4">
+                <p className="text-sm font-semibold text-foreground">Missing doc suggestion</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {item.intake.missingDocuments.length
+                    ? `Ask for ${item.intake.missingDocuments[0]} first so the citizen sees one clear next step.`
+                    : "No document gap is currently blocking review. Focus on routing and resolution language."}
+                </p>
+              </div>
+              <div className="rounded-[22px] bg-muted/75 p-4">
+                <p className="text-sm font-semibold text-foreground">Next best action</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {item.status === "need_more_docs"
+                    ? "Keep the citizen-facing follow-up concise, then wait for the replacement evidence packet."
+                    : item.status === "submitted"
+                      ? "Mark the case for review and confirm whether the current evidence supports assignment."
+                      : "Prepare the routing or resolution note so the timeline stays operationally clear."}
+                </p>
+              </div>
             </div>
           </div>
 

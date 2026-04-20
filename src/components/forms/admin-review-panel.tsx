@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 const actions = [
   {
-    label: "Approve",
+    label: "Mark reviewing",
     value: "approve",
     tone: "default" as const,
     icon: ShieldCheck,
@@ -33,7 +33,7 @@ const actions = [
     help: "Ask the citizen for one clear follow-up item.",
   },
   {
-    label: "Route to specialist desk",
+    label: "Route or escalate",
     value: "route",
     tone: "outline" as const,
     icon: Route,
@@ -99,8 +99,7 @@ export function AdminReviewPanel({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-[22px] bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
-          Actions update the shared case state, append timeline events, and keep
-          citizen and admin views in sync.
+          Actions update the shared case state, append timeline events, and keep citizen and admin views in sync.
         </div>
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
           Notes are required for rejections, routing, and document requests.

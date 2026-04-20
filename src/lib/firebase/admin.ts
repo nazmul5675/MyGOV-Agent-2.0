@@ -44,3 +44,21 @@ export async function getAuthUserRecord(uid: string) {
 
   return auth.getUser(uid);
 }
+
+export async function setAuthUserRole(uid: string, role: UserRole) {
+  const auth = getAdminAuth();
+  if (!auth) return false;
+
+  const user = await auth.getUser(uid);
+  const existingClaims =
+    user.customClaims && typeof user.customClaims === "object"
+      ? user.customClaims
+      : {};
+
+  await auth.setCustomUserClaims(uid, {
+    ...existingClaims,
+    role,
+  });
+
+  return true;
+}

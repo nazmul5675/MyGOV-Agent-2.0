@@ -18,7 +18,8 @@ export type ChatMessageDocument = PrototypeAssistantMessageRecord;
 
 export interface AdminNoteDocument {
   id: string;
-  caseId: string;
+  caseId?: string;
+  targetUserId?: string;
   actorId: string;
   actorName: string;
   note: string;

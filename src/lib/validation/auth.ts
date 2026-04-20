@@ -46,3 +46,7 @@ export const registerProfileSchema = z.object({
     .min(3, "Enter your full name.")
     .max(120, "Full name is too long."),
 });
+
+export const adminRoleUpdateSchema = z.object({
+  role: z.enum(["citizen", "admin"]),
+});

@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 import { createPrototypeSessionToken } from "@/lib/auth/prototype-session";
 import { isPrototypeMode } from "@/lib/config/app-mode";
 import { getAdminAuth, getUserRoleFromAuth } from "@/lib/firebase/admin";
-import { getUserByEmail, getUserProfileByUid, upsertUserProfile } from "@/lib/repositories/users";
+import {
+  getUserByEmail,
+  getUserProfileByUid,
+  touchUserActivity,
+  upsertUserProfile,
+} from "@/lib/repositories/users";
 import { sessionCookieName } from "@/lib/constants";
 import { loginSchema, sessionExchangeSchema } from "@/lib/validation/auth";
 
@@ -25,6 +30,7 @@ export async function POST(request: Request) {
       name: user.fullName,
       role: user.role,
     });
+    await touchUserActivity(user.uid);
 
     const response = NextResponse.json({
       ok: true,
@@ -79,6 +85,7 @@ export async function POST(request: Request) {
     phoneNumber: profile?.phoneNumber,
     addressText: profile?.addressText,
   });
+  await touchUserActivity(decoded.uid);
 
   const expiresIn = 60 * 60 * 24 * 5 * 1000;
   const sessionCookie = await adminAuth.createSessionCookie(body.idToken, { expiresIn });

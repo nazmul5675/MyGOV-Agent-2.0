@@ -20,7 +20,18 @@ export async function readSession() {
 
   if (isPrototypeMode()) {
     try {
-      return await verifyPrototypeSessionToken(sessionToken);
+      const prototypeSession = await verifyPrototypeSessionToken(sessionToken);
+      if (!prototypeSession) return null;
+
+      const profileRecord = await getUserProfileByUid(prototypeSession.uid).catch(() => null);
+      if (!profileRecord) return prototypeSession;
+
+      return {
+        uid: prototypeSession.uid,
+        email: profileRecord.email || prototypeSession.email,
+        name: profileRecord.fullName || prototypeSession.name,
+        role: profileRecord.role || prototypeSession.role,
+      } satisfies AppSession;
     } catch {
       return null;
     }

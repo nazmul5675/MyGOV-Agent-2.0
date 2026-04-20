@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import type { UserRole } from "@/lib/types";
-import { roleNavigation } from "@/lib/navigation";
+import { isNavItemActive, roleNavigation } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 export function MobileNav({
@@ -16,19 +16,16 @@ export function MobileNav({
   const navItems = roleNavigation[role];
 
   return (
-    <nav className="glass-panel fixed inset-x-4 bottom-4 z-40 rounded-[26px] px-3 py-2 lg:hidden">
+    <nav className="glass-panel fixed inset-x-4 bottom-4 z-40 rounded-[28px] px-3 py-2 lg:hidden">
       <div
         className={cn(
           "grid gap-2",
-          navItems.length === 4 ? "grid-cols-4" : navItems.length === 3 ? "grid-cols-3" : "grid-cols-2"
+          navItems.length === 4 ? "grid-cols-4" : "grid-cols-3"
         )}
       >
         {navItems.map((item) => {
           const Icon = item.icon;
-          const matchPrefixes = item.matchPrefixes || [item.href];
-          const active = matchPrefixes.some(
-            (prefix) => currentPath === prefix || currentPath.startsWith(`${prefix}/`)
-          );
+          const active = isNavItemActive(currentPath, item);
 
           return (
             <Link

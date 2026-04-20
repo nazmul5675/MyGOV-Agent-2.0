@@ -23,6 +23,7 @@ import {
   listRemindersForCase,
   listRemindersForUser,
 } from "@/lib/repositories/notifications";
+import { getAdminUserOverview } from "@/lib/repositories/users";
 import type {
   CaseDocument,
   ChatMessageDocument,
@@ -140,21 +141,47 @@ function computeCitizenStats(cases: CaseItem[]): DashboardStat[] {
   ];
 }
 
-function computeAdminStats(cases: CaseItem[]): DashboardStat[] {
+function computeAdminStats(
+  cases: CaseItem[],
+  userOverview?: {
+    totalUsers: number;
+    totalAdmins: number;
+    newCitizensThisWeek: number;
+  }
+): DashboardStat[] {
   const total = cases.length;
-  const needsReview = cases.filter((item) =>
-    ["submitted", "reviewing", "need_more_docs"].includes(item.status)
-  ).length;
+  const needsReview = cases.filter((item) => ["submitted", "reviewing"].includes(item.status)).length;
+  const waitingOnCitizen = cases.filter((item) => item.status === "need_more_docs").length;
   const inProgress = cases.filter((item) => item.status === "in_progress").length;
   const resolved = cases.filter((item) => item.status === "resolved").length;
   const urgent = cases.filter((item) => item.intake.urgency === "high").length;
 
   return [
-    { label: "Total queue", value: String(total), change: "All operational records" },
-    { label: "Needs review", value: String(needsReview), change: "Open packets awaiting action" },
+    { label: "Total cases", value: String(total), change: "All operational records" },
+    { label: "Needs review", value: String(needsReview), change: "Fresh packets awaiting triage" },
+    {
+      label: "Waiting on citizen",
+      value: String(waitingOnCitizen),
+      change: "Follow-up documents or clarification requested",
+    },
     { label: "In progress", value: String(inProgress), change: "Already assigned to a desk" },
     { label: "Resolved", value: String(resolved), change: "Closed with citizen outcome" },
     { label: "Urgent items", value: String(urgent), change: "High-priority service issues" },
+    {
+      label: "Total users",
+      value: String(userOverview?.totalUsers || 0),
+      change: "Citizen and admin accounts in MongoDB",
+    },
+    {
+      label: "Total admins",
+      value: String(userOverview?.totalAdmins || 0),
+      change: "Operational access holders",
+    },
+    {
+      label: "New citizens",
+      value: String(userOverview?.newCitizensThisWeek || 0),
+      change: "Created during the last 7 days",
+    },
   ];
 }
 
@@ -224,6 +251,7 @@ export async function getCitizenCaseById(citizenId: string, caseId: string) {
 
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   const queue = await listAllCases();
+  const userOverview = await getAdminUserOverview();
   const filesNeedingReview = queue
     .flatMap((item) => item.evidence)
     .filter((file) => ["uploaded", "under_review", "needs_replacement"].includes(file.status))
@@ -233,16 +261,38 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     .flatMap((item) => item.timeline)
     .sort(compareByCreatedAtDesc)
     .slice(0, 8);
+  const queueBuckets = {
+    recentIncoming: queue
+      .filter((item) => item.status === "submitted")
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+      .slice(0, 4),
+    needsCitizenResponse: queue
+      .filter((item) => item.status === "need_more_docs")
+      .sort(compareByCreatedAtDesc)
+      .slice(0, 4),
+    urgentCases: queue
+      .filter((item) => item.intake.urgency === "high" && item.status !== "resolved")
+      .sort(compareByCreatedAtDesc)
+      .slice(0, 4),
+    stalledCases: queue
+      .filter((item) => {
+        const updated = Date.parse(item.updatedAt);
+        return Number.isFinite(updated) && Date.now() - updated >= 48 * 60 * 60 * 1000;
+      })
+      .slice(0, 4),
+  };
 
   return {
-    stats: computeAdminStats(queue),
+    stats: computeAdminStats(queue, userOverview),
     queue,
     filesNeedingReview,
     recentActivity,
+    queueBuckets,
+    roleActivity: userOverview.recentRoleChanges,
     suggestedActions: [
-      "Use the AI helper to produce a citizen-facing summary before requesting more documents.",
-      "Check files needing review first to keep the queue moving cleanly.",
-      "Route high-urgency packets early so field teams see them quickly.",
+      "Use the AI helper to prepare a concise officer summary before you request more documents.",
+      "Clear file reviews first so blocked cases can move from intake into desk assignment.",
+      "Check urgent and stalled packets at the start of each shift to prevent silent queue aging.",
     ],
   };
 }

@@ -33,12 +33,15 @@ export interface UserProfile {
   email: string;
   fullName: string;
   role: UserRole;
+  accountStatus?: "active" | "invited" | "disabled";
   dateOfBirth?: string;
   phoneNumber?: string;
   addressText?: string;
   documents?: string[];
   createdAt?: string;
   updatedAt?: string;
+  lastActiveAt?: string;
+  profileCompleteness?: number;
 }
 
 export interface NotificationItem {
@@ -164,4 +167,36 @@ export interface AdminDashboardData {
   filesNeedingReview: EvidenceFile[];
   recentActivity: CaseEvent[];
   suggestedActions: string[];
+  queueBuckets?: {
+    recentIncoming: CaseItem[];
+    needsCitizenResponse: CaseItem[];
+    urgentCases: CaseItem[];
+    stalledCases: CaseItem[];
+  };
+  roleActivity?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    createdAt: string;
+    actor: string;
+  }>;
+}
+
+export interface AdminManagedUser extends UserProfile {
+  casesCount: number;
+  openCasesCount: number;
+  profileCompleteness: number;
+}
+
+export interface AdminUsersDashboardData {
+  stats: DashboardStat[];
+  users: AdminManagedUser[];
+  recentRoleChanges: Array<{
+    id: string;
+    title: string;
+    description: string;
+    createdAt: string;
+    actor: string;
+    actorId?: string;
+  }>;
 }
