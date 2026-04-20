@@ -32,14 +32,14 @@ export function EvidenceManager({
   ).length;
 
   return (
-    <section className="surface-panel p-6">
+    <section className="surface-panel p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
             {title}
           </p>
           {description ? (
-            <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               {description}
             </p>
           ) : null}
@@ -61,16 +61,16 @@ export function EvidenceManager({
       </div>
 
       {files.length ? (
-        <div className={cn("mt-5 grid gap-3", dense ? "lg:grid-cols-1" : "lg:grid-cols-2")}>
+        <div className={cn("mt-5 grid gap-3", dense ? "xl:grid-cols-1" : "lg:grid-cols-2")}>
           {files.map((file) => (
             <article
               key={file.id}
-              className="group min-w-0 rounded-[24px] border border-border/60 bg-white/75 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
+              className="group min-w-0 rounded-[22px] border border-border/60 bg-white/75 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.10)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-2">
                   <p className="break-all font-semibold text-foreground">{file.name}</p>
-                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
                     <span>{file.kind.replace("_", " ")}</span>
                     <span>{file.sizeLabel}</span>
                     <span>{formatDate(file.uploadedAt)}</span>
@@ -79,7 +79,7 @@ export function EvidenceManager({
                 <FileStatusBadge status={file.status} />
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid gap-3 xl:grid-cols-3">
                 <div className="rounded-[18px] bg-muted/80 p-3">
                   <UploadCloud className="size-4 text-primary" />
                   <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -103,7 +103,7 @@ export function EvidenceManager({
                   <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Review note
                   </p>
-                  <p className="mt-1 line-clamp-2 text-sm text-foreground">
+                  <p className="mt-1 text-sm leading-6 text-foreground">
                     {file.notes || "Awaiting a reviewer note."}
                   </p>
                 </div>
@@ -113,7 +113,7 @@ export function EvidenceManager({
                   href={file.downloadUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-4 inline-flex text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
                 >
                   Open file preview
                 </a>

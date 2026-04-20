@@ -16,17 +16,17 @@ export function AppSidebar({
   const homeHref = role === "admin" ? "/admin" : "/dashboard";
 
   return (
-    <aside className="glass-panel hidden w-[286px] shrink-0 flex-col rounded-[32px] p-5 lg:flex">
+    <aside className="glass-panel hidden w-[272px] shrink-0 flex-col rounded-[30px] p-4 lg:flex">
       <Link
         href={homeHref}
-        className="flex items-center gap-3 rounded-[24px] px-2 py-3 transition-colors hover:bg-white/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+        className="flex items-center gap-3 rounded-[22px] px-2 py-2.5 transition-colors hover:bg-white/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
       >
-        <LogoMark />
+        <LogoMark className="size-10 rounded-[18px]" />
         <div className="min-w-0">
-          <p className="font-heading text-lg font-bold tracking-tight text-primary">
+          <p className="font-heading text-base font-bold tracking-tight text-primary">
             MyGOV Agent 2.0
           </p>
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             {role === "admin" ? "Admin Workspace" : "Citizen Workspace"}
           </p>
           <div className="mt-2">
@@ -34,7 +34,7 @@ export function AppSidebar({
           </div>
         </div>
       </Link>
-      <nav className="mt-8 space-y-2">
+      <nav className="mt-6 space-y-1.5">
         {roleNavigation[role].map((item) => {
           const Icon = item.icon;
           const active =
@@ -45,7 +45,7 @@ export function AppSidebar({
               key={`${role}-${item.href}`}
               href={item.href}
               className={cn(
-                "flex min-w-0 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all",
+                "flex min-w-0 items-center gap-3 rounded-[20px] px-3.5 py-2.5 text-sm font-medium transition-all",
                 active
                   ? "bg-primary text-primary-foreground shadow-[0_14px_28px_rgba(0,30,64,0.18)]"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -57,14 +57,14 @@ export function AppSidebar({
           );
         })}
       </nav>
-      <div className="mt-auto rounded-[28px] bg-primary px-5 py-5 text-primary-foreground">
+      <div className="mt-auto rounded-[24px] bg-primary px-4 py-4.5 text-primary-foreground">
         <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
           System readiness
         </p>
-        <p className="mt-2 font-heading text-2xl font-bold tracking-tight">
+        <p className="mt-2 font-heading text-xl font-bold tracking-tight">
           Ready to route
         </p>
-        <p className="mt-3 text-sm leading-6 text-primary-foreground/75">
+        <p className="mt-2.5 text-sm leading-6 text-primary-foreground/75">
           Live case routing, file handling, and assistant guidance are available from this workspace.
         </p>
       </div>

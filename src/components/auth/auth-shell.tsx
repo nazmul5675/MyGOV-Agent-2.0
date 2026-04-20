@@ -22,8 +22,8 @@ export function AuthShell({
   footerLink,
 }: AuthShellProps) {
   return (
-    <div className="container-shell grid min-h-screen items-center gap-10 py-12 lg:grid-cols-[0.95fr_1.05fr]">
-      <div className="min-w-0 space-y-6 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-4">
+    <div className="container-shell grid min-h-screen items-center gap-8 py-10 lg:grid-cols-[0.92fr_1.08fr] lg:py-12">
+      <div className="min-w-0 space-y-5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-4">
         <div className="inline-flex rounded-full bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-accent-foreground">
           {badge}
         </div>
@@ -35,7 +35,7 @@ export function AuthShell({
             {description}
           </p>
         </div>
-        <div className="hero-gradient rounded-[32px] p-8 text-primary-foreground">
+        <div className="hero-gradient rounded-[30px] p-7 text-primary-foreground">
           {sideContent}
         </div>
         <div className="grid gap-3 sm:grid-cols-3">

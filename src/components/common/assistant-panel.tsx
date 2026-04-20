@@ -104,13 +104,13 @@ export function AssistantPanel({
   };
 
   return (
-    <section className="surface-panel flex min-h-[32rem] flex-col p-5 sm:min-h-[36rem] sm:p-6">
+    <section className="surface-panel flex min-h-[32rem] flex-col p-5 sm:min-h-[35rem] sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
             {title}
           </p>
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             {subtitle ||
               "Ask for document guidance, upload checks, next steps, or a cleaner explanation before you submit or follow up."}
           </p>
@@ -122,7 +122,7 @@ export function AssistantPanel({
 
       <div
         ref={viewportRef}
-        className="mt-6 flex-1 space-y-4 overflow-y-auto rounded-[28px] bg-muted/55 p-4"
+        className="mt-5 flex-1 space-y-4 overflow-y-auto rounded-[26px] bg-muted/55 p-4"
       >
         {isEmpty ? (
           <div className="flex h-full min-h-[16rem] flex-col items-center justify-center rounded-[24px] border border-dashed border-primary/20 bg-white/70 px-6 py-10 text-center">
@@ -150,7 +150,7 @@ export function AssistantPanel({
               ) : null}
               <div
                 className={cn(
-                  "max-w-[90%] break-words rounded-[24px] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.08)] sm:max-w-[85%]",
+                  "max-w-[90%] break-words rounded-[22px] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.08)] sm:max-w-[85%]",
                   message.role === "assistant"
                     ? "bg-white text-foreground"
                     : "bg-primary text-primary-foreground"
@@ -212,14 +212,14 @@ export function AssistantPanel({
             key={prompt}
             type="button"
             onClick={() => handleSend(prompt)}
-            className="rounded-full border border-primary/15 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5"
+            className="rounded-full border border-primary/15 bg-white px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5"
           >
             {prompt}
           </button>
         ))}
       </div>
 
-      <div className="mt-4 rounded-[28px] border border-border/70 bg-white/85 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+      <div className="mt-4 rounded-[26px] border border-border/70 bg-white/85 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
         {assistantMeta?.notice ? (
           <div
             className={cn(
@@ -240,7 +240,7 @@ export function AssistantPanel({
           placeholder="Ask what to upload, how to explain your issue, or what to do next."
           className="min-h-24 rounded-[22px] border-0 bg-transparent px-2 py-2 shadow-none focus-visible:ring-0"
         />
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <p className="min-w-0 text-xs leading-6 text-muted-foreground">
             {assistantMeta?.source === "gemini" && assistantMeta.model
               ? `Live Gemini is active with ${assistantMeta.model}.`

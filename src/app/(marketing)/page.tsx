@@ -19,9 +19,9 @@ export default function LandingPage() {
     <div className="min-h-screen">
       <MarketingHeader />
       <main>
-        <section className="container-shell grid gap-10 py-16 lg:grid-cols-[1.15fr_0.85fr] lg:py-24">
+        <section className="container-shell grid gap-8 py-14 lg:grid-cols-[1.12fr_0.88fr] lg:py-20">
           <Reveal>
-            <div className="space-y-8">
+            <div className="space-y-7">
               <div className="inline-flex rounded-full bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-accent-foreground">
                 Premium civic-tech intake and tracking
               </div>
@@ -29,7 +29,7 @@ export default function LandingPage() {
                 <h1 className="text-balance max-w-3xl text-5xl font-black tracking-tight text-primary sm:text-6xl">
                   One trusted entry point for citizen cases, admin review, and proactive reminders.
                 </h1>
-                <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
+                <p className="max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
                   MyGOV Agent 2.0 unifies multimodal case intake, structured summaries, evidence handling, and role-based review flows in a calm, polished experience built for public trust.
                 </p>
               </div>

@@ -15,7 +15,7 @@ export function AppFrame({
   children: React.ReactNode;
 }) {
   return (
-    <div className="container-shell grid min-h-screen gap-6 py-6 pb-28 lg:grid-cols-[286px_minmax(0,1fr)] lg:pb-6">
+    <div className="container-shell grid min-h-screen gap-5 py-5 pb-28 lg:grid-cols-[272px_minmax(0,1fr)] lg:pb-5">
       <AppSidebar role={session.role} currentPath={currentPath} />
       <main className="min-w-0 space-y-6">
         <Topbar session={session} title={title} currentPath={currentPath} />

@@ -104,8 +104,8 @@ export default async function DashboardPage() {
       />
 
       <Reveal>
-        <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)] sm:p-8">
+        <section className="grid items-stretch gap-5 xl:grid-cols-12">
+          <div className="hero-gradient flex h-full flex-col rounded-[32px] p-6 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)] sm:p-8 xl:col-span-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">
               Citizen command center
             </p>
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
               This command center keeps your active case, document trail, assistant guidance, and reminders aligned so you always know what to do next.
             </p>
             {activeCase ? (
-              <div className="mt-6 grid gap-4 rounded-[24px] bg-white/10 p-5 md:grid-cols-3">
+              <div className="mt-6 grid gap-4 rounded-[24px] bg-white/10 p-5 lg:grid-cols-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
                     Active case
@@ -138,7 +138,7 @@ export default async function DashboardPage() {
               </div>
             ) : null}
           </div>
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid auto-rows-fr gap-5 sm:grid-cols-2 xl:col-span-4">
             <StatCard {...stats[0]} icon={<Files className="size-5" />} />
             <StatCard {...stats[1]} icon={<BellRing className="size-5" />} />
             <StatCard {...stats[2]} icon={<ShieldEllipsis className="size-5" />} />
@@ -148,14 +148,14 @@ export default async function DashboardPage() {
       </Reveal>
 
       <Reveal delay={0.06}>
-        <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <div className="space-y-5">
+        <section className="grid gap-6 xl:grid-cols-12">
+          <div className="space-y-5 xl:col-span-7 2xl:col-span-8">
             <PageHeader
               title="Case command center"
               description="Recent cases stay actionable here, with the latest status, timeline signals, and evidence context."
             />
             {cases.length ? (
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="grid gap-5 2xl:grid-cols-2">
                 {cases.slice(0, 2).map((item) => (
                   <CaseCard key={item.id} item={item} href={`/cases/${item.id}`} />
                 ))}
@@ -175,71 +175,8 @@ export default async function DashboardPage() {
                 }
               />
             )}
-
-            {activeCase ? (
-              <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-                <div className="surface-panel p-6">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="size-5 text-primary" />
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                      Active case readiness
-                    </p>
-                  </div>
-                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-[22px] bg-muted/80 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        Accepted
-                      </p>
-                      <p className="mt-2 text-2xl font-bold text-foreground">
-                        {activeCaseAcceptedFiles}
-                      </p>
-                    </div>
-                    <div className="rounded-[22px] bg-muted/80 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        Pending review
-                      </p>
-                      <p className="mt-2 text-2xl font-bold text-foreground">
-                        {activeCasePendingFiles}
-                      </p>
-                    </div>
-                    <div className="rounded-[22px] bg-muted/80 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        Missing docs
-                      </p>
-                      <p className="mt-2 text-2xl font-bold text-foreground">
-                        {activeCase.intake.missingDocuments.length}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-5 space-y-3">
-                    {activeCase.intake.missingDocuments.length ? (
-                      activeCase.intake.missingDocuments.map((item) => (
-                        <div
-                          key={item}
-                          className="flex items-start gap-3 rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-950"
-                        >
-                          <Sparkles className="mt-0.5 size-4 shrink-0" />
-                          <p>{item}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="rounded-[20px] border border-emerald-200 bg-emerald-50 p-4 text-sm leading-7 text-emerald-900">
-                        This packet currently has no missing-document flags.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <LocationPreviewCard
-                  title="Case location context"
-                  description="Ground the active case with its mapped service location and resolved address."
-                  location={activeCase.locationMeta}
-                  compact
-                />
-              </section>
-            ) : null}
           </div>
-          <div className="space-y-6">
+          <div className="space-y-6 xl:col-span-5 2xl:col-span-4">
             <div className="surface-panel p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
                 Reminders and notifications
@@ -285,49 +222,116 @@ export default async function DashboardPage() {
                 ))}
               </div>
             </div>
-
-            {activeCase ? (
-              <div className="surface-panel p-6">
-                <div className="flex items-center gap-3">
-                  <MapPinned className="size-5 text-primary" />
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                    Case status blocks
-                  </p>
-                </div>
-                <div className="mt-4 grid gap-3">
-                  {[
-                    `Current stage: ${activeCase.status.replaceAll("_", " ")}`,
-                    `Assigned desk: ${activeCase.assignedUnit}`,
-                    `Progress marker: ${activeCase.progress}% complete`,
-                  ].map((entry) => (
-                    <div
-                      key={entry}
-                      className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground"
-                    >
-                      {entry}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
           </div>
         </section>
       </Reveal>
 
+      {activeCase ? (
+        <Reveal delay={0.08}>
+          <section className="grid gap-5 xl:grid-cols-12">
+            <div className="surface-panel p-6 xl:col-span-4 2xl:col-span-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="size-5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+                  Active case readiness
+                </p>
+              </div>
+              <div className="mt-5 grid gap-3">
+                <div className="rounded-[22px] bg-muted/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Accepted
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-foreground">
+                    {activeCaseAcceptedFiles}
+                  </p>
+                </div>
+                <div className="rounded-[22px] bg-muted/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Pending review
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-foreground">
+                    {activeCasePendingFiles}
+                  </p>
+                </div>
+                <div className="rounded-[22px] bg-muted/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Missing docs
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-foreground">
+                    {activeCase.intake.missingDocuments.length}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 space-y-3">
+                {activeCase.intake.missingDocuments.length ? (
+                  activeCase.intake.missingDocuments.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-start gap-3 rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-950"
+                    >
+                      <Sparkles className="mt-0.5 size-4 shrink-0" />
+                      <p>{item}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-[20px] border border-emerald-200 bg-emerald-50 p-4 text-sm leading-7 text-emerald-900">
+                    This packet currently has no missing-document flags.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="xl:col-span-5 2xl:col-span-6">
+              <LocationPreviewCard
+                title="Case location context"
+                description="Ground the active case with its mapped service location and resolved address."
+                location={activeCase.locationMeta}
+                compact
+              />
+            </div>
+
+            <div className="surface-panel p-6 xl:col-span-3 2xl:col-span-3">
+              <div className="flex items-center gap-3">
+                <MapPinned className="size-5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+                  Case status blocks
+                </p>
+              </div>
+              <div className="mt-4 grid gap-3">
+                {[
+                  `Current stage: ${activeCase.status.replaceAll("_", " ")}`,
+                  `Assigned desk: ${activeCase.assignedUnit}`,
+                  `Progress marker: ${activeCase.progress}% complete`,
+                ].map((entry) => (
+                  <div
+                    key={entry}
+                    className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground"
+                  >
+                    {entry}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </Reveal>
+      ) : null}
+
       <Reveal delay={0.1}>
-        <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <AssistantPanel
-            initialMessages={messages || []}
-            title="AI helping chat box"
-            subtitle="Use the assistant to check required documents, clean up your explanation, understand a status, or verify whether your uploads are complete."
-            suggestedPrompts={[
-              "What documents do I need?",
-              "Help me explain my issue",
-              "Summarize my uploaded files",
-              "What should I do next?",
-            ]}
-          />
-          <div className="space-y-6">
+        <section className="grid gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-7 2xl:col-span-8">
+            <AssistantPanel
+              initialMessages={messages || []}
+              title="AI helping chat box"
+              subtitle="Use the assistant to check required documents, clean up your explanation, understand a status, or verify whether your uploads are complete."
+              suggestedPrompts={[
+                "What documents do I need?",
+                "Help me explain my issue",
+                "Summarize my uploaded files",
+                "What should I do next?",
+              ]}
+            />
+          </div>
+          <div className="space-y-6 xl:col-span-5 2xl:col-span-4">
             <EvidenceManager
               files={recentFiles}
               title="Uploaded files overview"

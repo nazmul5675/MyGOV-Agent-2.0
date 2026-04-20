@@ -88,15 +88,17 @@ export default async function AdminDashboardPage() {
       />
 
       <Reveal>
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-12">
           {stats.map((stat, index) => (
-            <StatCard key={stat.label} {...stat} icon={statIcons[index]} />
+            <div key={stat.label} className="xl:col-span-4 2xl:col-span-12 2xl:[&:nth-child(1)]:col-span-3 2xl:[&:nth-child(2)]:col-span-3 2xl:[&:nth-child(3)]:col-span-2 2xl:[&:nth-child(4)]:col-span-2 2xl:[&:nth-child(5)]:col-span-2">
+              <StatCard {...stat} icon={statIcons[index]} />
+            </div>
           ))}
         </div>
       </Reveal>
 
       <Reveal delay={0.06}>
-        <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.14fr)_minmax(21rem,0.86fr)] 2xl:grid-cols-[minmax(0,1.18fr)_minmax(24rem,0.82fr)]">
           <div className="space-y-5">
             <PageHeader
               title="Priority queue"
@@ -113,7 +115,7 @@ export default async function AdminDashboardPage() {
               dense
             />
 
-            <section className="surface-panel p-6">
+            <section className="surface-panel p-5 sm:p-6">
               <div className="flex items-center gap-3">
                 <Sparkles className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
@@ -122,14 +124,14 @@ export default async function AdminDashboardPage() {
               </div>
               <div className="mt-4 space-y-3">
                 {suggestedActions.map((action) => (
-                  <div key={action} className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground">
+                  <div key={action} className="rounded-[22px] bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
                     {action}
                   </div>
                 ))}
               </div>
             </section>
 
-            <section className="surface-panel p-6">
+            <section className="surface-panel p-5 sm:p-6">
               <div className="flex items-center gap-3">
                 <Sparkles className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
@@ -150,7 +152,7 @@ export default async function AdminDashboardPage() {
                         {item.intake.urgency}
                       </span>
                     </div>
-                    <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
                       {item.intake.adminSummary}
                     </p>
                   </div>
@@ -162,7 +164,7 @@ export default async function AdminDashboardPage() {
       </Reveal>
 
       <Reveal delay={0.1}>
-        <section className="surface-panel p-6">
+        <section className="surface-panel p-5 sm:p-6">
           <div className="flex items-center gap-3">
             <Workflow className="size-5 text-primary" />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">

@@ -17,20 +17,20 @@ export function CaseCard({
   const missingDocs = item.intake.missingDocuments.length;
 
   return (
-    <article className="surface-panel interactive-lift flex h-full flex-col gap-5 p-6">
+    <article className="surface-panel interactive-lift flex h-full flex-col gap-4 p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 space-y-3">
           <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {caseTypeLabelMap[item.type]}
           </div>
-          <div>
+          <div className="space-y-1.5">
             <h3 className="text-xl font-bold tracking-tight text-foreground">{item.title}</h3>
             <p className="mt-1 break-all text-sm text-muted-foreground">{item.reference}</p>
           </div>
         </div>
         <StatusBadge status={item.status} />
       </div>
-      <p className="text-sm leading-7 text-muted-foreground">{item.summary}</p>
+      <p className="text-sm leading-6 text-muted-foreground">{item.summary}</p>
       <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em]">
         <span className="rounded-full bg-accent px-3 py-1 text-accent-foreground">
           {item.evidence.length} file{item.evidence.length === 1 ? "" : "s"}
@@ -46,7 +46,7 @@ export function CaseCard({
           {missingDocs ? `${missingDocs} missing doc${missingDocs === 1 ? "" : "s"}` : "packet ready"}
         </span>
       </div>
-      <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+      <div className="grid gap-x-4 gap-y-3 text-sm text-muted-foreground sm:grid-cols-2">
         <div className="flex items-center gap-2">
           <MapPin className="size-4" />
           <span>{item.location}</span>
@@ -64,7 +64,7 @@ export function CaseCard({
           <span>{item.intake.category}</span>
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 pt-1">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Progress</span>
           <span className="font-semibold text-primary">{item.progress}%</span>
@@ -80,7 +80,7 @@ export function CaseCard({
         href={href}
         className={cn(
           buttonVariants({ variant: "outline", size: "default" }),
-          "mt-auto w-full justify-between px-4 sm:w-auto"
+          "mt-auto w-full justify-between px-4"
         )}
       >
         Open case

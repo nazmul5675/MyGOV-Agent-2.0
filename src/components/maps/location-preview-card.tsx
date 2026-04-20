@@ -16,6 +16,7 @@ export function LocationPreviewCard({
   compact?: boolean;
 }) {
   const embedUrl = buildMapsEmbedUrl(location);
+  const resolvedAddress = location?.formattedAddress || location?.locationText;
   const googleMapsHref =
     location && typeof location.lat === "number" && typeof location.lng === "number"
       ? `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`
@@ -31,10 +32,10 @@ export function LocationPreviewCard({
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
           {title}
         </p>
-        <p className="mt-2 text-sm leading-7 text-muted-foreground">{description}</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
 
-      <div className={compact ? "aspect-[16/9] w-full" : "aspect-[4/3] w-full"}>
+      <div className={compact ? "aspect-[16/9] min-h-56 w-full" : "aspect-[4/3] min-h-64 w-full"}>
         {embedUrl ? (
           <iframe
             title={title}
@@ -52,7 +53,7 @@ export function LocationPreviewCard({
               <p className="font-semibold text-foreground">
                 {location?.locationText || "Location preview unavailable"}
               </p>
-              <p className="max-w-sm text-sm leading-7 text-muted-foreground">
+              <p className="max-w-sm text-sm leading-6 text-muted-foreground">
                 Add `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` to enable embedded map previews in this card.
               </p>
             </div>
@@ -61,56 +62,106 @@ export function LocationPreviewCard({
       </div>
 
       {location ? (
-        <div className="grid gap-4 border-t border-border/60 p-6 sm:grid-cols-2">
-          <div className="min-w-0 space-y-3">
-            <div className="flex items-start gap-3">
-              <MapPin className="mt-1 size-4 text-primary" />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  {location.formattedAddress || location.locationText}
-                </p>
-                {location.nearbyLandmark ? (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Nearby: {location.nearbyLandmark}
-                  </p>
-                ) : null}
+        compact ? (
+          <div className="space-y-4 border-t border-border/60 p-5 sm:p-6">
+            <div className="rounded-[22px] bg-muted/55 p-4">
+              <div className="flex items-start gap-3">
+                <MapPin className="mt-1 size-4 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{resolvedAddress}</p>
+                  {location.nearbyLandmark ? (
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      Nearby: {location.nearbyLandmark}
+                    </p>
+                  ) : null}
+                </div>
               </div>
+              {googleMapsHref ? (
+                <Link
+                  href={googleMapsHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                >
+                  Open in Google Maps
+                  <ExternalLink className="size-4" />
+                </Link>
+              ) : null}
             </div>
-            {googleMapsHref ? (
-              <Link
-                href={googleMapsHref}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
-              >
-                Open in Google Maps
-                <ExternalLink className="size-4" />
-              </Link>
-            ) : null}
-          </div>
-          <div className="grid gap-3 sm:justify-self-end sm:text-right">
-            {typeof location.lat === "number" && typeof location.lng === "number" ? (
-              <div className="rounded-[20px] bg-muted/75 p-4 text-sm">
-                <div className="flex items-center gap-2 font-semibold text-foreground">
-                  <Navigation className="size-4 text-primary" />
-                  Coordinates
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {typeof location.lat === "number" && typeof location.lng === "number" ? (
+                <div className="rounded-[20px] bg-muted/75 p-4 text-sm">
+                  <div className="flex items-center gap-2 font-semibold text-foreground">
+                    <Navigation className="size-4 text-primary" />
+                    Coordinates
+                  </div>
+                  <p className="mt-2 break-words leading-6 text-muted-foreground">
+                    {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                  </p>
                 </div>
-                <p className="mt-2 text-muted-foreground">
-                  {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                </p>
-              </div>
-            ) : null}
-            {location.timezoneId ? (
-              <div className="rounded-[20px] bg-muted/75 p-4 text-sm">
-                <div className="flex items-center gap-2 font-semibold text-foreground">
-                  <TimerReset className="size-4 text-primary" />
-                  Time zone
+              ) : null}
+              {location.timezoneId ? (
+                <div className="rounded-[20px] bg-muted/75 p-4 text-sm">
+                  <div className="flex items-center gap-2 font-semibold text-foreground">
+                    <TimerReset className="size-4 text-primary" />
+                    Time zone
+                  </div>
+                  <p className="mt-2 break-words leading-6 text-muted-foreground">{location.timezoneId}</p>
                 </div>
-                <p className="mt-2 text-muted-foreground">{location.timezoneId}</p>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid gap-4 border-t border-border/60 p-5 sm:p-6 xl:grid-cols-[minmax(0,1fr)_minmax(12rem,14rem)]">
+            <div className="min-w-0 space-y-3">
+              <div className="flex items-start gap-3">
+                <MapPin className="mt-1 size-4 text-primary" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{resolvedAddress}</p>
+                  {location.nearbyLandmark ? (
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      Nearby: {location.nearbyLandmark}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              {googleMapsHref ? (
+                <Link
+                  href={googleMapsHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                >
+                  Open in Google Maps
+                  <ExternalLink className="size-4" />
+                </Link>
+              ) : null}
+            </div>
+            <div className="grid gap-3 xl:justify-self-end xl:text-right">
+              {typeof location.lat === "number" && typeof location.lng === "number" ? (
+                <div className="rounded-[20px] bg-muted/75 p-4 text-sm">
+                  <div className="flex items-center gap-2 font-semibold text-foreground xl:justify-end">
+                    <Navigation className="size-4 text-primary" />
+                    Coordinates
+                  </div>
+                  <p className="mt-2 text-muted-foreground">
+                    {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                  </p>
+                </div>
+              ) : null}
+              {location.timezoneId ? (
+                <div className="rounded-[20px] bg-muted/75 p-4 text-sm">
+                  <div className="flex items-center gap-2 font-semibold text-foreground xl:justify-end">
+                    <TimerReset className="size-4 text-primary" />
+                    Time zone
+                  </div>
+                  <p className="mt-2 text-muted-foreground">{location.timezoneId}</p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )
       ) : null}
     </section>
   );
