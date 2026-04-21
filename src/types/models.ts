@@ -47,6 +47,7 @@ export interface CaseDocument {
   reference: string;
   citizenUid: string;
   citizenName: string;
+  isHidden: boolean;
   title: string;
   type: CaseType;
   status: CaseStatus;

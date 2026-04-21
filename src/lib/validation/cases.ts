@@ -101,3 +101,7 @@ export const fileReviewSchema = z.object({
     });
   }
 });
+
+export const caseVisibilitySchema = z.object({
+  isHidden: z.boolean(),
+});

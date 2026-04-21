@@ -44,6 +44,7 @@ const collectionIndexes: Record<CollectionName, IndexDescription[]> = {
     { key: { citizenUid: 1, updatedAt: -1 } },
     { key: { status: 1, updatedAt: -1 } },
     { key: { reference: 1 }, unique: true },
+    { key: { isHidden: 1, updatedAt: -1 } },
   ],
   case_events: [
     { key: { id: 1 }, unique: true },
@@ -123,6 +124,7 @@ function normalizeSeedCases(records: Array<Record<string, unknown> | object>): C
       reference: String(record.reference),
       citizenUid: String(record.citizenId || record.citizenUid),
       citizenName: String(record.citizenName || "Citizen"),
+      isHidden: Boolean(record.isHidden),
       title: String(record.title),
       type:
         record.type === "flood_relief" ||
@@ -393,9 +395,17 @@ async function seedIfEmpty() {
   }
 }
 
+async function ensureCaseVisibilityDefaults() {
+  const db = await getMongoDb();
+  await db
+    .collection<CaseDocument>("cases")
+    .updateMany({ isHidden: { $exists: false } }, { $set: { isHidden: false } });
+}
+
 async function bootstrapMongoCollections() {
   await ensureIndexes();
   await seedIfEmpty();
+  await ensureCaseVisibilityDefaults();
 }
 
 export async function ensureMongoCollectionsReady() {

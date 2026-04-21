@@ -124,6 +124,7 @@ export interface CaseLocationMeta {
 export interface CaseItem {
   id: string;
   reference: string;
+  isHidden: boolean;
   title: string;
   type: CaseType;
   status: CaseStatus;

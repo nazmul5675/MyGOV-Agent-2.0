@@ -60,11 +60,11 @@ export const roleNavigation: Record<UserRole, AppNavItem[]> = {
       exact: true,
     },
     {
-      href: "/admin#queue",
+      href: "/admin/case-queue",
       label: "Case Queue",
       shortLabel: "Queue",
       icon: ListTodo,
-      matchPrefixes: ["/admin/cases"],
+      matchPrefixes: ["/admin/case-queue", "/admin/cases"],
     },
     {
       href: "/admin/users",

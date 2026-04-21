@@ -1,19 +1,23 @@
 import { NextResponse } from "next/server";
 
 import { readSession } from "@/lib/auth/session";
-import { getAdminDashboardData, listCitizenCases } from "@/lib/repositories/cases";
+import { getAdminDashboardData, listAdminCases, listCitizenCases } from "@/lib/repositories/cases";
 import { assertRole } from "@/lib/services/auth";
 import { createCitizenCase } from "@/lib/services/cases";
 import { handleRouteError, unauthorized } from "@/lib/security/api";
 import { createCaseRequestSchema } from "@/lib/validation/cases";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await readSession();
     if (!session) throw unauthorized();
+    const searchParams = new URL(request.url).searchParams;
 
     if (session.role === "admin") {
-      const data = await getAdminDashboardData();
+      const includeHidden = searchParams.get("includeHidden") === "true";
+      const data = includeHidden
+        ? { queue: await listAdminCases({ includeHidden: true }), stats: [] }
+        : await getAdminDashboardData();
       return NextResponse.json({
         cases: data.queue,
         stats: data.stats,
