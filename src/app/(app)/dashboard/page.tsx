@@ -16,6 +16,7 @@ import { CaseCard } from "@/components/common/case-card";
 import { EvidenceManager } from "@/components/common/evidence-manager";
 import { EmptyState } from "@/components/common/empty-state";
 import { LiveDataState } from "@/components/common/live-data-state";
+import { CitizenRecentCasesTable } from "@/components/cases/citizen-recent-cases-table";
 import { LocationPreviewCard } from "@/components/maps/location-preview-card";
 import { PageHeader } from "@/components/common/page-header";
 import { Reveal } from "@/components/common/reveal";
@@ -94,12 +95,23 @@ export default async function DashboardPage() {
         title={`Welcome back, ${session.name.split(" ")[0]}.`}
         description="Track every case in one place, complete document requests quickly, and stay ahead of renewal reminders with a calmer citizen experience."
         actions={
-          <Link
-            href="/cases/new"
-            className={cn(buttonVariants({ size: "lg" }), "rounded-full px-5")}
-          >
-            Create a new case
-          </Link>
+          <>
+            <Link
+              href="/cases"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "rounded-full px-5"
+              )}
+            >
+              Recent cases table
+            </Link>
+            <Link
+              href="/cases/new"
+              className={cn(buttonVariants({ size: "lg" }), "rounded-full px-5")}
+            >
+              Create a new case
+            </Link>
+          </>
         }
       />
 
@@ -151,10 +163,19 @@ export default async function DashboardPage() {
       </Reveal>
 
       <Reveal delay={0.06}>
+        <CitizenRecentCasesTable
+          cases={cases.slice(0, 10)}
+          totalVisibleCount={cases.length}
+          description="This table is now the primary way to scan your recent visible cases, while the card layout below remains available if you still prefer it."
+          emptyDescription="Submit a case and your latest visible cases will appear here."
+        />
+      </Reveal>
+
+      <Reveal delay={0.07}>
         <div className="space-y-6">
           <PageHeader
-            title="Case command center"
-            description="Recent cases stay actionable here, with the latest status, timeline signals, and evidence context."
+            title="Card view"
+            description="The existing card layout stays available here if you want the richer summary view after checking the table."
           />
 
           <section className="grid gap-5 xl:grid-cols-3">

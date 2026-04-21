@@ -74,6 +74,7 @@ export default async function AdminDashboardPage() {
 
   const { stats, queue, filesNeedingReview, recentActivity, suggestedActions, queueBuckets, roleActivity } =
     data;
+  const latestQueueCards = queue.slice(0, 8);
   const aiFocusCases = queue.slice(0, 3);
   const statIcons = [
     <ClipboardCheck className="size-5" key="total" />,
@@ -111,7 +112,7 @@ export default async function AdminDashboardPage() {
             </div>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/admin#queue"
+                href="/admin/case-queue"
                 className={cn(buttonVariants({ variant: "default" }), "rounded-full px-5")}
               >
                 Open case queue
@@ -216,13 +217,13 @@ export default async function AdminDashboardPage() {
 
             <div className="space-y-1">
               <h2 className="font-heading text-2xl font-bold tracking-tight text-primary">
-                Case queue
+                Latest case cards
               </h2>
               <p className="text-sm leading-6 text-muted-foreground">
-                Use the full review queue when you need stronger search, denser case context, and direct entry into the review workspace.
+                Keep the existing latest-card workflow here for recent visible cases, then jump to the dedicated queue route for the full permanent case history.
               </p>
             </div>
-            <AdminQueueBoard cases={queue} />
+            <AdminQueueBoard cases={latestQueueCards} />
           </div>
 
           <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">

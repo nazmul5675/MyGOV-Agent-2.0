@@ -1,6 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import type { Filter } from "mongodb";
 
 import type {
   AdminDashboardData,
@@ -154,6 +155,7 @@ async function hydrateSingleCase(base: CaseDocument): Promise<CaseItem> {
   return {
     id: base.id,
     reference: base.reference,
+    isHidden: base.isHidden,
     title: base.title,
     type: base.type,
     status: base.status,
@@ -186,21 +188,55 @@ async function hydrateSingleCase(base: CaseDocument): Promise<CaseItem> {
   };
 }
 
-async function listAllCases() {
+interface ListCaseOptions {
+  includeHidden?: boolean;
+  hiddenOnly?: boolean;
+  limit?: number;
+}
+
+function buildCaseVisibilityQuery(options?: ListCaseOptions): Filter<CaseDocument> {
+  if (options?.hiddenOnly) {
+    return { isHidden: true };
+  }
+
+  if (options?.includeHidden) {
+    return {};
+  }
+
+  return { isHidden: { $ne: true } };
+}
+
+async function listAllCases(options?: ListCaseOptions) {
   const { cases } = await getMongoCollections();
-  const records = await cases.find({}).sort({ updatedAt: -1 }).toArray();
+  const cursor = cases.find(buildCaseVisibilityQuery(options)).sort({ updatedAt: -1 });
+  if (typeof options?.limit === "number" && options.limit > 0) {
+    cursor.limit(options.limit);
+  }
+  const records = await cursor.toArray();
   return Promise.all(records.map((record) => hydrateSingleCase(toPlainRecord(record))));
 }
 
-async function listCasesForCitizen(citizenUid: string) {
+async function listCasesForCitizen(citizenUid: string, options?: Omit<ListCaseOptions, "hiddenOnly">) {
   const { cases } = await getMongoCollections();
-  const records = await cases.find({ citizenUid }).sort({ updatedAt: -1 }).toArray();
+  const cursor = cases
+    .find({
+      citizenUid,
+      ...buildCaseVisibilityQuery(options),
+    })
+    .sort({ updatedAt: -1 });
+  if (typeof options?.limit === "number" && options.limit > 0) {
+    cursor.limit(options.limit);
+  }
+  const records = await cursor.toArray();
   return Promise.all(records.map((record) => hydrateSingleCase(toPlainRecord(record))));
 }
 
-async function getCaseById(caseId: string) {
+async function getCaseById(caseId: string, options?: Pick<ListCaseOptions, "includeHidden">) {
   const { cases } = await getMongoCollections();
-  const record = await cases.findOne({ id: caseId });
+  const record = await cases.findOne({
+    id: caseId,
+    ...buildCaseVisibilityQuery(options),
+  });
   if (!record) return null;
   return hydrateSingleCase(toPlainRecord(record));
 }
@@ -311,6 +347,10 @@ export async function getCitizenCaseById(citizenId: string, caseId: string) {
   return item && item.citizenId === citizenId ? item : null;
 }
 
+export async function listAdminCases(options?: ListCaseOptions) {
+  return listAllCases({ includeHidden: true, ...options });
+}
+
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   const queue = await listAllCases();
   const userOverview = await getAdminUserOverview();
@@ -348,7 +388,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 }
 
 export async function getAdminCaseById(caseId: string) {
-  return getCaseById(caseId);
+  return getCaseById(caseId, { includeHidden: true });
 }
 
 export interface CreateCasePayload {
@@ -459,6 +499,7 @@ export async function createCaseRecord(payload: CreateCasePayload) {
   const caseRecord: CaseDocument = {
     id: payload.id,
     reference: createCaseReference(),
+    isHidden: false,
     title: payload.title,
     type: payload.type,
     status: "submitted",
@@ -794,6 +835,52 @@ export async function updateEvidenceReviewStatus(input: {
   });
 
   return { ok: true };
+}
+
+export async function updateCaseVisibility(input: {
+  caseId: string;
+  isHidden: boolean;
+  actorName: string;
+  actorId: string;
+}) {
+  const { adminNotes, cases } = await getMongoCollections();
+  const caseRecord = await cases.findOne({ id: input.caseId });
+  if (!caseRecord) throw new Error("Case not found.");
+
+  if (Boolean(caseRecord.isHidden) === input.isHidden) {
+    return { ok: true, isHidden: input.isHidden };
+  }
+
+  const now = isoNow();
+
+  await cases.updateOne(
+    { id: input.caseId },
+    {
+      $set: {
+        isHidden: input.isHidden,
+        updatedAt: now,
+        updatedBy: input.actorId,
+      },
+    }
+  );
+
+  const noteRecord: AdminNoteDocument = {
+    id: `note-${randomUUID().slice(0, 8)}`,
+    caseId: input.caseId,
+    actorUid: input.actorId,
+    actorRole: "admin",
+    actorName: input.actorName,
+    note: input.isHidden
+      ? "Case hidden from citizen and admin visible queues."
+      : "Case restored to citizen and admin visible queues.",
+    action: input.isHidden ? "hide_case" : "unhide_case",
+    createdAt: now,
+    visibleInTimeline: false,
+  };
+
+  await adminNotes.insertOne(noteRecord);
+
+  return { ok: true, isHidden: input.isHidden };
 }
 
 export async function listCaseAssistantMessages(caseId: string): Promise<AssistantMessage[]> {

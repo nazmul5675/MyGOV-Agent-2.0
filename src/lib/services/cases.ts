@@ -10,6 +10,7 @@ import {
   getCitizenCaseById,
   listCaseAssistantMessages,
   listDashboardAssistantMessages,
+  updateCaseVisibility,
   updateEvidenceReviewStatus,
 } from "@/lib/repositories/cases";
 import { notFoundError } from "@/lib/security/api";
@@ -120,6 +121,19 @@ export async function reviewAdminFile(input: {
     fileId: input.fileId,
     status: input.status,
     note: input.note,
+    actorName: input.session.name,
+    actorId: input.session.uid,
+  });
+}
+
+export async function setAdminCaseVisibility(input: {
+  session: AppSession;
+  caseId: string;
+  isHidden: boolean;
+}) {
+  return updateCaseVisibility({
+    caseId: input.caseId,
+    isHidden: input.isHidden,
     actorName: input.session.name,
     actorId: input.session.uid,
   });

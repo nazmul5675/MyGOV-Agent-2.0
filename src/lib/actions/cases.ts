@@ -80,3 +80,23 @@ export async function updateFileReviewAction(
 
   return response.json() as Promise<{ ok: boolean }>;
 }
+
+export async function updateCaseVisibilityAction(
+  caseId: string,
+  payload: { isHidden: boolean }
+) {
+  const response = await fetch(`/api/admin/cases/${caseId}/visibility`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+    throw new Error(body?.error || "Request failed.");
+  }
+
+  return response.json() as Promise<{ ok: boolean; isHidden: boolean }>;
+}
