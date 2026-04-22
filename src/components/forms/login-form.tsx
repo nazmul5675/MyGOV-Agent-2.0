@@ -126,7 +126,7 @@ export function LoginForm() {
           Sign in securely
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
-          Use your Firebase account to enter the citizen or admin workspace with a server-issued session cookie and Mongo-backed application data.
+          Use the account details you were given. We will route you to the correct citizen or admin area after sign-in.
         </p>
         {nextPath ? (
           <p className="text-xs leading-6 text-muted-foreground">
@@ -185,10 +185,10 @@ export function LoginForm() {
         <div className="rounded-[24px] border border-border/60 bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
           <div className="flex items-center gap-2 font-medium text-foreground">
             <LockKeyhole className="size-4 text-primary" />
-            Firebase sign-in
+            Protected access
           </div>
           <p className="mt-2">
-            Identity comes from Firebase Auth, while role-aware profile and case data are read from MongoDB. Admin access is never self-selected.
+            Your account decides whether you go to the citizen or admin side. Admin access is assigned separately and is never self-selected.
           </p>
           {missingClientVars.length ? (
             <FormMessage

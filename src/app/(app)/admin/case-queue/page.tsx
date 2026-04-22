@@ -32,7 +32,7 @@ export default async function AdminCaseQueuePage() {
         <PageHeader
           eyebrow="Admin case queue"
           title="Full case queue unavailable"
-          description="This route is the persistent admin source of truth for every submitted case, including hidden records."
+          description="This is the full saved queue for admin review, including hidden records."
         />
         <LiveDataState
           tone="setup"
@@ -56,8 +56,8 @@ export default async function AdminCaseQueuePage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Admin case queue"
-        title="Persistent case queue"
-        description="Every submitted case stays here permanently. Scan the live queue fast, then open or hide the next record without losing the saved history."
+        title="Full case queue"
+        description="Scan the saved queue quickly, then open or hide the next record without losing the case history."
         actions={
           <Link
             href="/admin"

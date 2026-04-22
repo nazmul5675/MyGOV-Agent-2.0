@@ -51,7 +51,7 @@ export default async function AdminDashboardPage() {
         <PageHeader
           eyebrow="Admin dashboard"
           title="Review queue with cleaner context and faster decisions"
-          description="Admins get a focused queue with evidence context, AI-ready summaries, missing document signals, and direct actions in one protected workspace."
+          description="Use the queue as your starting point, then open the next case that needs action."
         />
         <LiveDataState
           tone="setup"
@@ -114,10 +114,10 @@ export default async function AdminDashboardPage() {
                 Operations pulse
               </p>
               <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-                Keep the workload moving from triage to review to resolution.
+                Keep the workload moving.
               </h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Start with the queue, then use the right column only for the next supporting action.
+                Start with the queue, then use the right column only when it helps you decide faster.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -237,7 +237,7 @@ export default async function AdminDashboardPage() {
                         ))
                       ) : (
                         <div className="rounded-[20px] bg-muted/70 p-4 text-sm leading-6 text-muted-foreground">
-                          No items in this workload bucket right now.
+                          Nothing needs attention in this bucket right now.
                         </div>
                       )}
                     </div>
@@ -293,7 +293,7 @@ export default async function AdminDashboardPage() {
                   Queue priorities
                 </p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Latest live cases worth opening next.
+                  Latest cases worth opening next.
                 </p>
               </div>
               <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">

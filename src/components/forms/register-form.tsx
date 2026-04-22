@@ -129,8 +129,7 @@ export function RegisterForm() {
           Create your citizen account
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
-          Start with the essentials. We collect your full name now, then let you
-          complete profile details next so sign-up stays friendly and fast.
+          Start with the essentials. You can complete the rest of your profile after sign-up so this step stays light and quick.
         </p>
         <p className="text-sm leading-6 text-muted-foreground">
           This sign-up is for citizen access. Admin access is managed separately.
@@ -203,10 +202,10 @@ export function RegisterForm() {
         <div className="rounded-[24px] border border-border/60 bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
           <div className="flex items-center gap-2 font-medium text-foreground">
             <ShieldCheck className="size-4 text-primary" />
-            Profile data stays in MongoDB
+            What happens next
           </div>
           <p className="mt-2">
-            We store `fullName`, `dateOfBirth`, `phoneNumber`, and `addressText` in MongoDB. Firebase Auth is used only for authentication credentials.
+            After you create your account, you will go straight to your profile so you can add any extra details when you are ready.
           </p>
         </div>
 

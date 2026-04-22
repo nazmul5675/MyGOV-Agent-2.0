@@ -239,7 +239,7 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
               </span>
             </div>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Use this table to scan what is urgent, blocked, stalled, or hidden, then open the next case without reading every row in full.
+              Scan what is urgent, blocked, stalled, or hidden, then open the next case without reading every row in full.
             </p>
             <div className="flex flex-wrap gap-2">
               {[
@@ -274,7 +274,7 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
                 setCurrentPage(1);
                 setQuery(event.target.value);
               }}
-              placeholder="Search by case, citizen, desk, location, or state"
+              placeholder="Search by case, citizen, desk, location, or status"
               className="h-12 rounded-full pl-11"
             />
           </div>
@@ -288,8 +288,8 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
               <tr className="text-left">
                 {[
                   { label: "Case", key: "title" as const, className: "w-[31%]" },
-                  { label: "Review state", key: "status" as const, className: "w-[20%]" },
-                  { label: "Evidence and routing", key: "priority" as const, className: "w-[19%]" },
+                  { label: "Status and risk", key: "status" as const, className: "w-[20%]" },
+                  { label: "Desk and files", key: "priority" as const, className: "w-[19%]" },
                   { label: "Updated", key: "updated" as const, className: "w-[12%]" },
                   { label: "Visibility", key: "priority" as const, className: "w-[8%]" },
                   { label: "Actions", key: "priority" as const, className: "w-[10%]" },
@@ -362,7 +362,7 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
                             ))
                           ) : (
                             <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
-                              On track
+                              Ready to review
                             </span>
                           )}
                         </div>
@@ -480,7 +480,7 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
             <DialogDescription>
               {selectedCase?.isHidden
                 ? "The case will return to the citizen dashboard and the admin visible queues, but it will remain in the full case queue either way."
-                : "The case will disappear from the citizen dashboard and the admin visible queues, but the saved record will stay in the permanent case queue."}
+                : "The case will disappear from the citizen dashboard and the admin visible queues, but the saved record will stay in the full case queue."}
             </DialogDescription>
           </DialogHeader>
           {selectedCase ? (

@@ -31,8 +31,8 @@ export default async function AdminUsersPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Admin users"
-        title="Manage access, roles, and account readiness"
-        description="Inspect account context first, then make deliberate access changes from one audit-ready control console."
+        title="Manage access with a safer, audit-ready view"
+        description="Inspect account context first, then make deliberate role changes without losing sight of risk or account readiness."
       />
 
       <Reveal>
@@ -43,10 +43,10 @@ export default async function AdminUsersPage() {
                 Access control
               </p>
               <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-                Manage citizen and admin access with safer role changes and clearer account context.
+                Review the account, then decide on access.
               </h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Review profile readiness, related case load, and current role before changing access.
+                Keep role changes deliberate by checking account status, activity, and case load first.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -85,7 +85,7 @@ export default async function AdminUsersPage() {
               <div className="flex items-center gap-3">
                 <Sparkles className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Role audit activity
+                  Recent role changes
                 </p>
               </div>
               <div className="mt-5 space-y-3">
@@ -110,7 +110,7 @@ export default async function AdminUsersPage() {
                   <EmptyState
                     icon={<ShieldCheck className="size-5" />}
                     title="No role changes recorded yet"
-                    description="Promotions and demotions from this screen will appear here with audit-ready detail."
+                    description="Role changes from this screen will appear here."
                   />
                 )}
               </div>

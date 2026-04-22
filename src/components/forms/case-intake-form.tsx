@@ -92,7 +92,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
         });
 
         toast.success("Case submitted", {
-          description: `${values.title} was saved and routed successfully.`,
+          description: `${values.title} is ready to track from your case page.`,
         });
         resetUploads();
         router.push(`/cases/${created.caseId}?submitted=1`);
@@ -183,7 +183,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 Supporting files
               </CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                Add the clearest file you have first. Photos, PDFs, and voice notes all work here.
+                Add the strongest proof you have first. Photos, PDFs, and voice notes all work here.
               </p>
             </div>
             <div className="self-start rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -219,17 +219,17 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 {
                   label: "Photo proof",
                   icon: ImagePlus,
-                  description: "Best for showing damage, location, or visible conditions.",
+                  description: "Use for damage, location, or any visible condition you want staff to see quickly.",
                 },
                 {
                   label: "Document",
                   icon: FileText,
-                  description: "Best for forms, letters, receipts, or official proof.",
+                  description: "Use for forms, letters, receipts, or any official proof tied to the case.",
                 },
                 {
                   label: "Voice note",
                   icon: FileAudio2,
-                  description: "Useful when speaking is easier than typing.",
+                  description: "Use when speaking is easier than typing or when context is easier to explain aloud.",
                 },
               ].map((item) => {
                 const Icon = item.icon;
@@ -307,7 +307,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             {[
               "Keep the title clear and describe the issue in plain language.",
               "Upload your strongest supporting file first, then add any extra proof.",
-              "After submit, your case timeline and file statuses will be available right away.",
+              "After submit, you can follow updates, requested documents, and file decisions from the case page.",
             ].map((item, index) => (
               <div key={item} className="rounded-[22px] bg-muted/75 p-4">
                 <div className="flex items-center gap-2 text-primary">
@@ -327,7 +327,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
         <AssistantPanel
           initialMessages={[]}
           title="Need help before you submit?"
-          subtitle="Use the assistant while you prepare your case. It can suggest useful files, help tighten your summary, and point out what may be missing."
+          subtitle="Use the assistant while you prepare your case. It can help you write a clearer summary and think through what proof may help."
         />
 
         <Card className="hero-gradient rounded-[32px] border-none text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)]">
@@ -346,7 +346,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               </div>
             </div>
             <p className="text-sm leading-7 text-primary-foreground/80">
-              Your summary, files, and case details stay together so the next review step is easier and clearer.
+              Your summary, files, and case details stay together so the next review step is clearer and easier to trust.
             </p>
           </CardContent>
         </Card>
@@ -361,7 +361,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             {[
               "Clear location and easy-to-understand description",
               "At least one supporting file where possible",
-              "Enough detail for a follow-up without asking you to repeat everything",
+              "Enough detail so staff can understand the issue without asking you to repeat everything",
             ].map((item) => (
               <div key={item} className="flex items-start gap-3 rounded-[20px] bg-muted/70 p-4">
                 <Sparkles className="mt-0.5 size-4 text-primary" />
@@ -369,11 +369,11 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               </div>
             ))}
             <div className="rounded-[20px] bg-accent/65 p-4 text-sm leading-6 text-accent-foreground">
-              When you submit, your files are uploaded first, then your case is created and ready to track.
+              When you submit, your files are uploaded first. Then your case is created and ready to track.
             </div>
             <Button type="submit" size="lg" className="h-12 w-full rounded-2xl" disabled={isPending}>
               {isPending ? <LoaderCircle className="size-4 animate-spin" /> : null}
-              Submit case
+              Submit and track case
             </Button>
           </CardContent>
         </Card>

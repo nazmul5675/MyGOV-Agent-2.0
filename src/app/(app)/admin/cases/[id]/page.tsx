@@ -61,7 +61,7 @@ export default async function AdminCaseDetailPage({
         <PageHeader
           eyebrow="Admin review"
           title="Live case review unavailable"
-          description="This page reads directly from MongoDB for the case packet, evidence, and event history."
+          description="This page could not load the case story, evidence, and event history."
         />
         <LiveDataState
           tone="setup"
@@ -113,7 +113,7 @@ export default async function AdminCaseDetailPage({
       <PageHeader
         eyebrow={item.reference}
         title="Admin review workspace"
-        description="Read the case story quickly, review the file packet, and take the next operational decision from one protected workspace."
+        description="Read the case story quickly, review the file packet, and take the next decision from one clear workspace."
       />
 
       <section className="surface-panel p-6 sm:p-7">
@@ -161,7 +161,7 @@ export default async function AdminCaseDetailPage({
                 {acceptedFiles}
               </p>
               <p className="mt-2 text-sm leading-6 text-emerald-900/80">
-                Evidence already cleared for the live case record.
+                Evidence already cleared for this case.
               </p>
             </div>
           </div>
@@ -253,8 +253,7 @@ export default async function AdminCaseDetailPage({
                   Case story and action context
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                  Keep urgency, location, and document pressure together before taking an action
-                  from the decision lane.
+                  Review urgency, location, and document pressure together before moving to the decision lane.
                 </p>
               </div>
               <Link
@@ -356,7 +355,7 @@ export default async function AdminCaseDetailPage({
           <EvidenceManager
             files={item.evidence}
             title="Evidence at a glance"
-            description="Read the current file packet quickly before making review decisions below."
+            description="Read the current file packet quickly before making review decisions."
             dense
           />
 
@@ -372,7 +371,7 @@ export default async function AdminCaseDetailPage({
               <EmptyState
                 icon={<AlertTriangle className="size-5" />}
                 title="No live events yet"
-                description="Admin timeline entries from the case events subcollection will appear here as the review flow advances."
+                description="Timeline updates will appear here as the review flow advances."
               />
             )}
           </div>
@@ -391,7 +390,7 @@ export default async function AdminCaseDetailPage({
           caseId={item.id}
           initialMessages={messages || []}
           title="AI review helper"
-          subtitle="Use AI only after the case story and file packet are clear. Keep it for summary, gap-checking, and drafting a cleaner follow-up note."
+          subtitle="Use AI after the case story and file packet are clear. Keep it for summary, gap-checking, and drafting a cleaner follow-up note."
           suggestedPrompts={[
             "Draft an officer summary for this case",
             "Summarize the uploaded files",

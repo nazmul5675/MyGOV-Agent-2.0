@@ -40,9 +40,9 @@ export function AuthShell({
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {[
-            { label: "Roles", value: "Citizen + Admin" },
-            { label: "Auth", value: "Firebase session cookies" },
-            { label: "Data", value: "MongoDB + GridFS" },
+            { label: "Access", value: "Citizen and admin" },
+            { label: "Protection", value: "Secure sign-in" },
+            { label: "Next step", value: "Go straight to your workspace" },
           ].map((item) => (
             <div key={item.label} className="rounded-[22px] border border-border/50 bg-white/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">

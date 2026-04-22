@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, UserRound } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, UserRound } from "lucide-react";
 
 import { ProfileBasicsForm } from "@/components/forms/profile-basics-form";
 import { LiveDataState } from "@/components/common/live-data-state";
@@ -61,16 +61,32 @@ export default async function ProfilePage({
   }
 
   const profileCards = getProfileCards({
-    role: profile.role,
+    dateOfBirth: profile.dateOfBirth,
+    phoneNumber: profile.phoneNumber,
+    addressText: profile.addressText,
     documents: profile.documents ?? [],
   });
+  const readinessChecks = [
+    Boolean(profile.dateOfBirth),
+    Boolean(profile.phoneNumber),
+    Boolean(profile.addressText),
+    Boolean(profile.documents?.length),
+  ];
+  const completedCount = readinessChecks.filter(Boolean).length;
+  const needsAttentionCount = readinessChecks.length - completedCount;
+  const readinessLabel =
+    needsAttentionCount === 0
+      ? "Ready for case updates"
+      : needsAttentionCount === 1
+        ? "One detail could help later"
+        : `${needsAttentionCount} details could still help`;
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Profile"
-        title="Profile and identity readiness"
-        description="Profile details beyond login credentials live in MongoDB, so the product can stay simple at sign-up and still support richer citizen context later."
+        title="Keep your profile ready for case updates"
+        description="See what is complete, what can wait, and which details may help staff handle your next case faster."
       />
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -84,10 +100,29 @@ export default async function ProfilePage({
               <p className="break-all text-sm text-primary-foreground/75">{profile.email}</p>
             </div>
           </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[24px] bg-white/10 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
+                Profile complete
+              </p>
+              <p className="mt-2 text-2xl font-black tracking-tight">{completedCount}/4</p>
+            </div>
+            <div className="rounded-[24px] bg-white/10 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
+                Needs attention
+              </p>
+              <p className="mt-2 text-2xl font-black tracking-tight">{needsAttentionCount}</p>
+            </div>
+            <div className="rounded-[24px] bg-white/10 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
+                Status
+              </p>
+              <p className="mt-2 text-sm font-semibold leading-6">{readinessLabel}</p>
+            </div>
+          </div>
           <p className="mt-6 max-w-xl text-sm leading-7 text-primary-foreground/82">
-            Full name is collected during registration. Date of birth, phone number,
-            and location details are stored here in MongoDB so onboarding stays
-            lightweight while age-aware and contact-aware flows remain possible later.
+            Keep the details you are comfortable sharing up to date here. The goal is simple:
+            fewer follow-up questions when a case needs your attention.
           </p>
         </div>
 
@@ -96,7 +131,7 @@ export default async function ProfilePage({
             const Icon = item.icon;
 
             return (
-              <div key={item.title} className="surface-panel p-6">
+              <div key={item.title} className={`surface-panel p-6 ${item.tone}`}>
                 <Icon className="size-5 text-primary" />
                 <h2 className="mt-4 text-xl font-bold tracking-tight text-foreground">
                   {item.title}
@@ -105,6 +140,42 @@ export default async function ProfilePage({
               </div>
             );
           })}
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        <div className="surface-panel p-5">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="size-5 text-primary" />
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+              Update now
+            </p>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Add anything missing that would help staff reach you or confirm your situation quickly.
+          </p>
+        </div>
+        <div className="surface-panel p-5">
+          <div className="flex items-center gap-3">
+            <Clock3 className="size-5 text-primary" />
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+              Can wait
+            </p>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Optional details like address notes or profile documents can be added later if a case asks for them.
+          </p>
+        </div>
+        <div className="surface-panel p-5">
+          <div className="flex items-center gap-3">
+            <UserRound className="size-5 text-primary" />
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+              Why it helps
+            </p>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            A more complete profile can reduce repeated questions and make status updates easier to trust.
+          </p>
         </div>
       </section>
 

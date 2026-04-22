@@ -45,7 +45,7 @@ export function AppSidebar({
             MyGOV Agent 2.0
           </p>
           <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-            {role === "admin" ? "Admin Workspace" : "Citizen Workspace"}
+            {role === "admin" ? "Admin workspace" : "Citizen workspace"}
           </p>
         </div>
       </Link>
@@ -89,15 +89,15 @@ export function AppSidebar({
       </nav>
       <div className="mt-auto rounded-[22px] bg-primary px-4 py-4 text-primary-foreground">
         <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
-          {role === "admin" ? "Operations posture" : "System readiness"}
+          {role === "admin" ? "Operations focus" : "Service guidance"}
         </p>
         <p className="mt-2 font-heading text-lg font-bold tracking-tight">
-          {role === "admin" ? "Review, route, and protect access" : "Track cases with confidence"}
+          {role === "admin" ? "Review, route, and manage access" : "Track cases with confidence"}
         </p>
         <p className="mt-2 text-sm leading-6 text-primary-foreground/75">
           {role === "admin"
-            ? "Queue review, file handling, and access management all stay live from this workspace."
-            : "Your cases, files, notifications, and next steps stay in one calm citizen workspace."}
+            ? "Keep queue work, file review, and access control in one clear admin workspace."
+            : "Your cases, files, notifications, and next steps stay together in one calm citizen space."}
         </p>
       </div>
     </aside>

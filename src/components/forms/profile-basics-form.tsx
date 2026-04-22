@@ -74,7 +74,7 @@ export function ProfileBasicsForm({
       try {
         await patchJson("/api/profile", values);
         toast.success("Profile updated", {
-          description: "Your profile details are saved to your live workspace.",
+          description: "Your profile details are saved and ready for future case updates.",
         });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Unable to update profile.");
@@ -86,11 +86,10 @@ export function ProfileBasicsForm({
     <Card className="surface-panel min-w-0">
       <CardHeader className="space-y-2">
         <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
-          Profile basics
+          Update your details
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
-          We store `dateOfBirth` instead of raw age so your age can be derived
-          when needed without becoming stale.
+          Add the details that help staff confirm who you are, how to reach you, and where help may be needed.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -122,7 +121,7 @@ export function ProfileBasicsForm({
             />
             <FormMessage
               tone="muted"
-              message={liveAge !== null ? `Computed age: ${liveAge}` : "Optional, but useful for age-aware assistance and service guidance."}
+              message={liveAge !== null ? `Age shown from this date: ${liveAge}` : "Optional, but useful when a service depends on age or eligibility."}
             />
             <FormMessage message={form.formState.errors.dateOfBirth?.message} />
           </div>
@@ -138,7 +137,7 @@ export function ProfileBasicsForm({
             />
             <FormMessage
               tone="muted"
-              message="Optional. Helpful for follow-up calls or reminders."
+              message="Optional. Helpful if your case needs a quick follow-up or reminder."
             />
             <FormMessage message={form.formState.errors.phoneNumber?.message} />
           </div>
@@ -153,7 +152,7 @@ export function ProfileBasicsForm({
             />
             <FormMessage
               tone="muted"
-              message="Optional. This remains lightweight so onboarding stays friendly."
+              message="Optional. A saved location note can make future case routing faster."
             />
             <FormMessage message={form.formState.errors.addressText?.message} />
           </div>
@@ -166,7 +165,7 @@ export function ProfileBasicsForm({
               disabled={!form.formState.isValid || isPending}
             >
               {isPending ? <LoaderCircle className="size-4 animate-spin" /> : null}
-              Save profile details
+              Save profile
             </Button>
           </div>
         </form>

@@ -22,7 +22,13 @@ export default async function AppLayout({
   const unreadNotificationCount = await countUnreadNotificationsForUser(session.uid);
   const title =
     session.role === "admin"
-      ? "Workspace"
+      ? pathname.startsWith("/admin/users")
+        ? "Access control"
+        : pathname.startsWith("/admin/cases/")
+          ? "Case review"
+          : pathname.startsWith("/admin/case-queue")
+            ? "Case queue"
+            : "Dashboard"
       : pathname.startsWith("/cases/new")
         ? "Create case"
         : pathname.startsWith("/cases/")

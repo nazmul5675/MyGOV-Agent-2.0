@@ -234,7 +234,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                   </span>
                 </div>
                 <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                  Inspect account context first, then make deliberate role changes from a single audit-oriented table.
+                  Use one table to compare account health, current access, and recent activity before changing a role.
                 </p>
               </div>
 
@@ -448,7 +448,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                             ) : (
                               <UserCog className="size-3.5" />
                             )}
-                            {user.role === "admin" ? "Change admin role" : "Promote to admin"}
+                            {user.role === "admin" ? "Review role change" : "Promote to admin"}
                           </Button>
                         </div>
                       </td>
@@ -504,9 +504,9 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
           {selectedUser ? (
             <>
               <SheetHeader className="border-b border-border/70 px-6 py-5">
-                <SheetTitle>User workspace</SheetTitle>
+                <SheetTitle>User details</SheetTitle>
                 <SheetDescription>
-                  Inspect profile readiness, role, activity, and case load before making any access change.
+                  Review profile readiness, role, activity, and case load before changing access.
                 </SheetDescription>
               </SheetHeader>
 
@@ -603,11 +603,11 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                     <p className="font-semibold">Role control</p>
                   </div>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                    Review account context before promoting or demoting. Changes update the Mongo-backed profile immediately and, when Firebase Admin is configured, sync auth claims too.
+                    Review account context before promoting or demoting. Access changes take effect on the live account.
                   </p>
                   {selectedUser.role === "admin" ? (
                     <div className="mt-4 rounded-[20px] bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                      This is an admin account. Demotion changes access to protected admin workflows.
+                      This is an admin account. Demotion removes access to protected admin review and management routes.
                     </div>
                   ) : null}
                   <Button
@@ -616,7 +616,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                     onClick={() => setPendingRoleTarget(selectedUser)}
                   >
                     <UserCog className="size-4" />
-                    {selectedUser.role === "admin" ? "Change admin role" : "Promote to admin"}
+                    {selectedUser.role === "admin" ? "Review role change" : "Promote to admin"}
                   </Button>
                 </section>
               </div>
@@ -643,7 +643,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
 
               <div className="space-y-4 px-6 pb-6 text-sm leading-7 text-muted-foreground">
                 <div className="rounded-[22px] bg-muted/70 p-4">
-                  This change updates the live Mongo-backed user record immediately and writes an audit trail for the control console.
+                  This change updates the user&apos;s live access and records the action in the audit log.
                 </div>
                 <div className="rounded-[22px] bg-amber-50 p-4 text-amber-900">
                   <div className="flex items-start gap-2">

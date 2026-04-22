@@ -13,16 +13,16 @@ export default function LoginPage() {
     <AuthShell
       badge="Secure authentication"
       title="Sign in to your MyGOV workspace."
-      description="Enter the citizen or admin workspace with a reliable session flow and immediate protected routing."
+      description="Sign in once and we will take you to the right protected workspace."
       sideContent={
         <>
           <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70">
-            Included in this experience
+            What to expect
           </p>
           <ul className="mt-4 space-y-3 text-sm leading-7 text-primary-foreground/80">
-            <li>Cookie-based sessions for server-side route protection</li>
-            <li>Citizen and admin access routed into the correct workspace immediately after sign-in</li>
-            <li>Immediate handoff into the correct workspace after sign-in</li>
+            <li>Secure sign-in for citizen and admin accounts</li>
+            <li>Protected routing into the correct workspace right after sign-in</li>
+            <li>One shared login page for both roles</li>
           </ul>
         </>
       }

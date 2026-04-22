@@ -28,7 +28,7 @@ export function Topbar({
     currentPath.startsWith("/admin/users")
       ? "Access control"
       : currentPath.startsWith("/admin/cases") || currentPath.startsWith("/admin/case-queue")
-        ? "Case review operations"
+        ? "Case review"
         : "Operations dashboard";
   const citizenAreaLabel =
     currentPath.startsWith("/cases/new")
