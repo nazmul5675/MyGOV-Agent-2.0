@@ -12,14 +12,18 @@ export function Topbar({
   session,
   title,
   currentPath,
+  unreadNotificationCount,
 }: {
   session: AppSession;
   title: string;
   currentPath: string;
+  unreadNotificationCount: number;
 }) {
   const noticeHref = session.role === "citizen" ? "/notifications" : "/admin";
   const homeHref = session.role === "admin" ? "/admin" : "/dashboard";
   const quickLinks = roleNavigation[session.role].slice(0, 3);
+  const unreadBadgeLabel =
+    unreadNotificationCount > 99 ? "99+" : String(unreadNotificationCount);
 
   return (
     <div className="glass-panel flex flex-col gap-2.5 rounded-[24px] px-4 py-3">
@@ -51,9 +55,14 @@ export function Topbar({
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Link
             href={noticeHref}
-            className="flex size-10 items-center justify-center rounded-full bg-accent text-accent-foreground transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(0,30,64,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+            className="relative flex size-10 items-center justify-center rounded-full bg-accent text-accent-foreground transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(0,30,64,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
           >
             <Bell className="size-4" />
+            {unreadNotificationCount > 0 ? (
+              <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full border border-white/80 bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary-foreground shadow-[0_8px_18px_rgba(0,30,64,0.2)]">
+                {unreadBadgeLabel}
+              </span>
+            ) : null}
           </Link>
           <div className="hidden min-w-0 items-center gap-2 rounded-full bg-white/70 px-2 py-1.5 sm:flex">
             <Avatar className="size-8">

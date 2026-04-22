@@ -9,9 +9,11 @@ import { cn } from "@/lib/utils";
 export function MobileNav({
   role,
   currentPath,
+  unreadNotificationCount,
 }: {
   role: UserRole;
   currentPath: string;
+  unreadNotificationCount: number;
 }) {
   const navItems = roleNavigation[role];
 
@@ -26,6 +28,10 @@ export function MobileNav({
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isNavItemActive(currentPath, item);
+          const showUnreadBadge =
+            item.href === "/notifications" && unreadNotificationCount > 0;
+          const unreadBadgeLabel =
+            unreadNotificationCount > 9 ? "9+" : String(unreadNotificationCount);
 
           return (
             <Link
@@ -38,7 +44,14 @@ export function MobileNav({
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
             >
-              <Icon className="size-4" />
+              <span className="relative inline-flex">
+                <Icon className="size-4" />
+                {showUnreadBadge ? (
+                  <span className="absolute -right-2.5 -top-2 inline-flex min-w-4 items-center justify-center rounded-full border border-white/80 bg-primary px-1 py-0.5 text-[9px] font-bold leading-none text-primary-foreground shadow-[0_6px_14px_rgba(0,30,64,0.18)]">
+                    {unreadBadgeLabel}
+                  </span>
+                ) : null}
+              </span>
               <span className="min-w-0">{item.shortLabel || item.label}</span>
             </Link>
           );

@@ -49,6 +49,11 @@ export async function listNotificationsForUser(userUid: string): Promise<Notific
   }));
 }
 
+export async function countUnreadNotificationsForUser(userUid: string) {
+  const { notifications } = await getMongoCollections();
+  return notifications.countDocuments({ userUid, read: false });
+}
+
 export async function createReminderForUser(input: {
   caseId: string;
   userId: string;

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 
 import { AppFrame } from "@/components/layout/app-frame";
 import { requireSession } from "@/lib/auth/session";
+import { countUnreadNotificationsForUser } from "@/lib/repositories/notifications";
 
 export default async function AppLayout({
   children,
@@ -10,9 +11,15 @@ export default async function AppLayout({
 }>) {
   const session = await requireSession();
   const pathname = (await headers()).get("x-current-path") || "/dashboard";
+  const unreadNotificationCount = await countUnreadNotificationsForUser(session.uid);
 
   return (
-    <AppFrame session={session} title="Workspace" currentPath={pathname}>
+    <AppFrame
+      session={session}
+      title="Workspace"
+      currentPath={pathname}
+      unreadNotificationCount={unreadNotificationCount}
+    >
       {children}
     </AppFrame>
   );
