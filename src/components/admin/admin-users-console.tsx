@@ -3,9 +3,11 @@
 import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   CheckCircle2,
   Clock3,
-  Mail,
   Search,
   ShieldCheck,
   UserCog,
@@ -33,9 +35,21 @@ import {
 } from "@/components/ui/sheet";
 import { updateAdminUserRole } from "@/lib/actions/users";
 import type { AdminManagedUser } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 type RoleFilter = "all" | "citizen" | "admin";
 type StatusFilter = "all" | "active" | "invited" | "disabled";
+type UserSortKey =
+  | "name"
+  | "email"
+  | "role"
+  | "status"
+  | "created"
+  | "active"
+  | "cases"
+  | "openCases"
+  | "profile";
+type SortDirection = "asc" | "desc";
 
 function formatDate(value?: string) {
   if (!value) return "Not available";
@@ -50,6 +64,14 @@ function formatDate(value?: string) {
   }).format(new Date(parsed));
 }
 
+function compareText(left: string, right: string, direction: SortDirection) {
+  return direction === "asc" ? left.localeCompare(right) : right.localeCompare(left);
+}
+
+function compareNumber(left: number, right: number, direction: SortDirection) {
+  return direction === "asc" ? left - right : right - left;
+}
+
 function roleChipTone(role: AdminManagedUser["role"]) {
   return role === "admin"
     ? "bg-primary/10 text-primary"
@@ -62,33 +84,101 @@ function statusChipTone(status: NonNullable<AdminManagedUser["accountStatus"]>) 
   return "bg-slate-100 text-slate-700";
 }
 
+function SortIcon({
+  active,
+  direction,
+}: {
+  active: boolean;
+  direction: SortDirection;
+}) {
+  if (!active) return <ArrowUpDown className="size-3.5" />;
+  return direction === "asc" ? (
+    <ArrowUp className="size-3.5" />
+  ) : (
+    <ArrowDown className="size-3.5" />
+  );
+}
+
 export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortKey, setSortKey] = useState<UserSortKey>("created");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedUser, setSelectedUser] = useState<AdminManagedUser | null>(null);
   const [pendingRoleTarget, setPendingRoleTarget] = useState<AdminManagedUser | null>(null);
   const [isPending, startTransition] = useTransition();
   const deferredQuery = useDeferredValue(query);
 
+  const latestUsers = useMemo(
+    () =>
+      [...users]
+        .sort((left, right) => (right.createdAt || "").localeCompare(left.createdAt || ""))
+        .slice(0, 3),
+    [users]
+  );
+
   const filteredUsers = useMemo(() => {
     const normalizedQuery = deferredQuery.trim().toLowerCase();
 
-    return users.filter((user) => {
-      const matchesQuery = normalizedQuery
-        ? [user.fullName, user.email, user.uid]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedQuery)
-        : true;
-      const matchesRole = roleFilter === "all" ? true : user.role === roleFilter;
-      const matchesStatus =
-        statusFilter === "all" ? true : (user.accountStatus || "active") === statusFilter;
+    return [...users]
+      .filter((user) => {
+        const matchesQuery = normalizedQuery
+          ? [user.fullName, user.email, user.uid]
+              .join(" ")
+              .toLowerCase()
+              .includes(normalizedQuery)
+          : true;
+        const matchesRole = roleFilter === "all" ? true : user.role === roleFilter;
+        const matchesStatus =
+          statusFilter === "all" ? true : (user.accountStatus || "active") === statusFilter;
 
-      return matchesQuery && matchesRole && matchesStatus;
-    });
-  }, [deferredQuery, roleFilter, statusFilter, users]);
+        return matchesQuery && matchesRole && matchesStatus;
+      })
+      .sort((left, right) => {
+        const leftStatus = left.accountStatus || "active";
+        const rightStatus = right.accountStatus || "active";
+        const leftActive = left.lastActiveAt || left.updatedAt || "";
+        const rightActive = right.lastActiveAt || right.updatedAt || "";
+
+        switch (sortKey) {
+          case "name":
+            return compareText(left.fullName, right.fullName, sortDirection);
+          case "email":
+            return compareText(left.email, right.email, sortDirection);
+          case "role":
+            return compareText(left.role, right.role, sortDirection);
+          case "status":
+            return compareText(leftStatus, rightStatus, sortDirection);
+          case "active":
+            return compareText(leftActive, rightActive, sortDirection);
+          case "cases":
+            return compareNumber(left.casesCount, right.casesCount, sortDirection);
+          case "openCases":
+            return compareNumber(left.openCasesCount, right.openCasesCount, sortDirection);
+          case "profile":
+            return compareNumber(left.profileCompleteness, right.profileCompleteness, sortDirection);
+          case "created":
+          default:
+            return compareText(left.createdAt || "", right.createdAt || "", sortDirection);
+        }
+      });
+  }, [deferredQuery, roleFilter, sortDirection, sortKey, statusFilter, users]);
+
+  const toggleSort = (nextKey: UserSortKey) => {
+    if (sortKey === nextKey) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortKey(nextKey);
+    setSortDirection(
+      nextKey === "name" || nextKey === "email" || nextKey === "role" || nextKey === "status"
+        ? "asc"
+        : "desc"
+    );
+  };
 
   const runRoleUpdate = (user: AdminManagedUser) => {
     const nextRole = user.role === "admin" ? "citizen" : "admin";
@@ -118,17 +208,22 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
       <div className="space-y-5">
         <section className="surface-panel p-5 sm:p-6">
           <div className="space-y-4">
-            <div className="space-y-1">
-              <h2 className="font-heading text-2xl font-bold tracking-tight text-primary">
-                User directory
-              </h2>
-              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                Search across citizen and admin accounts, then inspect readiness,
-                case load, and access level before making role changes.
-              </p>
-            </div>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="font-heading text-2xl font-bold tracking-tight text-primary">
+                    User directory
+                  </h2>
+                  <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {filteredUsers.length} visible
+                  </span>
+                </div>
+                <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                  Scan accounts in one practical management table, then open details or update roles
+                  without leaving the control console.
+                </p>
+              </div>
 
-            <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_auto] 2xl:items-center">
               <div className="relative w-full max-w-xl">
                 <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -138,149 +233,236 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                   className="h-12 rounded-full pl-11"
                 />
               </div>
+            </div>
 
-              <div className="flex flex-col gap-2 xl:items-end">
-                <div className="flex flex-wrap gap-2">
-                  {(["all", "citizen", "admin"] as const).map((item) => (
-                    <button
-                      key={`role-${item}`}
-                      type="button"
-                      onClick={() => setRoleFilter(item)}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${roleFilter === item
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex flex-wrap gap-2">
+                {(["all", "citizen", "admin"] as const).map((item) => (
+                  <button
+                    key={`role-${item}`}
+                    type="button"
+                    onClick={() => setRoleFilter(item)}
+                    className={cn(
+                      "rounded-full px-4 py-2 text-sm font-semibold transition-all",
+                      roleFilter === item
                         ? "bg-primary text-primary-foreground shadow-[0_14px_28px_rgba(0,30,64,0.18)]"
                         : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                    >
-                      {item === "all" ? "All roles" : item}
-                    </button>
-                  ))}
-                </div>
+                    )}
+                  >
+                    {item === "all" ? "All roles" : item}
+                  </button>
+                ))}
+              </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {(["all", "active", "invited", "disabled"] as const).map((item) => (
-                    <button
-                      key={`status-${item}`}
-                      type="button"
-                      onClick={() => setStatusFilter(item)}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${statusFilter === item
+              <div className="flex flex-wrap gap-2 xl:justify-end">
+                {(["all", "active", "invited", "disabled"] as const).map((item) => (
+                  <button
+                    key={`status-${item}`}
+                    type="button"
+                    onClick={() => setStatusFilter(item)}
+                    className={cn(
+                      "rounded-full px-4 py-2 text-sm font-semibold transition-all",
+                      statusFilter === item
                         ? "bg-primary text-primary-foreground shadow-[0_14px_28px_rgba(0,30,64,0.18)]"
                         : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                    >
-                      {item === "all" ? "All status" : item}
-                      {item !== "all" ? "" : ""}
-                    </button>
-                  ))}
-                </div>
+                    )}
+                  >
+                    {item === "all" ? "All status" : item}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
+        {latestUsers.length ? (
+          <section className="grid gap-4 xl:grid-cols-3">
+            {latestUsers.map((user) => (
+              <article key={`highlight-${user.uid}`} className="surface-panel p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary/70">
+                      Latest user
+                    </p>
+                    <h3 className="mt-2 truncate text-lg font-bold tracking-tight text-foreground">
+                      {user.fullName}
+                    </h3>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">{user.email}</p>
+                  </div>
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    {user.role === "admin" ? (
+                      <ShieldCheck className="size-4" />
+                    ) : (
+                      <UserRound className="size-4" />
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span
+                    className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${roleChipTone(user.role)}`}
+                  >
+                    {user.role}
+                  </span>
+                  <span
+                    className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusChipTone(user.accountStatus || "active")}`}
+                  >
+                    {user.accountStatus || "active"}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-[18px] bg-muted/75 p-3">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Created
+                    </p>
+                    <p className="mt-2 font-semibold text-foreground">{formatDate(user.createdAt)}</p>
+                  </div>
+                  <div className="rounded-[18px] bg-muted/75 p-3">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Profile
+                    </p>
+                    <p className="mt-2 font-semibold text-foreground">
+                      {user.profileCompleteness}%
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </section>
+        ) : null}
+
         {filteredUsers.length ? (
-          <div className="space-y-4">
-            {filteredUsers.map((user) => {
-              const accountStatus = user.accountStatus || "active";
-              const userCardKey = user.uid || user.id || user.email;
+          <div className="overflow-x-auto rounded-[28px] border border-border/70 bg-background/90">
+            <table className="min-w-[1260px] table-fixed border-separate border-spacing-0">
+              <thead>
+                <tr className="text-left">
+                  {[
+                    { label: "User", key: "name" as const, className: "w-[18%]" },
+                    { label: "Email", key: "email" as const, className: "w-[18%]" },
+                    { label: "Role", key: "role" as const, className: "w-[8%]" },
+                    { label: "Status", key: "status" as const, className: "w-[9%]" },
+                    { label: "Created", key: "created" as const, className: "w-[10%]" },
+                    { label: "Last active", key: "active" as const, className: "w-[10%]" },
+                    { label: "Cases", key: "cases" as const, className: "w-[7%]" },
+                    { label: "Open", key: "openCases" as const, className: "w-[7%]" },
+                    { label: "Profile", key: "profile" as const, className: "w-[8%]" },
+                    { label: "Actions", key: "profile" as const, className: "w-[15%]" },
+                  ].map((column, index) => (
+                    <th
+                      key={column.label}
+                      className={cn(
+                        "border-b border-border/70 bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground",
+                        column.className,
+                        index === 0 ? "rounded-tl-[24px]" : "",
+                        index === 9 ? "rounded-tr-[24px]" : ""
+                      )}
+                    >
+                      {column.label === "Actions" ? (
+                        column.label
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(column.key)}
+                          className="inline-flex items-center gap-2 text-left transition-colors hover:text-foreground"
+                        >
+                          <span>{column.label}</span>
+                          <SortIcon active={sortKey === column.key} direction={sortDirection} />
+                        </button>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => {
+                  const accountStatus = user.accountStatus || "active";
 
-              return (
-                <article
-                  key={userCardKey}
-                  className="surface-panel interactive-lift min-w-0 p-5 sm:p-6"
-                >
-                  <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-start">
-                    {/* LEFT CONTENT */}
-                    <div className="min-w-0 space-y-4">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-xl font-bold tracking-tight text-foreground">
+                  return (
+                    <tr key={user.uid} className="group bg-background align-top">
+                      <td className="border-b border-border/60 px-4 py-4">
+                        <div className="space-y-1">
+                          <p className="font-semibold text-foreground group-hover:text-primary">
                             {user.fullName}
-                          </h3>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {user.email}
+                          </p>
+                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                            {user.uid}
                           </p>
                         </div>
-
-                        <div className="flex flex-wrap gap-2 sm:justify-end">
-                          <span
-                            className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${roleChipTone(user.role)}`}
-                          >
-                            {user.role}
-                          </span>
-                          <span
-                            className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusChipTone(accountStatus)}`}
-                          >
-                            {accountStatus}
-                          </span>
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground">{user.email}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">Primary sign-in email</p>
                         </div>
-                      </div>
-
-                      <div className="rounded-[22px] border border-primary/8 bg-primary/[0.04] p-4 text-sm">
-                        <div className="flex items-center gap-2 text-foreground">
-                          <Mail className="size-4 shrink-0 text-primary" />
-                          <span className="font-semibold">Account summary</span>
-                        </div>
-
-                        <div className="mt-3 grid gap-3 text-muted-foreground sm:grid-cols-2">
-                          <p>Created: {formatDate(user.createdAt)}</p>
-                          <p>Last active: {formatDate(user.lastActiveAt || user.updatedAt)}</p>
-                        </div>
-                      </div>
-
-                      <div className="grid gap-16 sm:grid-cols-3">
-                        <div key={`${user.uid}-cases`} className="rounded-[20px] w-24 bg-muted/75 p-4">
-                          <p className="text-xs uppercase tracking-[.18em] text-muted-foreground">
-                            Related cases
-                          </p>
-                          <p className="mt-2 text-xl font-bold text-foreground">
-                            {user.casesCount}
-                          </p>
-                        </div>
-
-                        <div key={`${user.uid}-open-cases`} className="rounded-[20px] w-24  bg-muted/75 p-4">
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                            Open cases
-                          </p>
-                          <p className="mt-2 text-xl font-bold text-foreground">
-                            {user.openCasesCount}
-                          </p>
-                        </div>
-
-                        <div key={`${user.uid}-profile`} className="rounded-[20px] w-24 bg-muted/75 p-4">
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                            Profile score
-                          </p>
-                          <p className="mt-2 text-xl font-bold text-foreground">
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${roleChipTone(user.role)}`}
+                        >
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusChipTone(accountStatus)}`}
+                        >
+                          {accountStatus}
+                        </span>
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4 text-sm text-muted-foreground">
+                        {formatDate(user.createdAt)}
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4 text-sm text-muted-foreground">
+                        {formatDate(user.lastActiveAt || user.updatedAt)}
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4 text-sm font-semibold text-foreground">
+                        {user.casesCount}
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4 text-sm font-semibold text-foreground">
+                        {user.openCasesCount}
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4">
+                        <div className="space-y-2">
+                          <p className="text-sm font-semibold text-foreground">
                             {user.profileCompleteness}%
                           </p>
+                          <div className="h-2 rounded-full bg-muted">
+                            <div
+                              className="h-2 rounded-full bg-primary"
+                              style={{ width: `${Math.min(100, Math.max(0, user.profileCompleteness))}%` }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-full px-3"
+                            onClick={() => setSelectedUser(user)}
+                          >
+                            <UserRound className="size-3.5" />
+                            View
+                          </Button>
 
-                    {/* RIGHT ACTIONS */}
-                    <div className="flex flex-wrap gap-2 xl:flex-col xl:items-stretch">
-                      <Button
-                        variant="outline"
-                        className="rounded-full px-4 xl:w-full"
-                        onClick={() => setSelectedUser(user)}
-                      >
-                        <UserRound className="size-4" />
-                        View details
-                      </Button>
-
-                      <Button
-                        variant={user.role === "admin" ? "outline" : "default"}
-                        className="rounded-full px-4 xl:w-full"
-                        onClick={() => setPendingRoleTarget(user)}
-                      >
-                        <UserCog className="size-4" />
-                        {user.role === "admin" ? "Move to citizen" : "Promote to admin"}
-                      </Button>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+                          <Button
+                            variant={user.role === "admin" ? "outline" : "default"}
+                            size="sm"
+                            className="rounded-full px-3"
+                            onClick={() => setPendingRoleTarget(user)}
+                          >
+                            <UserCog className="size-3.5" />
+                            {user.role === "admin" ? "Demote" : "Promote"}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         ) : (
           <EmptyState
