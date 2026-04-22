@@ -21,7 +21,6 @@ import { z } from "zod";
 
 import { createCaseAction } from "@/lib/actions/cases";
 import { useFileUploads } from "@/hooks/use-file-uploads";
-import { isPrototypeMode } from "@/lib/config/app-mode";
 import { createCaseSchema } from "@/lib/validation/cases";
 import { AssistantPanel } from "@/components/common/assistant-panel";
 import { Button } from "@/components/ui/button";
@@ -55,7 +54,6 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
     cleanupUploadedFiles,
     resetUploads,
   } = useFileUploads();
-  const prototypeMode = isPrototypeMode();
   const form = useForm<FormValues>({
     resolver: zodResolver(createCaseSchema),
     defaultValues: {
@@ -192,9 +190,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 Evidence and uploads
               </CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                {prototypeMode
-                  ? "Photos, documents, and voice notes use the demo upload path with realistic progress, status, and metadata so the judge flow stays stable."
-                  : "Photos, documents, and voice notes upload through the protected MyGOV backend into MongoDB GridFS, with metadata saved against the case."}
+                Photos, documents, and voice notes upload through the protected MyGOV backend into MongoDB GridFS, with metadata saved against the case.
               </p>
             </div>
             <div className="self-start rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -340,7 +336,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             </div>
             <p className="text-sm leading-7 text-primary-foreground/80">
               Structured intake, summaries, urgency, and missing-document hints
-              stay attached to the case so the assistant can respond with relevant guidance throughout the demo flow.
+              stay attached to the case so the assistant can respond with relevant guidance throughout the case flow.
             </p>
           </CardContent>
         </Card>

@@ -1,7 +1,5 @@
 import "server-only";
 
-import { getAppMode } from "@/lib/config/app-mode";
-
 const requiredEnvKeys = {
   mongodb: ["MONGODB_URI"] as const,
   gridfs: ["GRIDFS_BUCKET_NAME"] as const,
@@ -26,7 +24,6 @@ export function assertEnvConfigured(kind: EnvCheckKey) {
 
 export function getBackendEnvironmentSummary() {
   return {
-    appMode: getAppMode(),
     hasMongo: getMissingEnvVars("mongodb").length === 0,
     hasGridFs: getMissingEnvVars("gridfs").length === 0,
     hasFirebaseAdmin: getMissingEnvVars("firebaseAdmin").length === 0,

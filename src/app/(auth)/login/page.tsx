@@ -13,7 +13,7 @@ export default function LoginPage() {
     <AuthShell
       badge="Secure authentication"
       title="Sign in to your MyGOV workspace."
-      description="Enter the citizen or admin workspace with a reliable session flow designed for smooth demo handoff and immediate protected routing."
+      description="Enter the citizen or admin workspace with a reliable session flow and immediate protected routing."
       sideContent={
         <>
           <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70">

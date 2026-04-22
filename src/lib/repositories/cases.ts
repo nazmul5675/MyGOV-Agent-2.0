@@ -916,7 +916,7 @@ export async function appendAssistantMessage(input: {
   caseId?: string;
   attachments?: string[];
   model?: string;
-  source?: "gemini" | "prototype-fallback";
+  source?: "gemini";
 }) {
   const createdAt = isoNow();
   const record: ChatMessageDocument = {

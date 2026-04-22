@@ -1,8 +1,8 @@
 /**
  * seed-admin.mjs
  * ---------------------------------------------------------------------------
- * Creates the first admin account in Firebase Auth + MongoDB for live mode.
- * Run ONCE after switching NEXT_PUBLIC_APP_MODE=live.
+ * Creates the first admin account in Firebase Auth + MongoDB.
+ * Run once after your live environment variables are configured.
  *
  * Usage:
  *   node --env-file=.env.local scripts/seed-admin.mjs \

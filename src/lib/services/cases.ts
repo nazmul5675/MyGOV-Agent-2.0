@@ -146,7 +146,7 @@ export async function appendAssistantConversation(input: {
   assistantBody: string;
   attachments?: string[];
   model?: string;
-  source: "gemini" | "prototype-fallback";
+  source: "gemini";
 }) {
   const caseItem = input.caseId
     ? input.session.role === "admin"

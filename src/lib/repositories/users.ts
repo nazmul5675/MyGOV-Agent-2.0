@@ -203,12 +203,6 @@ export async function upsertUserProfile(
   });
 }
 
-export async function getUserByEmail(email: string) {
-  const { users } = await getMongoCollections();
-  const record = await users.findOne({ email: email.trim().toLowerCase() });
-  return record ? toPlainRecord(record) : null;
-}
-
 export async function touchUserActivity(uid: string) {
   const { users } = await getMongoCollections();
   const now = new Date().toISOString();
@@ -315,55 +309,6 @@ export async function updateUserRole(input: {
     role: input.nextRole,
     previousRole: targetUser.role,
   };
-}
-
-function slugifyName(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
-}
-
-export async function createPrototypeUser(input: {
-  fullName: string;
-  email: string;
-  password: string;
-}) {
-  const email = input.email.trim().toLowerCase();
-  const { users } = await getMongoCollections();
-  const existing = await users.findOne({ email });
-
-  if (existing) {
-    throw new Error("An account with this email already exists.");
-  }
-
-  const slugBase = slugifyName(input.fullName) || "citizen";
-  let uid = `citizen-${slugBase}`;
-  let counter = 2;
-
-  while (await users.findOne({ firebaseUid: uid })) {
-    uid = `citizen-${slugBase}-${counter}`;
-    counter += 1;
-  }
-
-  const now = new Date().toISOString();
-  const user: UserDocument = {
-    id: uid,
-    uid,
-    firebaseUid: uid,
-    email,
-    fullName: input.fullName.trim(),
-    role: "citizen",
-    accountStatus: "active",
-    password: input.password,
-    documents: [],
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  await users.insertOne(user);
-  return user;
 }
 
 export async function searchManagedUsers(query?: string) {

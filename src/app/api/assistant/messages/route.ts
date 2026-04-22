@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 
 import { generateGeminiAssistantReply, hasGeminiKey } from "@/lib/ai/gemini";
 import { readSession } from "@/lib/auth/session";
-import { buildAssistantFallbackNotice, buildAssistantReply } from "@/lib/assistant";
 import { getAssistantHistory, appendAssistantConversation } from "@/lib/services/cases";
-import { handleRouteError, unauthorized } from "@/lib/security/api";
+import { AppError, handleRouteError, unauthorized } from "@/lib/security/api";
 import { assistantMessageSchema } from "@/lib/validation/cases";
 
 export async function POST(request: Request) {
@@ -15,58 +14,39 @@ export async function POST(request: Request) {
     const body = assistantMessageSchema.parse(await request.json());
     const { caseItem, history } = await getAssistantHistory({ session, caseId: body.caseId });
 
-    const geminiConfigured = hasGeminiKey();
-    let assistantBody: string;
-    let attachments: string[] = [];
-    let assistantMeta;
-
-    try {
-      if (geminiConfigured) {
-        const geminiResult = await generateGeminiAssistantReply({
-            prompt: body.body,
-            role: session.role,
-            citizenName: session.name,
-            caseItem,
-            history,
-          });
-
-        assistantBody = geminiResult.body;
-        attachments = geminiResult.attachments.length
-          ? geminiResult.attachments
-          : caseItem?.intake.missingDocuments.slice(0, 4) || [];
-        assistantMeta = {
-          source: geminiResult.source,
-          model: geminiResult.model,
-        };
-      } else {
-        const fallback = buildAssistantReply({
-          prompt: body.body,
-          caseItem,
-          citizenName: session.name,
-          role: session.role,
-        });
-
-        assistantBody = fallback.reply;
-        attachments = fallback.attachments;
-        assistantMeta = buildAssistantFallbackNotice({
-          hadGeminiKey: false,
-        });
-      }
-    } catch (failure) {
-      const fallback = buildAssistantReply({
-        prompt: body.body,
-        caseItem,
-        citizenName: session.name,
-        role: session.role,
-      });
-
-      assistantBody = fallback.reply;
-      attachments = fallback.attachments;
-      assistantMeta = buildAssistantFallbackNotice({
-        hadGeminiKey: geminiConfigured,
-        failure,
-      });
+    if (!hasGeminiKey()) {
+      throw new AppError(
+        "AI assistant is temporarily unavailable because the Gemini server configuration is missing.",
+        503
+      );
     }
+
+    let geminiResult;
+    try {
+      geminiResult = await generateGeminiAssistantReply({
+        prompt: body.body,
+        role: session.role,
+        citizenName: session.name,
+        caseItem,
+        history,
+      });
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error
+          ? `AI assistant is temporarily unavailable. ${error.message}`
+          : "AI assistant is temporarily unavailable.",
+        503
+      );
+    }
+
+    const assistantBody = geminiResult.body;
+    const attachments = geminiResult.attachments.length
+      ? geminiResult.attachments
+      : caseItem?.intake.missingDocuments.slice(0, 4) || [];
+    const assistantMeta = {
+      source: geminiResult.source,
+      model: geminiResult.model,
+    };
 
     const { userMessage, assistantMessage } = await appendAssistantConversation({
       session,

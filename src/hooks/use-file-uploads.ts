@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { isPrototypeMode } from "@/lib/config/app-mode";
 import type { EvidenceFile } from "@/lib/types";
 
 interface UploadState {
@@ -22,12 +21,6 @@ function inferKind(file: File): EvidenceFile["kind"] {
   if (file.type.startsWith("image/")) return "photo";
   if (file.type.startsWith("audio/")) return "voice_note";
   return "document";
-}
-
-function formatFileSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 const maxUploadBytes = 10 * 1024 * 1024;
@@ -106,56 +99,6 @@ export function useFileUploads() {
         }));
     const results: EvidenceFile[] = [];
 
-    if (isPrototypeMode()) {
-      for (const entry of queued) {
-        const file = "file" in entry && entry.file instanceof File ? entry.file : null;
-        if (!file) continue;
-
-        setUploads((current) =>
-          current.map((item) =>
-            item.id === entry.id ? { ...item, status: "uploading", progress: 15 } : item
-          )
-        );
-
-        await new Promise((resolve) => setTimeout(resolve, 180));
-        setUploads((current) =>
-          current.map((item) =>
-            item.id === entry.id ? { ...item, progress: 56 } : item
-          )
-        );
-        await new Promise((resolve) => setTimeout(resolve, 220));
-
-        const previewUrl = URL.createObjectURL(file);
-        objectUrlRef.current[entry.id] = previewUrl;
-        setUploads((current) =>
-          current.map((item) =>
-            item.id === entry.id
-              ? {
-                  ...item,
-                  progress: 100,
-                  status: "uploaded",
-                  downloadUrl: previewUrl,
-                }
-              : item
-          )
-        );
-
-        results.push({
-          id: entry.id,
-          name: entry.name,
-          kind: entry.kind,
-          sizeLabel: formatFileSize(entry.size),
-          sizeBytes: entry.size,
-          uploadedAt: new Date().toISOString(),
-          status: "uploaded",
-          downloadUrl: previewUrl,
-          contentType: entry.contentType,
-        });
-      }
-
-      return results;
-    }
-
     for (const entry of queued) {
       const file = "file" in entry && entry.file instanceof File ? entry.file : null;
       if (!file) continue;
@@ -217,16 +160,6 @@ export function useFileUploads() {
     },
     uploadForCase,
     cleanupUploadedFiles: async (files: EvidenceFile[]) => {
-      if (isPrototypeMode()) {
-        files.forEach((file) => {
-          if (file.id && objectUrlRef.current[file.id]) {
-            URL.revokeObjectURL(objectUrlRef.current[file.id]);
-            delete objectUrlRef.current[file.id];
-          }
-        });
-        return;
-      }
-
       const fileIds = files.map((file) => file.id).filter(Boolean);
       if (!fileIds.length) return;
 

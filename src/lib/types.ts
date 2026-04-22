@@ -93,7 +93,7 @@ export interface AssistantMessage {
   attachments?: string[];
 }
 
-export type AssistantResponseSource = "gemini" | "prototype-fallback";
+export type AssistantResponseSource = "gemini";
 
 export interface AssistantResponseMeta {
   source: AssistantResponseSource;

@@ -74,7 +74,7 @@ export function ProfileBasicsForm({
       try {
         await patchJson("/api/profile", values);
         toast.success("Profile updated", {
-          description: "Your profile details are saved for the demo workspace.",
+          description: "Your profile details are saved to your live workspace.",
         });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Unable to update profile.");

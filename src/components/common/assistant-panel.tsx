@@ -221,14 +221,7 @@ export function AssistantPanel({
 
       <div className="mt-4 rounded-[26px] border border-border/70 bg-white/85 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
         {assistantMeta?.notice ? (
-          <div
-            className={cn(
-              "mb-3 flex items-start gap-3 rounded-[22px] border px-4 py-3 text-sm",
-              assistantMeta.source === "gemini"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : "border-amber-200 bg-amber-50 text-amber-900"
-            )}
-          >
+          <div className="mb-3 flex items-start gap-3 rounded-[22px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
             <p className="leading-6">{assistantMeta.notice}</p>
           </div>
@@ -244,7 +237,7 @@ export function AssistantPanel({
           <p className="min-w-0 text-xs leading-6 text-muted-foreground">
             {assistantMeta?.source === "gemini" && assistantMeta.model
               ? `Live Gemini is active with ${assistantMeta.model}.`
-              : "The assistant uses case, file, and workflow context from the application data layer and upgrades to live Gemini responses whenever the API key is configured."}
+              : "The assistant uses the live case, file, and workflow context from the application data layer."}
           </p>
           <Button
             type="button"

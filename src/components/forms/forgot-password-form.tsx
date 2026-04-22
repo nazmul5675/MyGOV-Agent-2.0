@@ -8,13 +8,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { FormMessage } from "@/components/auth/form-message";
-import { AppModeBadge } from "@/components/common/app-mode-badge";
 import { SuccessBlock } from "@/components/auth/success-block";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { isPrototypeMode } from "@/lib/config/app-mode";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { forgotPasswordSchema } from "@/lib/validation/auth";
 
@@ -34,11 +32,6 @@ export function ForgotPasswordForm() {
   const onSubmit = (values: ForgotPasswordValues) => {
     startTransition(async () => {
       try {
-        if (isPrototypeMode()) {
-          setEmailSentTo(values.email);
-          return;
-        }
-
         const auth = firebaseAuth;
 
         if (!auth) {
@@ -61,16 +54,16 @@ export function ForgotPasswordForm() {
   };
 
   return (
-    <Card className="surface-panel min-w-0 border-white/50 bg-white/82">
+      <Card className="surface-panel min-w-0 border-white/50 bg-white/82">
       <CardHeader className="space-y-2">
-        <AppModeBadge />
+        <span className="inline-flex w-fit rounded-full border border-primary/15 bg-white/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+          Account recovery
+        </span>
         <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
           Reset your password
         </CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
-          {isPrototypeMode()
-            ? "Enter the email address linked to your demo account and we will simulate a reset handoff for the presentation flow."
-            : "Enter the email address linked to your account and we will send a secure password reset link."}
+          Enter the email address linked to your account and we will send a secure password reset link.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">

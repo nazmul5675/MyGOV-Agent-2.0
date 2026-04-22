@@ -12,14 +12,14 @@ export default function ForgotPasswordPage() {
     <AuthShell
       badge="Password recovery"
       title="Reset access without losing momentum."
-      description="Recover access quickly with a clear, presentation-safe flow that keeps the demo moving."
+      description="Recover access quickly with a clear flow that protects your account data."
       sideContent={
         <>
           <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70">
             Reset flow
           </p>
           <ul className="mt-4 space-y-3 text-sm leading-7 text-primary-foreground/80">
-            <li>Prototype mode simulates the reset handoff cleanly</li>
+            <li>Reset links are sent through Firebase Auth</li>
             <li>No role or profile data is exposed during recovery</li>
             <li>Clear success and failure states keep the flow trustworthy</li>
           </ul>

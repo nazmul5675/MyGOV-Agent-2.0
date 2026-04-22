@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Bell, LogOut } from "lucide-react";
 
-import { AppModeBadge } from "@/components/common/app-mode-badge";
 import { LogoMark } from "@/components/common/logo-mark";
 import type { AppSession } from "@/lib/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -47,7 +46,6 @@ export function Topbar({
             <p className="font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
               {title}
             </p>
-            <AppModeBadge />
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">

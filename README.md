@@ -1,63 +1,54 @@
 # MyGOV Agent 2.0
 
-MyGOV Agent 2.0 is a GovTech case-management MVP built in a single Next.js App Router repo. The frontend routes stay intact while the backend now runs through Next route handlers, MongoDB repositories/services, MongoDB GridFS for uploaded files, Firebase Auth for identity, and Gemini for server-side AI help.
+MyGOV Agent 2.0 is a GovTech case-management app built in a single Next.js App Router repo. It runs in one live mode only: Firebase Auth for identity, MongoDB for application data, MongoDB GridFS for uploaded files, and Gemini for server-side AI assistance.
 
 Hero flow:
 
 `citizen login -> dashboard -> upload evidence -> create/open case -> AI help -> admin review -> status update -> citizen sees live change`
 
-## 🚀 Live Demo
+## Live App
 
-**Live Hosting Link:** https://mygov-agent-2-0-526785154511.asia-southeast1.run.app/
+Live hosting link: https://mygov-agent-2-0-526785154511.asia-southeast1.run.app/
 
-### 🔑 Test Credentials
+### Test Accounts
 
-Use the following credentials to explore both sides of the platform:
+Use the following test accounts to explore both sides of the platform:
 
-**Citizen Portal** (File reports, upload evidence, chat with AI assistant)
-- **Email:** `nazmulhasandh@gmail.com`
-- **Password:** `nazmulhasandh@gmail.com1`
+Citizen portal:
+- Email: `nazmulhasandh@gmail.com`
+- Password: `nazmulhasandh@gmail.com1`
 
-**Admin Console** (Review evidence, manage files, post review notes)
-- **Email:** `first.admin@mygov.local`
-- **Password:** `Admin12345!`
+Admin console:
+- Email: `first.admin@mygov.local`
+- Password: `Admin12345!`
 
-## 💻 Tech Stack
+## Tech Stack
 
-- **Framework:** [Next.js App Router](https://nextjs.org/)
-- **Language:** [TypeScript](https://www.typescriptlang.org/)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/) & [Lucide Icons](https://lucide.dev/)
-- **Authentication:** [Firebase Auth](https://firebase.google.com/) (Client auth & Server-side verification via Admin SDK)
-- **Database:** [MongoDB](https://www.mongodb.com/) (Application data, Users, Case Timelines, Prompts)
-- **File Storage:** [MongoDB GridFS](https://www.mongodb.com/docs/manual/core/gridfs/) (Secure evidence storage)
-- **Artificial Intelligence:** [Google Gemini](https://deepmind.google/technologies/gemini/) (Server-side case assistant, issue summaries)
-- **Maps:** [Leaflet](https://leafletjs.com/) & OpenStreetMap (Frontend coordinate mapping)
-- **Validation:** [Zod](https://zod.dev/)
+- Framework: Next.js App Router
+- Language: TypeScript
+- Styling: Tailwind CSS and Lucide Icons
+- Authentication: Firebase Auth with server-side verification via Firebase Admin
+- Database: MongoDB
+- File Storage: MongoDB GridFS
+- AI: Google Gemini, server-side only
+- Maps: Leaflet and OpenStreetMap
+- Validation: Zod
 
-## Final Backend Architecture
+## Runtime Architecture
 
-- `src/app/api/*`: thin route handlers
+- `src/app/api/*`: route handlers
 - `src/lib/auth/*`: session and identity helpers
-- `src/lib/config/*`: app/env config
+- `src/lib/config/*`: environment checks
 - `src/lib/security/*`: errors and authorization helpers
 - `src/lib/repositories/*`: MongoDB data access
 - `src/lib/services/*`: business logic
-- `src/lib/storage/gridfs.ts`: GridFS upload/delete/download helpers
+- `src/lib/storage/gridfs.ts`: GridFS upload, delete, and download helpers
 - `src/lib/ai/*`: Gemini prompts and model calls
 - `src/lib/audit/*`: audit helpers
 - `src/lib/validation/*`: Zod schemas
 - `src/types/*`: typed document models
 
-## Identity And Data Boundaries
-
-- Firebase Auth: client sign-in, registration, password reset, auth state
-- Firebase Admin: verify ID tokens, create/verify session cookies, read Firebase UID
-- MongoDB: users, cases, case events, file metadata, notifications, reminders, chat, admin notes, role audit logs
-- MongoDB GridFS: uploaded evidence blobs
-- Gemini: server-side AI only
-- Leaflet: frontend-only map UI
-
-There is no separate Express backend, no Firestore dependency, and no Firebase Storage dependency in the runtime upload flow.
+There is no separate Express backend, no Firestore dependency, no Firebase Storage dependency in the upload flow, and no runtime demo or prototype mode.
 
 ## Role Model
 
@@ -72,49 +63,19 @@ Rules:
 - admin cannot self-register publicly
 - citizen routes resolve to `/dashboard`
 - admin routes resolve to `/admin`
-- role is resolved from MongoDB user records, not from client-selected state
+- role is resolved from MongoDB user records, not client-selected state
 - role changes are admin-only and written to `role_audit_logs`
 - self-demotion and last-admin removal are blocked
 
-## MongoDB Collections
+## Data Boundaries
 
-- `users`
-- `cases`
-- `case_events`
-- `files_metadata`
-- `notifications`
-- `reminders`
-- `chat_messages`
-- `admin_notes`
-- `role_audit_logs`
+- Firebase Auth: client sign-in, registration, password reset
+- Firebase Admin: verify ID tokens, create and verify session cookies
+- MongoDB: users, cases, case events, file metadata, notifications, reminders, chat, admin notes, role audit logs
+- MongoDB GridFS: uploaded evidence blobs
+- Gemini: live server-side assistant responses
 
-GridFS bucket collections:
-
-- `<GRIDFS_BUCKET_NAME>.files`
-- `<GRIDFS_BUCKET_NAME>.chunks`
-
-## File Storage Model
-
-- file blobs are stored in MongoDB GridFS
-- file metadata is stored in `files_metadata`
-- each file metadata record links the case, owner, review state, and GridFS blob id
-- file preview/download is served through `GET /api/files/[id]`
-
-Metadata fields include:
-
-- `id`
-- `fileId`
-- `gridFsFileId`
-- `caseId`
-- `ownerUid`
-- `filename`
-- `mimeType`
-- `size`
-- `category`
-- `uploadedAt`
-- `reviewStatus`
-- `reviewNote`
-- `uploadedByRole`
+If MongoDB, GridFS, Firebase Admin, or Gemini are unavailable, the app returns honest empty or failure states instead of switching to fake content.
 
 ## Current Backend Capabilities
 
@@ -136,24 +97,17 @@ Metadata fields include:
 
 ### Files
 
-- live uploads flow through `POST /api/uploads`
+- uploads flow through `POST /api/uploads`
 - blobs are stored in GridFS
 - metadata is stored in MongoDB
 - file streaming uses `GET /api/files/[id]`
 - admin review updates write review status and notes back to MongoDB
 
-### Admin Operations
-
-- admin user list/search/filter
-- user detail reads
-- citizen/admin role changes
-- dedicated role audit logging
-
 ### AI Layer
 
 - Gemini runs server-side only
 - case-aware prompts include summaries, status, files, and missing docs
-- graceful fallback remains available for demo stability
+- assistant failures return explicit unavailable errors instead of simulated replies
 
 ## Route Overview
 
@@ -197,18 +151,6 @@ Backend routes:
 - `/api/profile`
 - `/api/health`
 
-## Hero Demo Flow
-
-1. Citizen signs in with Firebase Auth.
-2. `/dashboard` loads MongoDB-backed cases and reminders.
-3. Citizen opens `/cases/new`.
-4. Evidence uploads through the Next backend into GridFS.
-5. Case creation stores metadata in MongoDB and writes timeline events.
-6. Citizen opens `/cases/[id]` and sees uploads, timeline, and AI help.
-7. Admin opens `/admin` and `/admin/cases/[id]`.
-8. Admin reviews files, updates status, or requests more documents.
-9. Citizen sees updated status, file review notes, and timeline changes.
-
 ## Environment Variables
 
 Use `.env.local` for local development. Never commit real values.
@@ -216,8 +158,6 @@ Use `.env.local` for local development. Never commit real values.
 Required app vars:
 
 - `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_APP_MODE`
-- `APP_SESSION_SECRET`
 - `MONGODB_URI`
 - `MONGODB_DB_NAME`
 - `GRIDFS_BUCKET_NAME`
@@ -260,23 +200,14 @@ Optional admin bootstrap:
 npm run seed:admin -- --email admin@example.com --password "StrongPass123!" --name "First Admin"
 ```
 
-## Demo Mode vs Live Mode
-
-- `prototype`: seeded MongoDB data plus stable demo auth/upload behavior
-- `live`: Firebase Auth + Firebase Admin verification + MongoDB + GridFS + Gemini
-
 ## Security Notes
 
 - Firebase Admin runs server-side only
 - Gemini keys stay server-side only
 - route handlers validate payloads with Zod
 - protected routes verify the session before mutation
-- file blobs are stored in GridFS, not in normal Mongo collections
+- file blobs are stored in GridFS, not normal Mongo collections
 - role changes are audited
-
-## AI-Assisted Development Disclosure
-
-This repository includes AI-assisted implementation work. AI tooling was used to help generate, refactor, and document parts of the codebase. Final integration, project-specific adaptation, and validation were performed inside the repo workflow.
 
 ## Attribution
 

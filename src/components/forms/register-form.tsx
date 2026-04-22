@@ -9,13 +9,11 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { FormMessage } from "@/components/auth/form-message";
-import { AppModeBadge } from "@/components/common/app-mode-badge";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { isPrototypeMode } from "@/lib/config/app-mode";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { getMissingFirebaseClientVars } from "@/lib/firebase/config";
 import { registerSchema } from "@/lib/validation/auth";
@@ -56,6 +54,19 @@ export function RegisterForm() {
   const onSubmit = (values: RegisterValues) => {
     startTransition(async () => {
       try {
+        const auth = firebaseAuth;
+
+        if (!auth) {
+          throw new Error(
+            `Firebase client config is incomplete. Missing: ${missingClientVars.join(", ")}`
+          );
+        }
+
+        const { createUserWithEmailAndPassword, deleteUser, signOut } =
+          await import("firebase/auth");
+        let createdUser:
+          | Awaited<ReturnType<typeof createUserWithEmailAndPassword>>
+          | undefined;
         let result:
           | {
               ok?: boolean;
@@ -65,52 +76,29 @@ export function RegisterForm() {
             }
           | null = null;
 
-        if (isPrototypeMode()) {
-          result = (await postJson("/api/auth/register", values)) as {
+        try {
+          createdUser = await createUserWithEmailAndPassword(
+            auth,
+            values.email,
+            values.password
+          );
+
+          const idToken = await createdUser.user.getIdToken(true);
+          result = (await postJson("/api/auth/register", {
+            idToken,
+            fullName: values.fullName,
+          })) as {
             ok?: boolean;
             role?: "citizen" | "admin";
             profileCreated?: boolean;
             warning?: string;
           } | null;
-        } else {
-          const auth = firebaseAuth;
-
-          if (!auth) {
-            throw new Error(
-              `Firebase client config is incomplete. Missing: ${missingClientVars.join(", ")}`
-            );
+        } catch (error) {
+          if (createdUser?.user) {
+            await deleteUser(createdUser.user).catch(() => undefined);
           }
-
-          const { createUserWithEmailAndPassword, deleteUser, signOut } =
-            await import("firebase/auth");
-          let createdUser:
-            | Awaited<ReturnType<typeof createUserWithEmailAndPassword>>
-            | undefined;
-
-          try {
-            createdUser = await createUserWithEmailAndPassword(
-              auth,
-              values.email,
-              values.password
-            );
-
-            const idToken = await createdUser.user.getIdToken(true);
-            result = (await postJson("/api/auth/register", {
-              idToken,
-              fullName: values.fullName,
-            })) as {
-              ok?: boolean;
-              role?: "citizen" | "admin";
-              profileCreated?: boolean;
-              warning?: string;
-            } | null;
-          } catch (error) {
-            if (createdUser?.user) {
-              await deleteUser(createdUser.user).catch(() => undefined);
-            }
-            await signOut(auth).catch(() => undefined);
-            throw error;
-          }
+          await signOut(auth).catch(() => undefined);
+          throw error;
         }
 
         if (result?.profileCreated === false) {
@@ -132,9 +120,11 @@ export function RegisterForm() {
   };
 
   return (
-    <Card className="surface-panel min-w-0 border-white/50 bg-white/82">
+      <Card className="surface-panel min-w-0 border-white/50 bg-white/82">
       <CardHeader className="space-y-2">
-        <AppModeBadge />
+        <span className="inline-flex w-fit rounded-full border border-primary/15 bg-white/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+          Citizen access
+        </span>
         <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
           Create your citizen account
         </CardTitle>
@@ -213,12 +203,10 @@ export function RegisterForm() {
         <div className="rounded-[24px] border border-border/60 bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
           <div className="flex items-center gap-2 font-medium text-foreground">
             <ShieldCheck className="size-4 text-primary" />
-            {isPrototypeMode() ? "Demo account bootstrap" : "Profile data stays in MongoDB"}
+            Profile data stays in MongoDB
           </div>
           <p className="mt-2">
-            {isPrototypeMode()
-              ? "In demo mode, registration creates a citizen account in MongoDB and signs you in immediately so the dashboard flow stays stable for judges."
-              : "We store `fullName`, `dateOfBirth`, `phoneNumber`, and `addressText` in MongoDB. Firebase Auth is used only for authentication credentials."}
+            We store `fullName`, `dateOfBirth`, `phoneNumber`, and `addressText` in MongoDB. Firebase Auth is used only for authentication credentials.
           </p>
         </div>
 
