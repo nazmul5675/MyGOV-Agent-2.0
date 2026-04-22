@@ -2,7 +2,10 @@ import { headers } from "next/headers";
 
 import { AppFrame } from "@/components/layout/app-frame";
 import { requireSession } from "@/lib/auth/session";
-import { countUnreadNotificationsForUser } from "@/lib/repositories/notifications";
+import {
+  countUnreadNotificationsForUser,
+  markNotificationsAsReadForUser,
+} from "@/lib/repositories/notifications";
 
 export default async function AppLayout({
   children,
@@ -11,6 +14,11 @@ export default async function AppLayout({
 }>) {
   const session = await requireSession();
   const pathname = (await headers()).get("x-current-path") || "/dashboard";
+
+  if (pathname === "/notifications" || pathname.startsWith("/notifications/")) {
+    await markNotificationsAsReadForUser(session.uid);
+  }
+
   const unreadNotificationCount = await countUnreadNotificationsForUser(session.uid);
 
   return (
