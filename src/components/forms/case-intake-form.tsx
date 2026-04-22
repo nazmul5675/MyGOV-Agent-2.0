@@ -19,10 +19,10 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AssistantPanel } from "@/components/common/assistant-panel";
 import { createCaseAction } from "@/lib/actions/cases";
 import { useFileUploads } from "@/hooks/use-file-uploads";
 import { createCaseSchema } from "@/lib/validation/cases";
-import { AssistantPanel } from "@/components/common/assistant-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -64,10 +64,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
     },
   });
 
-  const uploadCountLabel = useMemo(
-    () => `${uploads.length} files attached`,
-    [uploads.length]
-  );
+  const uploadCountLabel = useMemo(() => `${uploads.length} files attached`, [uploads.length]);
   const caseTypeValue = useWatch({
     control: form.control,
     name: "caseType",
@@ -118,7 +115,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
         <Card className="surface-panel">
           <CardHeader>
             <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
-              Multimodal citizen intake
+              Tell us what happened
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-5 sm:grid-cols-2">
@@ -127,12 +124,10 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               <Input
                 id="title"
                 className="h-12 rounded-2xl bg-white/70"
-                placeholder="Briefly name the issue or request"
+                placeholder="A short title people can understand quickly"
                 {...form.register("title")}
               />
-              <p className="text-sm text-destructive">
-                {form.formState.errors.title?.message}
-              </p>
+              <p className="text-sm text-destructive">{form.formState.errors.title?.message}</p>
             </div>
             <div className="grid gap-2">
               <Label>Case type</Label>
@@ -160,12 +155,10 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               <Input
                 id="location"
                 className="h-12 rounded-2xl bg-white/70"
-                placeholder="Where is this happening?"
+                placeholder="Where should we look into this?"
                 {...form.register("location")}
               />
-              <p className="text-sm text-destructive">
-                {form.formState.errors.location?.message}
-              </p>
+              <p className="text-sm text-destructive">{form.formState.errors.location?.message}</p>
             </div>
             <div className="grid gap-2 sm:col-span-2">
               <Label htmlFor="description">Tell us what happened</Label>
@@ -173,7 +166,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 id="description"
                 rows={7}
                 className="rounded-3xl bg-white/70"
-                placeholder="Explain what happened, what support you need, and any urgency we should know about."
+                placeholder="Explain what happened, what help you need, and anything urgent we should know."
                 {...form.register("description")}
               />
               <p className="text-sm text-destructive">
@@ -187,10 +180,10 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
           <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row">
             <div className="min-w-0">
               <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
-                Evidence and uploads
+                Supporting files
               </CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                Photos, documents, and voice notes upload through the protected MyGOV backend into MongoDB GridFS, with metadata saved against the case.
+                Add the clearest file you have first. Photos, PDFs, and voice notes all work here.
               </p>
             </div>
             <div className="self-start rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -203,11 +196,9 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 <Upload className="size-6" />
               </div>
               <div>
-                <p className="font-semibold text-foreground">
-                  Drop files or browse from device
-                </p>
+                <p className="font-semibold text-foreground">Drop files or browse from device</p>
                 <p className="text-sm text-muted-foreground">
-                  JPG, PDF, and M4A supported
+                  JPG, PDF, and audio files up to 10 MB each
                 </p>
               </div>
               <Input
@@ -222,11 +213,24 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                 }}
               />
             </label>
+
             <div className="grid gap-3 md:grid-cols-3">
               {[
-                { label: "Photo proof", icon: ImagePlus },
-                { label: "Document", icon: FileText },
-                { label: "Voice note", icon: FileAudio2 },
+                {
+                  label: "Photo proof",
+                  icon: ImagePlus,
+                  description: "Best for showing damage, location, or visible conditions.",
+                },
+                {
+                  label: "Document",
+                  icon: FileText,
+                  description: "Best for forms, letters, receipts, or official proof.",
+                },
+                {
+                  label: "Voice note",
+                  icon: FileAudio2,
+                  description: "Useful when speaking is easier than typing.",
+                },
               ].map((item) => {
                 const Icon = item.icon;
 
@@ -234,10 +238,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                   <div key={item.label} className="rounded-[24px] bg-muted/80 p-5">
                     <Icon className="size-5 text-primary" />
                     <p className="mt-3 font-semibold text-foreground">{item.label}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Uploaded files generate metadata, progress state, and
-                      evidence records for the case timeline.
-                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
                   </div>
                 );
               })}
@@ -260,6 +261,16 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
                     <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                       {item.progress === 100 ? (
                         <CheckCircle2 className="size-4 text-[#1d7d49]" />
+                      ) : null}
+                      {item.status === "uploaded" ? (
+                        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1d7d49]">
+                          Received
+                        </span>
+                      ) : null}
+                      {item.status === "uploading" ? (
+                        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                          Uploading
+                        </span>
                       ) : null}
                       {item.status === "error" ? (
                         <span className="text-xs font-semibold uppercase tracking-[0.18em] text-destructive">
@@ -289,14 +300,14 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
         <Card className="surface-panel">
           <CardHeader>
             <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
-              Submission path
+              Before you submit
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-3">
             {[
-              "Describe the issue in plain language so AI and staff can read the same summary.",
-              "Upload the strongest supporting file first, then add any extra proof or voice note.",
-              "Submit once the checklist is covered and track the live timeline immediately after.",
+              "Keep the title clear and describe the issue in plain language.",
+              "Upload your strongest supporting file first, then add any extra proof.",
+              "After submit, your case timeline and file statuses will be available right away.",
             ].map((item, index) => (
               <div key={item} className="rounded-[22px] bg-muted/75 p-4">
                 <div className="flex items-center gap-2 text-primary">
@@ -315,8 +326,8 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
       <div className="space-y-6">
         <AssistantPanel
           initialMessages={[]}
-          title="Guided AI helper"
-          subtitle="Use the assistant while you prepare your submission. It can explain what files to add, help tighten your case summary, and check whether anything important is missing."
+          title="Need help before you submit?"
+          subtitle="Use the assistant while you prepare your case. It can suggest useful files, help tighten your summary, and point out what may be missing."
         />
 
         <Card className="hero-gradient rounded-[32px] border-none text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)]">
@@ -327,16 +338,15 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
-                  Guided intake
+                  Guided submission
                 </p>
                 <p className="font-heading text-2xl font-bold tracking-tight">
-                  Structured case packet
+                  Calm, step-by-step intake
                 </p>
               </div>
             </div>
             <p className="text-sm leading-7 text-primary-foreground/80">
-              Structured intake, summaries, urgency, and missing-document hints
-              stay attached to the case so the assistant can respond with relevant guidance throughout the case flow.
+              Your summary, files, and case details stay together so the next review step is easier and clearer.
             </p>
           </CardContent>
         </Card>
@@ -349,9 +359,9 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {[
-              "Clear location and public-facing description",
+              "Clear location and easy-to-understand description",
               "At least one supporting file where possible",
-              "Citizen-friendly summary for follow-up notifications",
+              "Enough detail for a follow-up without asking you to repeat everything",
             ].map((item) => (
               <div key={item} className="flex items-start gap-3 rounded-[20px] bg-muted/70 p-4">
                 <Sparkles className="mt-0.5 size-4 text-primary" />
@@ -359,15 +369,9 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               </div>
             ))}
             <div className="rounded-[20px] bg-accent/65 p-4 text-sm leading-6 text-accent-foreground">
-              Submitting uploads evidence first, then creates the case packet,
-              writes the initial timeline, and keeps file metadata ready for citizen and admin review.
+              When you submit, your files are uploaded first, then your case is created and ready to track.
             </div>
-            <Button
-              type="submit"
-              size="lg"
-              className="h-12 w-full rounded-2xl"
-              disabled={isPending}
-            >
+            <Button type="submit" size="lg" className="h-12 w-full rounded-2xl" disabled={isPending}>
               {isPending ? <LoaderCircle className="size-4 animate-spin" /> : null}
               Submit case
             </Button>

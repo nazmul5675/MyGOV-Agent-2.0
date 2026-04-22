@@ -92,12 +92,12 @@ export function AppSidebar({
           {role === "admin" ? "Operations posture" : "System readiness"}
         </p>
         <p className="mt-2 font-heading text-lg font-bold tracking-tight">
-          {role === "admin" ? "Review, route, and protect access" : "Ready to route"}
+          {role === "admin" ? "Review, route, and protect access" : "Track cases with confidence"}
         </p>
         <p className="mt-2 text-sm leading-6 text-primary-foreground/75">
           {role === "admin"
             ? "Queue review, file handling, and access management all stay live from this workspace."
-            : "Live case routing, file handling, and assistant guidance are available from this workspace."}
+            : "Your cases, files, notifications, and next steps stay in one calm citizen workspace."}
         </p>
       </div>
     </aside>

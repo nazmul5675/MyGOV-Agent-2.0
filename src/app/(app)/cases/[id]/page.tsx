@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   AlertTriangle,
+  ArrowRight,
   CheckCircle2,
-  FileText,
+  CircleAlert,
   MapPin,
   MessageSquareQuote,
   Sparkles,
@@ -14,16 +15,13 @@ import { AssistantPanel } from "@/components/common/assistant-panel";
 import { EvidenceManager } from "@/components/common/evidence-manager";
 import { EmptyState } from "@/components/common/empty-state";
 import { LiveDataState } from "@/components/common/live-data-state";
-import { LocationPreviewCard } from "@/components/maps/location-preview-card";
 import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Timeline } from "@/components/common/timeline";
-import { requireRole } from "@/lib/auth/session";
-import {
-  getCitizenCaseById,
-  listCaseAssistantMessages,
-} from "@/lib/repositories/cases";
+import { LocationPreviewCard } from "@/components/maps/location-preview-card";
 import { buttonVariants } from "@/components/ui/button";
+import { requireRole } from "@/lib/auth/session";
+import { getCitizenCaseById, listCaseAssistantMessages } from "@/lib/repositories/cases";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -41,9 +39,7 @@ export default async function CitizenCaseDetailPage({
   const { id } = await params;
   const query = await searchParams;
   let item: Awaited<ReturnType<typeof getCitizenCaseById>> | null = null;
-  let messages:
-    | Awaited<ReturnType<typeof listCaseAssistantMessages>>
-    | null = null;
+  let messages: Awaited<ReturnType<typeof listCaseAssistantMessages>> | null = null;
   let errorMessage: string | null = null;
 
   try {
@@ -64,7 +60,7 @@ export default async function CitizenCaseDetailPage({
         <PageHeader
           eyebrow="Case detail"
           title="Live case detail unavailable"
-          description="This page reads directly from the MongoDB case workspace and event history."
+          description="This page reads directly from the live case record and event history."
         />
         <LiveDataState
           tone="setup"
@@ -87,16 +83,28 @@ export default async function CitizenCaseDetailPage({
   if (!item) notFound();
 
   const acceptedFiles = item.evidence.filter((file) => file.status === "accepted").length;
-  const pendingFiles = item.evidence.filter((file) =>
-    ["uploaded", "under_review", "needs_replacement"].includes(file.status)
+  const filesNeedAttention = item.evidence.filter((file) =>
+    ["needs_replacement", "rejected"].includes(file.status)
   ).length;
+  const filesInReview = item.evidence.filter((file) =>
+    ["uploaded", "under_review"].includes(file.status)
+  ).length;
+  const missingDocuments = item.intake.missingDocuments;
+  const needsCitizenAction =
+    item.status === "need_more_docs" || missingDocuments.length > 0 || filesNeedAttention > 0;
+  const nextStep =
+    needsCitizenAction
+      ? "Open the requested items below, replace anything flagged, and upload the missing proof first."
+      : filesInReview > 0
+        ? "Your files have been received and are being checked. You do not need to send anything else right now unless we ask."
+        : "Your case is moving. Keep an eye on the timeline and notifications for the next update.";
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow={item.reference}
         title={item.title}
-        description="A premium citizen-facing workspace for updates, uploads, AI guidance, and next-step clarity."
+        description="See what this case means, what happens next, and whether you need to do anything right now."
       />
 
       {query.submitted === "1" ? (
@@ -107,15 +115,15 @@ export default async function CitizenCaseDetailPage({
           <div className="space-y-1">
             <p className="font-semibold text-foreground">Case submitted successfully</p>
             <p className="text-sm leading-7 text-muted-foreground">
-              Your intake packet is live, your evidence is attached, and the first timeline event is already visible below.
+              Your case is now live. The first update is already saved below, and you can return here any time to check progress.
             </p>
           </div>
         </div>
       ) : null}
 
-      <section className="grid gap-6 xl:grid-cols-[1.04fr_0.96fr]">
-        <div className="space-y-6">
-          <div className="surface-panel p-6 sm:p-7">
+      <section className="surface-panel p-6 sm:p-7">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(20rem,0.55fr)]">
+          <div className="space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 space-y-3">
                 <StatusBadge status={item.status} />
@@ -130,62 +138,96 @@ export default async function CitizenCaseDetailPage({
                 </p>
               </div>
             </div>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="rounded-[24px] bg-muted/80 p-5">
-                <div className="flex items-center gap-2 text-primary">
-                  <MapPin className="size-4" />
-                  <span className="text-sm font-semibold">Location</span>
-                </div>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.location}</p>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-[24px] bg-amber-50/80 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
+                  Need from you
+                </p>
+                <p className="mt-3 text-2xl font-black tracking-tight text-amber-950">
+                  {missingDocuments.length + filesNeedAttention}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-amber-950/80">
+                  Missing or replacement items still blocking movement.
+                </p>
               </div>
-              <div className="rounded-[24px] bg-muted/80 p-5">
-                <div className="flex items-center gap-2 text-primary">
-                  <FileText className="size-4" />
-                  <span className="text-sm font-semibold">Missing documents</span>
-                </div>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                  {item.intake.missingDocuments.length
-                    ? item.intake.missingDocuments.join(", ")
-                    : "No missing documents at this stage."}
+              <div className="rounded-[24px] bg-sky-50/80 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">
+                  In review
+                </p>
+                <p className="mt-3 text-2xl font-black tracking-tight text-sky-950">
+                  {filesInReview}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-sky-950/80">
+                  Files already received and waiting for review.
+                </p>
+              </div>
+              <div className="rounded-[24px] bg-emerald-50/80 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+                  Accepted
+                </p>
+                <p className="mt-3 text-2xl font-black tracking-tight text-emerald-950">
+                  {acceptedFiles}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-emerald-950/80">
+                  Files already accepted for this case.
                 </p>
               </div>
             </div>
           </div>
 
-          <EvidenceManager
-            files={item.evidence}
-            title="Uploaded files"
-            description="Every file linked to this case stays visible here with a current review state, so document handling feels like a real workflow instead of hidden attachments."
-          />
+          <div className="space-y-3">
+            <div
+              className={cn(
+                "rounded-[28px] p-5",
+                needsCitizenAction ? "bg-amber-50/90" : "bg-emerald-50/90"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                {needsCitizenAction ? (
+                  <CircleAlert className="size-5 text-amber-800" />
+                ) : (
+                  <CheckCircle2 className="size-5 text-emerald-800" />
+                )}
+                <p
+                  className={cn(
+                    "text-xs font-semibold uppercase tracking-[0.2em]",
+                    needsCitizenAction ? "text-amber-800" : "text-emerald-800"
+                  )}
+                >
+                  What happens next
+                </p>
+              </div>
+              <p className="mt-4 text-sm leading-7 text-foreground">{nextStep}</p>
+              <div className="mt-4">
+                <Link
+                  href={needsCitizenAction ? "#case-requests" : "#case-timeline"}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                >
+                  {needsCitizenAction ? "Go to requested items" : "Go to latest updates"}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            </div>
 
-          <section className="grid gap-4 md:grid-cols-3">
-            <div className="surface-panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Accepted files
-              </p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{acceptedFiles}</p>
+            <div className="rounded-[24px] bg-muted/75 p-4">
+              <div className="flex items-center gap-2 text-primary">
+                <MapPin className="size-4" />
+                <span className="text-sm font-semibold">Service location</span>
+              </div>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.location}</p>
             </div>
-            <div className="surface-panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Pending review
-              </p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{pendingFiles}</p>
-            </div>
-            <div className="surface-panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Timeline events
-              </p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{item.timeline.length}</p>
-            </div>
-          </section>
+          </div>
         </div>
+      </section>
 
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)]">
         <div className="space-y-6">
           <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground sm:p-7">
             <div className="flex items-center gap-3">
               <MessageSquareQuote className="size-5" />
               <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
-                Citizen summary
+                Your summary
               </p>
             </div>
             <p className="mt-4 text-sm leading-7 text-primary-foreground/82">
@@ -193,95 +235,93 @@ export default async function CitizenCaseDetailPage({
             </p>
           </div>
 
-          <div className="surface-panel p-6">
+          <section id="case-requests" className="surface-panel p-6">
             <div className="flex items-center gap-3">
               <Sparkles className="size-5 text-primary" />
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                Next step guidance
+                Requested items and next steps
               </p>
             </div>
             <div className="mt-4 space-y-3">
-              {[
-                item.intake.missingDocuments.length
-                  ? `Prepare: ${item.intake.missingDocuments.join(", ")}`
-                  : "No missing documents are flagged right now.",
-                item.status === "need_more_docs"
-                  ? "Upload the requested replacement or missing document before the case can move forward."
-                  : "Keep checking the timeline for review updates and routed actions.",
-                item.evidence.length
-                  ? "Ask the assistant to summarize your uploads before responding to any follow-up."
-                  : "Add at least one supporting file to strengthen the review context.",
-              ].map((entry) => (
-                <div
-                  key={entry}
-                  className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground"
-                >
-                  {entry}
+              {missingDocuments.length ? (
+                missingDocuments.map((entry) => (
+                  <div
+                    key={entry}
+                    className="flex items-start gap-3 rounded-[22px] border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-950"
+                  >
+                    <CircleAlert className="mt-1 size-4 shrink-0" />
+                    <p>{entry}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-[22px] border border-emerald-200 bg-emerald-50 p-4 text-sm leading-7 text-emerald-900">
+                  No missing documents are flagged right now.
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
 
-          <div className="surface-panel p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-              Reminders
-            </p>
-            <div className="mt-4 space-y-3">
+              <div className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground">
+                {item.status === "need_more_docs"
+                  ? "Your case is waiting for the requested item above. Once you send it, the review can continue."
+                  : filesInReview
+                    ? "Your files have been received and are being reviewed. You only need to act if a replacement is requested."
+                    : "There is no action required from you right now."}
+              </div>
+
               {item.reminders.length ? (
                 item.reminders.map((reminder) => (
                   <div
                     key={reminder}
-                    className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground"
+                    className="rounded-[22px] bg-white/80 p-4 text-sm leading-7 text-muted-foreground"
                   >
                     {reminder}
                   </div>
                 ))
-              ) : (
-                <EmptyState
-                  icon={<MessageSquareQuote className="size-5" />}
-                  title="No reminders attached"
-                  description="Live reminder messages will appear here when the case needs a citizen follow-up."
-                />
-              )}
+              ) : null}
             </div>
-          </div>
+          </section>
 
-          <LocationPreviewCard
-            title="Location and service area"
-            description="Use this map context to confirm the complaint or service location tied to this case."
-            location={item.locationMeta}
+          <EvidenceManager
+            files={item.evidence}
+            title="Your uploaded files"
+            description="Check each file status here so you can see what was accepted, what is still being reviewed, and what needs replacing."
           />
         </div>
-      </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <div className="surface-panel p-7">
-          <p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-            Timeline
-          </p>
-          {item.timeline.length ? (
-            <Timeline events={item.timeline} />
-          ) : (
-            <EmptyState
-              icon={<CheckCircle2 className="size-5" />}
-              title="No timeline events yet"
-              description="Case events from cases/{caseId}/events will appear here as the live workflow progresses."
-            />
-          )}
+        <div className="space-y-6">
+          <LocationPreviewCard
+            title="Location and service area"
+            description="Check that the location linked to this case still looks right."
+            location={item.locationMeta}
+          />
+
+          <section id="case-timeline" className="surface-panel p-7">
+            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+              Latest updates
+            </p>
+            {item.timeline.length ? (
+              <Timeline events={item.timeline} />
+            ) : (
+              <EmptyState
+                icon={<CheckCircle2 className="size-5" />}
+                title="No updates yet"
+                description="Updates will appear here as soon as your case moves forward."
+              />
+            )}
+          </section>
+
+          <AssistantPanel
+            caseId={item.id}
+            initialMessages={messages || []}
+            title="Case help"
+            subtitle="Ask what your status means, what file is still needed, or what to do next before you respond."
+            suggestedPrompts={[
+              "What do I need to do next?",
+              "Which file is still missing?",
+              "Summarize my uploaded files",
+              "Why is my case still under review?",
+            ]}
+          />
         </div>
-
-        <AssistantPanel
-          caseId={item.id}
-          initialMessages={messages || []}
-          title="Contextual AI helper"
-          subtitle="This assistant is tied to the case record, so you can ask what the current status means, what documents still matter, or what you should do next."
-          suggestedPrompts={[
-            "What documents do I need?",
-            "Help me explain my issue",
-            "Summarize my uploaded files",
-            "Why is my case still under review?",
-          ]}
-        />
       </section>
     </div>
   );

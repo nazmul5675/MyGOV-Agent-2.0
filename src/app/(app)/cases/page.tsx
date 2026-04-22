@@ -55,8 +55,8 @@ export default async function CitizenCasesPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Citizen cases"
-        title="Recent visible cases"
-        description="Use this table as the main place to scan your newest case submissions without the older long-form card layout getting in the way."
+        title="Track your cases"
+        description="See which case needs you, which one is moving, and which one is already finished."
         actions={
           <>
             <Link
@@ -80,7 +80,7 @@ export default async function CitizenCasesPage() {
       <CitizenRecentCasesTable
         cases={recentCases}
         totalVisibleCount={cases.length}
-        description="Only your latest 10 visible cases are shown here by default, which keeps the citizen view focused and readable."
+        description="Your latest 10 visible cases are shown here by default so the page stays calm and easy to scan."
       />
     </div>
   );

@@ -83,18 +83,37 @@ export const roleNavigation: Record<UserRole, AppNavItem[]> = {
   ],
 };
 
+function normalizePath(path: string) {
+  const [withoutHash] = path.split("#");
+  const [withoutQuery] = withoutHash.split("?");
+
+  if (!withoutQuery) return "/";
+  if (withoutQuery === "/") return "/";
+
+  return withoutQuery.endsWith("/") ? withoutQuery.slice(0, -1) : withoutQuery;
+}
+
 export function isNavItemActive(currentPath: string, item: AppNavItem) {
-  const normalizedHref = item.href.split("#")[0];
+  const normalizedCurrentPath = normalizePath(currentPath);
+  const normalizedHref = normalizePath(item.href);
 
   if (item.matchPrefixes?.length) {
-    return item.matchPrefixes.some((prefix) =>
-      currentPath === prefix || currentPath.startsWith(`${prefix}/`)
-    );
+    return item.matchPrefixes.some((prefix) => {
+      const normalizedPrefix = normalizePath(prefix);
+
+      return (
+        normalizedCurrentPath === normalizedPrefix ||
+        normalizedCurrentPath.startsWith(`${normalizedPrefix}/`)
+      );
+    });
   }
 
   if (item.exact) {
-    return currentPath === normalizedHref;
+    return normalizedCurrentPath === normalizedHref;
   }
 
-  return currentPath === normalizedHref || currentPath.startsWith(`${normalizedHref}/`);
+  return (
+    normalizedCurrentPath === normalizedHref ||
+    normalizedCurrentPath.startsWith(`${normalizedHref}/`)
+  );
 }

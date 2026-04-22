@@ -66,23 +66,56 @@ export default async function NotificationsPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Notifications"
-        title="Stay ahead of reminders and status changes"
-        description="Track reminders, case updates, and follow-up requests in one clear notification center."
+        title="Updates that need your attention"
+        description="See what needs action first, then skim the rest of your case updates."
       />
 
       <div className="grid gap-4">
         {notifications.length ? notifications.map((notification) => {
           const Icon = toneIconMap[notification.tone];
+          const isAction = notification.tone === "warning" || !notification.read;
+
           return (
-            <article key={notification.id} className="surface-panel flex min-w-0 items-start gap-4 p-5 sm:p-6">
-              <div className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
+            <article
+              key={notification.id}
+              className={cn(
+                "surface-panel flex min-w-0 items-start gap-4 p-5 sm:p-6",
+                isAction ? "border border-amber-200 bg-amber-50/70" : ""
+              )}
+            >
+              <div
+                className={cn(
+                  "flex size-11 items-center justify-center rounded-full",
+                  notification.tone === "warning"
+                    ? "bg-amber-100 text-amber-900"
+                    : notification.tone === "success"
+                      ? "bg-emerald-100 text-emerald-900"
+                      : "bg-accent text-accent-foreground"
+                )}
+              >
                 <Icon className="size-4" />
               </div>
-              <div className="min-w-0 space-y-2">
+              <div className="min-w-0 space-y-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-lg font-bold tracking-tight text-foreground">
                     {notification.title}
                   </h2>
+                  <span
+                    className={cn(
+                      "rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]",
+                      notification.tone === "warning"
+                        ? "bg-amber-100 text-amber-900"
+                        : notification.tone === "success"
+                          ? "bg-emerald-100 text-emerald-900"
+                          : "bg-slate-100 text-slate-700"
+                    )}
+                  >
+                    {notification.tone === "warning"
+                      ? "Action needed"
+                      : notification.tone === "success"
+                        ? "Resolved"
+                        : "Info"}
+                  </span>
                   {!notification.read ? (
                     <span className="rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground">
                       New
@@ -90,6 +123,14 @@ export default async function NotificationsPage() {
                   ) : null}
                 </div>
                 <p className="text-sm leading-7 text-muted-foreground">{notification.body}</p>
+                {notification.actionHref ? (
+                  <Link
+                    href={notification.actionHref}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                  >
+                    Open related case
+                  </Link>
+                ) : null}
               </div>
             </article>
           );
