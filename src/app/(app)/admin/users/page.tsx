@@ -77,10 +77,10 @@ export default async function AdminUsersPage() {
       </Reveal>
 
       <Reveal delay={0.05}>
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_minmax(21rem,0.82fr)]">
+        <section className="space-y-6">
           <AdminUsersConsole users={data.users} />
 
-          <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
+          <div className="grid gap-6 xl:grid-cols-2">
             <section className="surface-panel p-5 sm:p-6">
               <div className="flex items-center gap-3">
                 <Sparkles className="size-5 text-primary" />
@@ -129,7 +129,7 @@ export default async function AdminUsersPage() {
                 <p>Self-demotion and last-admin removal are blocked to preserve secure access continuity.</p>
               </div>
             </section>
-          </aside>
+          </div>
         </section>
       </Reveal>
     </div>

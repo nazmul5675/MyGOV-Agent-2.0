@@ -8,6 +8,8 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   EyeOff,
   ExternalLink,
@@ -42,6 +44,7 @@ type AdminSortKey =
   | "priority";
 type SortDirection = "asc" | "desc";
 type VisibilityFilter = "visible" | "hidden" | "all";
+const CASES_PER_PAGE = 5;
 
 function compareText(left: string, right: string, direction: SortDirection) {
   return direction === "asc" ? left.localeCompare(right) : right.localeCompare(left);
@@ -82,6 +85,7 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("visible");
   const [sortKey, setSortKey] = useState<AdminSortKey>("submitted");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedCase, setSelectedCase] = useState<CaseItem | null>(null);
   const [isPending, startTransition] = useTransition();
   const deferredQuery = useDeferredValue(query);
@@ -137,12 +141,20 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
       }
     });
 
+  const totalPages = Math.max(1, Math.ceil(filteredCases.length / CASES_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * CASES_PER_PAGE;
+  const endIndex = Math.min(startIndex + CASES_PER_PAGE, filteredCases.length);
+  const paginatedCases = filteredCases.slice(startIndex, endIndex);
+
   const toggleSort = (nextKey: AdminSortKey) => {
     if (sortKey === nextKey) {
+      setCurrentPage(1);
       setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       return;
     }
 
+    setCurrentPage(1);
     setSortKey(nextKey);
     setSortDirection(nextKey === "title" || nextKey === "citizen" || nextKey === "status" ? "asc" : "desc");
   };
@@ -192,7 +204,10 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
                 <button
                   key={item.value}
                   type="button"
-                  onClick={() => setVisibilityFilter(item.value)}
+                  onClick={() => {
+                    setCurrentPage(1);
+                    setVisibilityFilter(item.value);
+                  }}
                   className={cn(
                     "rounded-full px-4 py-2 text-sm font-semibold transition-all",
                     visibilityFilter === item.value
@@ -209,7 +224,10 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setCurrentPage(1);
+                setQuery(event.target.value);
+              }}
               placeholder="Search by case, citizen, status, location, or desk"
               className="h-12 rounded-full pl-11"
             />
@@ -259,7 +277,7 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
               </tr>
             </thead>
             <tbody>
-              {filteredCases.map((item) => (
+              {paginatedCases.map((item) => (
                 <tr
                   key={item.id}
                   className={cn(
@@ -337,6 +355,38 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
               ))}
             </tbody>
           </table>
+          {filteredCases.length > CASES_PER_PAGE ? (
+            <div className="flex flex-col gap-3 border-t border-border/60 bg-muted/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Page {safeCurrentPage} of {totalPages}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full px-3"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={safeCurrentPage === 1}
+                >
+                  <ChevronLeft className="size-3.5" />
+                  Previous
+                </Button>
+                <div className="rounded-full bg-background px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {startIndex + 1}-{endIndex} of {filteredCases.length}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full px-3"
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={safeCurrentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : (
         <EmptyState

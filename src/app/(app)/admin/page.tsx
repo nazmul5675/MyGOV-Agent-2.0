@@ -13,7 +13,6 @@ import {
   Workflow,
 } from "lucide-react";
 
-import { AdminQueueBoard } from "@/components/admin/admin-queue-board";
 import { EvidenceManager } from "@/components/common/evidence-manager";
 import { EmptyState } from "@/components/common/empty-state";
 import { LiveDataState } from "@/components/common/live-data-state";
@@ -72,10 +71,25 @@ export default async function AdminDashboardPage() {
     );
   }
 
-  const { stats, queue, filesNeedingReview, recentActivity, suggestedActions, queueBuckets, roleActivity } =
-    data;
-  const latestQueueCards = queue.slice(0, 8);
-  const aiFocusCases = queue.slice(0, 3);
+  const {
+    stats,
+    queue,
+    filesNeedingReview,
+    recentActivity,
+    suggestedActions,
+    queueBuckets,
+    roleActivity,
+  } = data;
+  const primaryStats = stats.slice(0, 6);
+  const accessStats = stats.slice(6);
+  const priorityQueue = queue.slice(0, 5);
+  const evidencePending = filesNeedingReview.filter((file) =>
+    ["uploaded", "under_review"].includes(file.status)
+  ).length;
+  const evidenceNeedsAction = filesNeedingReview.filter((file) =>
+    ["needs_replacement", "rejected"].includes(file.status)
+  ).length;
+
   const statIcons = [
     <ClipboardCheck className="size-5" key="total" />,
     <ShieldCheck className="size-5" key="review" />,
@@ -93,7 +107,7 @@ export default async function AdminDashboardPage() {
       <PageHeader
         eyebrow="Admin dashboard"
         title="Run the queue like a real operations control center"
-        description="Scan workload, review evidence, use AI-backed summaries, and keep citizen cases moving from triage to resolution without losing context."
+        description="See what needs review now, what is blocked, and what should move next without competing panels getting in the way."
       />
 
       <Reveal>
@@ -104,10 +118,10 @@ export default async function AdminDashboardPage() {
                 Operations pulse
               </p>
               <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-                Review cases, evidence, and role-controlled access from one admin desk.
+                Keep the workload moving from triage to review to resolution.
               </h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                This console is tuned for queue movement: quick review counts, evidence pressure, AI-guided summaries, and cleaner access oversight.
+                The dashboard now centers on the active queue, file pressure, and the next operational decision.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -130,8 +144,8 @@ export default async function AdminDashboardPage() {
       </Reveal>
 
       <Reveal delay={0.03}>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-          {stats.map((stat, index) => (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+          {primaryStats.map((stat, index) => (
             <StatCard key={stat.label} {...stat} icon={statIcons[index]} />
           ))}
         </div>
@@ -140,17 +154,32 @@ export default async function AdminDashboardPage() {
       <Reveal delay={0.06}>
         <section
           id="queue"
-          className="grid gap-6 xl:grid-cols-[minmax(0,1.16fr)_minmax(22rem,0.84fr)]"
+          className="grid gap-6 xl:grid-cols-[minmax(0,1.32fr)_minmax(21rem,0.68fr)]"
         >
           <div className="space-y-5">
-            <div className="space-y-1">
-              <h2 className="font-heading text-2xl font-bold tracking-tight text-primary">
-                Workload buckets
-              </h2>
-              <p className="text-sm leading-6 text-muted-foreground">
-                Start with the buckets that matter most: fresh intake, citizen follow-up, urgent packets, and cases that have quietly stalled.
-              </p>
-            </div>
+            <section className="surface-panel p-5 sm:p-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                    Primary workload
+                  </p>
+                  <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-primary">
+                    Workload buckets
+                  </h2>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    Start with the buckets that directly answer what needs review now, what is urgent, and what is waiting on a citizen reply.
+                  </p>
+                </div>
+                <Link
+                  href="/admin/case-queue"
+                  className={cn(buttonVariants({ variant: "outline" }), "rounded-full px-5")}
+                >
+                  Open full queue
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            </section>
+
             <div className="grid gap-4 2xl:grid-cols-2">
               {[
                 {
@@ -215,23 +244,55 @@ export default async function AdminDashboardPage() {
               ))}
             </div>
 
-            <div className="space-y-1">
-              <h2 className="font-heading text-2xl font-bold tracking-tight text-primary">
-                Latest case cards
-              </h2>
-              <p className="text-sm leading-6 text-muted-foreground">
-                Keep the existing latest-card workflow here for recent visible cases, then jump to the dedicated queue route for the full permanent case history.
-              </p>
-            </div>
-            <AdminQueueBoard cases={latestQueueCards} />
+            <section className="surface-panel p-5 sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                    Queue priorities
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    Most recent queue items worth opening next from the live workload.
+                  </p>
+                </div>
+                <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {priorityQueue.length} items
+                </span>
+              </div>
+              <div className="mt-4 space-y-3">
+                {priorityQueue.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/admin/cases/${item.id}`}
+                    className="block rounded-[22px] bg-muted/75 p-4 transition-colors hover:bg-accent"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground">{item.title}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.reference} / {item.citizenName}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+                        {item.intake.urgency}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      <span>{item.status.replaceAll("_", " ")}</span>
+                      <span>{item.evidence.length} files</span>
+                      <span>Updated {new Date(item.updatedAt).toLocaleDateString("en-GB")}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
           </div>
 
-          <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
+          <div className="space-y-6">
             <section className="surface-panel p-5 sm:p-6">
               <div className="flex items-center gap-3">
                 <Sparkles className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  AI operations brief
+                  Suggested next actions
                 </p>
               </div>
               <div className="mt-4 space-y-3">
@@ -243,83 +304,56 @@ export default async function AdminDashboardPage() {
               </div>
             </section>
 
-            <EvidenceManager
-              files={filesNeedingReview}
-              title="Files needing review"
-              description="This file manager turns uploads into a visible operational surface instead of buried attachments."
-              dense
-            />
-
             <section className="surface-panel p-5 sm:p-6">
-              <div className="flex items-center gap-3">
-                <Sparkles className="size-5 text-primary" />
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  AI review snapshots
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Users2 className="size-5 text-primary" />
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                    Access overview
+                  </p>
+                </div>
+                <Link
+                  href="/admin/users"
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full px-3")}
+                >
+                  Manage users
+                </Link>
               </div>
-              <div className="mt-4 space-y-3">
-                {aiFocusCases.map((item) => (
-                  <div key={item.id} className="rounded-[22px] bg-muted/80 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-foreground">{item.title}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {item.citizenName} / {item.assignedUnit}
-                        </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {accessStats.map((stat, index) => (
+                  <div key={stat.label} className="rounded-[20px] bg-muted/75 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {stat.label}
+                      </p>
+                      <div className="flex size-9 items-center justify-center rounded-[16px] bg-white/80 text-primary">
+                        {statIcons[index + 6]}
                       </div>
-                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                        {item.intake.urgency}
-                      </span>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      {item.intake.adminSummary}
+                    <p className="mt-3 text-2xl font-black leading-none tracking-tight text-primary">
+                      {stat.value}
                     </p>
-                    <p className="mt-3 text-sm leading-6 text-foreground">
-                      Suggested next move:{" "}
-                      <span className="text-muted-foreground">
-                        {item.intake.missingDocuments.length
-                          ? `request ${item.intake.missingDocuments[0]} before routing.`
-                          : `prepare the officer summary and assign it to ${item.assignedUnit}.`}
-                      </span>
-                    </p>
+                    <p className="mt-2 text-sm leading-5 text-muted-foreground">{stat.change}</p>
                   </div>
                 ))}
               </div>
             </section>
 
-            <section className="surface-panel p-5 sm:p-6">
-              <div className="flex items-center gap-3">
-                <Users2 className="size-5 text-primary" />
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Role and access activity
-                </p>
-              </div>
-              <div className="mt-4 space-y-3">
-                {roleActivity?.length ? (
-                  roleActivity.map((item) => (
-                    <div key={item.id} className="rounded-[22px] bg-muted/80 p-4">
-                      <p className="font-semibold text-foreground">{item.title}</p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        {item.description}
-                      </p>
-                      <p className="mt-3 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                        {item.actor} / {new Date(item.createdAt).toLocaleDateString("en-GB")}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-[22px] bg-muted/75 p-4 text-sm leading-6 text-muted-foreground">
-                    Role changes from the admin users screen will appear here.
-                  </div>
-                )}
-              </div>
-            </section>
+            <EvidenceManager
+              files={filesNeedingReview}
+              title="Files needing review"
+              description="Keep this list close to the queue so pending uploads and replacement requests are easy to act on."
+              dense
+            />
           </div>
         </section>
       </Reveal>
 
       <Reveal delay={0.1}>
-        <section id="activity" className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(21rem,0.92fr)]">
+        <section
+          id="activity"
+          className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(21rem,0.92fr)]"
+        >
           <div className="surface-panel p-5 sm:p-6">
             <div className="flex items-center gap-3">
               <Workflow className="size-5 text-primary" />
@@ -340,34 +374,76 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
 
-          <section className="surface-panel p-5 sm:p-6">
-            <div className="flex items-center gap-3">
-              <FileSearch className="size-5 text-primary" />
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                Evidence workload snapshot
-              </p>
-            </div>
-            <div className="mt-4 space-y-3">
-              {filesNeedingReview.slice(0, 5).map((file) => (
-                <div key={file.id} className="rounded-[22px] bg-muted/80 p-4">
-                  <p className="font-semibold text-foreground">{file.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {file.category || file.kind} / {file.status.replaceAll("_", " ")}
+          <div className="space-y-6">
+            <section className="surface-panel p-5 sm:p-6">
+              <div className="flex items-center gap-3">
+                <Users2 className="size-5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                  Role and access activity
+                </p>
+              </div>
+              <div className="mt-4 space-y-3">
+                {roleActivity?.length ? (
+                  roleActivity.slice(0, 4).map((item) => (
+                    <div key={item.id} className="rounded-[22px] bg-muted/80 p-4">
+                      <p className="font-semibold text-foreground">{item.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {item.description}
+                      </p>
+                      <p className="mt-3 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        {item.actor} / {new Date(item.createdAt).toLocaleDateString("en-GB")}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-[22px] bg-muted/75 p-4 text-sm leading-6 text-muted-foreground">
+                    Role changes from the admin users screen will appear here.
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="surface-panel p-5 sm:p-6">
+              <div className="flex items-center gap-3">
+                <FileSearch className="size-5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                  Evidence workload snapshot
+                </p>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[22px] bg-muted/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Pending review
                   </p>
-                  <p className="mt-3 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                    Uploaded {new Date(file.uploadedAt).toLocaleDateString("en-GB")}
+                  <p className="mt-3 text-2xl font-black leading-none tracking-tight text-primary">
+                    {evidencePending}
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-muted-foreground">
+                    Files still waiting for a review decision.
                   </p>
                 </div>
-              ))}
-              {!filesNeedingReview.length ? (
-                <EmptyState
-                  icon={<FileSearch className="size-5" />}
-                  title="No pending evidence workload"
-                  description="When citizens upload new files or replacements, this review snapshot will populate automatically."
-                />
-              ) : null}
-            </div>
-          </section>
+                <div className="rounded-[22px] bg-muted/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Need action
+                  </p>
+                  <p className="mt-3 text-2xl font-black leading-none tracking-tight text-primary">
+                    {evidenceNeedsAction}
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-muted-foreground">
+                    Files blocked by replacement or rejection.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 rounded-[22px] bg-primary/[0.04] p-4 text-sm leading-6 text-muted-foreground">
+                {filesNeedingReview.length
+                  ? `Latest evidence workload: ${filesNeedingReview
+                      .slice(0, 3)
+                      .map((file) => file.name)
+                      .join(", ")}.`
+                  : "No pending evidence workload right now."}
+              </div>
+            </section>
+          </div>
         </section>
       </Reveal>
     </div>
