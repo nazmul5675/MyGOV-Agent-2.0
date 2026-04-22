@@ -24,6 +24,12 @@ export function Topbar({
   const quickLinks = roleNavigation[session.role].slice(0, 3);
   const unreadBadgeLabel =
     unreadNotificationCount > 99 ? "99+" : String(unreadNotificationCount);
+  const adminAreaLabel =
+    currentPath.startsWith("/admin/users")
+      ? "Access control"
+      : currentPath.startsWith("/admin/cases") || currentPath.startsWith("/admin/case-queue")
+        ? "Case review operations"
+        : "Operations dashboard";
 
   return (
     <div className="glass-panel flex flex-col gap-2.5 rounded-[24px] px-4 py-3">
@@ -44,7 +50,7 @@ export function Topbar({
             </div>
           </Link>
           <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-            {session.role === "admin" ? "Admin portal" : "Citizen portal"}
+            {session.role === "admin" ? adminAreaLabel : "Citizen portal"}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">

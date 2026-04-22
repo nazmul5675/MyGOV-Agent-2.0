@@ -93,19 +93,22 @@ export function AdminReviewPanel({
   return (
     <Card className="surface-panel top-6 xl:sticky">
       <CardHeader className="pb-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+          Next action
+        </p>
         <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
-          Decision center
+          Take the next case decision
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-[22px] bg-muted/80 p-4 text-sm leading-6 text-muted-foreground">
-          Actions update the shared case state, append timeline events, and keep citizen and admin views in sync.
+          Save your note, then choose one clear outcome. Every action updates the live case state and appends to the audit timeline.
         </div>
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          Notes are required for rejections, routing, and document requests.
+          Notes are required for rejection, routing, and document requests.
         </p>
         <Textarea
-          rows={6}
+          rows={5}
           className="rounded-3xl bg-white/70"
           value={note}
           onChange={(event) => setNote(event.target.value)}
@@ -119,13 +122,19 @@ export function AdminReviewPanel({
           {isPending && activeAction === "internal_note" ? (
             <LoaderCircle className="size-4 animate-spin" />
           ) : null}
-          Save internal note
+          Save note only
         </Button>
         <div className="grid gap-3">
           {actions.map((action) => (
             <div key={action.value} className="space-y-2 rounded-[22px] bg-muted/60 p-3.5">
               <Button
-                variant={action.tone}
+                variant={
+                  action.value === "reject"
+                    ? "destructive"
+                    : action.value === "resolve" || action.value === "approve"
+                      ? "default"
+                      : action.tone
+                }
                 size="default"
                 className="h-11 w-full justify-start rounded-2xl px-4 text-left whitespace-normal"
                 disabled={isPending}

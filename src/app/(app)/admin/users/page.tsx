@@ -32,7 +32,7 @@ export default async function AdminUsersPage() {
       <PageHeader
         eyebrow="Admin users"
         title="Manage access, roles, and account readiness"
-        description="Review every citizen and admin account from one operational screen, with safe role controls, profile context, and audit-ready change history."
+        description="Inspect account context first, then make deliberate access changes from one audit-ready control console."
       />
 
       <Reveal>
@@ -46,7 +46,7 @@ export default async function AdminUsersPage() {
                 Manage citizen and admin access with safer role changes and clearer account context.
               </h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Review profile readiness, related case load, and role state before making changes. Promotions and demotions stay visible and auditable.
+                Review profile readiness, related case load, and current role before changing access.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">

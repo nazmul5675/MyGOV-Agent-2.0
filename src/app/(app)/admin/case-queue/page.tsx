@@ -57,7 +57,7 @@ export default async function AdminCaseQueuePage() {
       <PageHeader
         eyebrow="Admin case queue"
         title="Persistent case queue"
-        description="Every submitted case stays here permanently. Use hide and unhide to control dashboard visibility without deleting the underlying record."
+        description="Every submitted case stays here permanently. Scan the live queue fast, then open or hide the next record without losing the saved history."
         actions={
           <Link
             href="/admin"

@@ -3,6 +3,7 @@
 import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -11,6 +12,7 @@ import {
   CheckCircle2,
   Clock3,
   Search,
+  ShieldAlert,
   ShieldCheck,
   UserCog,
   UserRound,
@@ -52,6 +54,7 @@ type UserSortKey =
   | "openCases"
   | "profile";
 type SortDirection = "asc" | "desc";
+
 const USERS_PER_PAGE = 10;
 
 function formatDate(value?: string) {
@@ -167,6 +170,8 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
   const startIndex = (safeCurrentPage - 1) * USERS_PER_PAGE;
   const endIndex = Math.min(startIndex + USERS_PER_PAGE, filteredUsers.length);
   const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+  const adminCount = filteredUsers.filter((user) => user.role === "admin").length;
+  const riskyCount = filteredUsers.filter((user) => user.role === "admin" || user.accountStatus === "disabled").length;
 
   const toggleSort = (nextKey: UserSortKey) => {
     if (sortKey === nextKey) {
@@ -213,23 +218,23 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
         <section className="surface-panel p-5 sm:p-6">
           <div className="space-y-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="font-heading text-2xl font-bold tracking-tight text-primary">
-                    User directory
+                    Access control table
                   </h2>
                   <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     {filteredUsers.length} visible
                   </span>
-                  {filteredUsers.length ? (
-                    <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      Showing {startIndex + 1}-{endIndex}
-                    </span>
-                  ) : null}
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                    {adminCount} admins
+                  </span>
+                  <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-800">
+                    {riskyCount} sensitive rows
+                  </span>
                 </div>
                 <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                  Scan accounts in one practical management table, then open details or update roles
-                  without leaving the control console.
+                  Inspect account context first, then make deliberate role changes from a single audit-oriented table.
                 </p>
               </div>
 
@@ -241,7 +246,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                     setCurrentPage(1);
                     setQuery(event.target.value);
                   }}
-                  placeholder="Search users by name, email, or UID"
+                  placeholder="Search by name, email, or UID"
                   className="h-12 rounded-full pl-11"
                 />
               </div>
@@ -295,20 +300,16 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
 
         {filteredUsers.length ? (
           <div className="overflow-x-auto rounded-[28px] border border-border/70 bg-background/90">
-            <table className="min-w-[1260px] table-fixed border-separate border-spacing-0">
+            <table className="min-w-[1180px] table-fixed border-separate border-spacing-0">
               <thead>
                 <tr className="text-left">
                   {[
-                    { label: "User", key: "name" as const, className: "w-[18%]" },
-                    { label: "Email", key: "email" as const, className: "w-[18%]" },
-                    { label: "Role", key: "role" as const, className: "w-[8%]" },
-                    { label: "Status", key: "status" as const, className: "w-[9%]" },
-                    { label: "Created", key: "created" as const, className: "w-[10%]" },
-                    { label: "Last active", key: "active" as const, className: "w-[10%]" },
-                    { label: "Cases", key: "cases" as const, className: "w-[7%]" },
-                    { label: "Open", key: "openCases" as const, className: "w-[7%]" },
-                    { label: "Profile", key: "profile" as const, className: "w-[8%]" },
-                    { label: "Actions", key: "profile" as const, className: "w-[15%]" },
+                    { label: "Account", key: "name" as const, className: "w-[28%]" },
+                    { label: "Access", key: "role" as const, className: "w-[18%]" },
+                    { label: "Activity", key: "active" as const, className: "w-[16%]" },
+                    { label: "Case load", key: "cases" as const, className: "w-[13%]" },
+                    { label: "Profile", key: "profile" as const, className: "w-[12%]" },
+                    { label: "Actions", key: "profile" as const, className: "w-[13%]" },
                   ].map((column, index) => (
                     <th
                       key={column.label}
@@ -316,7 +317,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                         "border-b border-border/70 bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground",
                         column.className,
                         index === 0 ? "rounded-tl-[24px]" : "",
-                        index === 9 ? "rounded-tr-[24px]" : ""
+                        index === 5 ? "rounded-tr-[24px]" : ""
                       )}
                     >
                       {column.label === "Actions" ? (
@@ -338,50 +339,66 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
               <tbody>
                 {paginatedUsers.map((user) => {
                   const accountStatus = user.accountStatus || "active";
+                  const isAdminRow = user.role === "admin";
 
                   return (
-                    <tr key={user.uid} className="group bg-background align-top">
+                    <tr
+                      key={user.uid}
+                      className={cn(
+                        "group align-top",
+                        isAdminRow ? "bg-primary/[0.035]" : "bg-background"
+                      )}
+                    >
                       <td className="border-b border-border/60 px-4 py-4">
-                        <div className="space-y-1">
-                          <p className="font-semibold text-foreground group-hover:text-primary">
-                            {user.fullName}
-                          </p>
-                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                            {user.uid}
-                          </p>
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-foreground group-hover:text-primary">
+                              {user.fullName}
+                            </p>
+                            {isAdminRow ? (
+                              <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+                                Protected admin
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                            <span>{user.uid}</span>
+                            <span>Created {formatDate(user.createdAt)}</span>
+                          </div>
                         </div>
                       </td>
                       <td className="border-b border-border/60 px-4 py-4">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">{user.email}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">Primary sign-in email</p>
+                        <div className="space-y-3">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${roleChipTone(user.role)}`}
+                          >
+                            {user.role}
+                          </span>
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusChipTone(accountStatus)}`}
+                          >
+                            {accountStatus}
+                          </span>
                         </div>
                       </td>
                       <td className="border-b border-border/60 px-4 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${roleChipTone(user.role)}`}
-                        >
-                          {user.role}
-                        </span>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <p className="font-semibold text-foreground">
+                            {formatDate(user.lastActiveAt || user.updatedAt)}
+                          </p>
+                          <p>Last activity on record</p>
+                        </div>
                       </td>
                       <td className="border-b border-border/60 px-4 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusChipTone(accountStatus)}`}
-                        >
-                          {accountStatus}
-                        </span>
-                      </td>
-                      <td className="border-b border-border/60 px-4 py-4 text-sm text-muted-foreground">
-                        {formatDate(user.createdAt)}
-                      </td>
-                      <td className="border-b border-border/60 px-4 py-4 text-sm text-muted-foreground">
-                        {formatDate(user.lastActiveAt || user.updatedAt)}
-                      </td>
-                      <td className="border-b border-border/60 px-4 py-4 text-sm font-semibold text-foreground">
-                        {user.casesCount}
-                      </td>
-                      <td className="border-b border-border/60 px-4 py-4 text-sm font-semibold text-foreground">
-                        {user.openCasesCount}
+                        <div className="space-y-2">
+                          <p className="text-sm font-semibold text-foreground">
+                            {user.casesCount} total case{user.casesCount === 1 ? "" : "s"}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {user.openCasesCount} open right now
+                          </p>
+                        </div>
                       </td>
                       <td className="border-b border-border/60 px-4 py-4">
                         <div className="space-y-2">
@@ -390,14 +407,21 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                           </p>
                           <div className="h-2 rounded-full bg-muted">
                             <div
-                              className="h-2 rounded-full bg-primary"
+                              className={cn(
+                                "h-2 rounded-full",
+                                user.profileCompleteness >= 80
+                                  ? "bg-emerald-500"
+                                  : user.profileCompleteness >= 50
+                                    ? "bg-amber-500"
+                                    : "bg-rose-500"
+                              )}
                               style={{ width: `${Math.min(100, Math.max(0, user.profileCompleteness))}%` }}
                             />
                           </div>
                         </div>
                       </td>
                       <td className="border-b border-border/60 px-4 py-4">
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-col gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -405,17 +429,26 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                             onClick={() => setSelectedUser(user)}
                           >
                             <UserRound className="size-3.5" />
-                            View
+                            View details
                           </Button>
 
                           <Button
-                            variant={user.role === "admin" ? "outline" : "default"}
+                            variant="outline"
                             size="sm"
-                            className="rounded-full px-3"
+                            className={cn(
+                              "rounded-full px-3",
+                              user.role === "admin"
+                                ? "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                                : "border-primary/25 bg-primary/[0.04] text-primary hover:bg-primary/[0.08]"
+                            )}
                             onClick={() => setPendingRoleTarget(user)}
                           >
-                            <UserCog className="size-3.5" />
-                            {user.role === "admin" ? "Demote" : "Promote"}
+                            {user.role === "admin" ? (
+                              <ShieldAlert className="size-3.5" />
+                            ) : (
+                              <UserCog className="size-3.5" />
+                            )}
+                            {user.role === "admin" ? "Change admin role" : "Promote to admin"}
                           </Button>
                         </div>
                       </td>
@@ -473,7 +506,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
               <SheetHeader className="border-b border-border/70 px-6 py-5">
                 <SheetTitle>User workspace</SheetTitle>
                 <SheetDescription>
-                  Inspect profile completeness, role, activity, and related case load before making access changes.
+                  Inspect profile readiness, role, activity, and case load before making any access change.
                 </SheetDescription>
               </SheetHeader>
 
@@ -570,16 +603,20 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                     <p className="font-semibold">Role control</p>
                   </div>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                    Promotions and demotions update the Mongo-backed profile and,
-                    when Firebase Admin is configured, sync auth claims too.
+                    Review account context before promoting or demoting. Changes update the Mongo-backed profile immediately and, when Firebase Admin is configured, sync auth claims too.
                   </p>
+                  {selectedUser.role === "admin" ? (
+                    <div className="mt-4 rounded-[20px] bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                      This is an admin account. Demotion changes access to protected admin workflows.
+                    </div>
+                  ) : null}
                   <Button
                     className="mt-4 rounded-full px-4"
-                    variant={selectedUser.role === "admin" ? "outline" : "default"}
+                    variant="outline"
                     onClick={() => setPendingRoleTarget(selectedUser)}
                   >
                     <UserCog className="size-4" />
-                    {selectedUser.role === "admin" ? "Move to citizen" : "Promote to admin"}
+                    {selectedUser.role === "admin" ? "Change admin role" : "Promote to admin"}
                   </Button>
                 </section>
               </div>
@@ -596,7 +633,7 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
           {pendingRoleTarget ? (
             <>
               <DialogHeader className="px-6 pt-6">
-                <DialogTitle>Confirm role update</DialogTitle>
+                <DialogTitle>Confirm access change</DialogTitle>
                 <DialogDescription>
                   {pendingRoleTarget.role === "admin"
                     ? `Move ${pendingRoleTarget.fullName} back to citizen access?`
@@ -604,12 +641,24 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="px-6 pb-6 text-sm leading-7 text-muted-foreground">
-                This change updates the Mongo-backed user record immediately and
-                writes an audit trail for the control console.
+              <div className="space-y-4 px-6 pb-6 text-sm leading-7 text-muted-foreground">
+                <div className="rounded-[22px] bg-muted/70 p-4">
+                  This change updates the live Mongo-backed user record immediately and writes an audit trail for the control console.
+                </div>
+                <div className="rounded-[22px] bg-amber-50 p-4 text-amber-900">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                    <p>
+                      Review the user context before confirming. Admin role changes affect access to protected review and management routes.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <DialogFooter className="rounded-b-[28px] px-6 pb-6">
+                <Button variant="outline" onClick={() => setPendingRoleTarget(null)} disabled={isPending}>
+                  Cancel
+                </Button>
                 <Button
                   variant={pendingRoleTarget.role === "admin" ? "destructive" : "default"}
                   disabled={isPending}
@@ -617,6 +666,8 @@ export function AdminUsersConsole({ users }: { users: AdminManagedUser[] }) {
                 >
                   {isPending ? (
                     <Clock3 className="size-4 animate-pulse" />
+                  ) : pendingRoleTarget.role === "admin" ? (
+                    <ShieldAlert className="size-4" />
                   ) : (
                     <UserCog className="size-4" />
                   )}

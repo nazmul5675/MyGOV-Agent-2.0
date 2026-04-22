@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Clock3,
   FileText,
   Layers3,
   MapPin,
@@ -15,17 +18,14 @@ import { AssistantPanel } from "@/components/common/assistant-panel";
 import { EvidenceManager } from "@/components/common/evidence-manager";
 import { EmptyState } from "@/components/common/empty-state";
 import { LiveDataState } from "@/components/common/live-data-state";
-import { LocationPreviewCard } from "@/components/maps/location-preview-card";
 import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Timeline } from "@/components/common/timeline";
 import { AdminReviewPanel } from "@/components/forms/admin-review-panel";
-import { requireRole } from "@/lib/auth/session";
-import {
-  getAdminCaseById,
-  listCaseAssistantMessages,
-} from "@/lib/repositories/cases";
+import { LocationPreviewCard } from "@/components/maps/location-preview-card";
 import { buttonVariants } from "@/components/ui/button";
+import { requireRole } from "@/lib/auth/session";
+import { getAdminCaseById, listCaseAssistantMessages } from "@/lib/repositories/cases";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -40,9 +40,7 @@ export default async function AdminCaseDetailPage({
   await requireRole("admin");
   const { id } = await params;
   let item: Awaited<ReturnType<typeof getAdminCaseById>> | null = null;
-  let messages:
-    | Awaited<ReturnType<typeof listCaseAssistantMessages>>
-    | null = null;
+  let messages: Awaited<ReturnType<typeof listCaseAssistantMessages>> | null = null;
   let errorMessage: string | null = null;
 
   try {
@@ -89,20 +87,113 @@ export default async function AdminCaseDetailPage({
   const pendingFiles = item.evidence.filter((file) =>
     ["uploaded", "under_review", "needs_replacement"].includes(file.status)
   ).length;
+  const missingDocumentsCount = item.intake.missingDocuments.length;
+  const nextAction =
+    item.status === "need_more_docs"
+      ? "Request the missing proof clearly, then wait for the replacement packet."
+      : item.status === "submitted"
+        ? "Move the case into review and start resolving the file packet."
+        : item.status === "reviewing"
+          ? "Finish evidence decisions, then route or resolve with one clear note."
+          : item.status === "in_progress"
+            ? "Leave the routing or resolution note that explains the next operational move."
+            : "Check the latest timeline event before making another state change.";
+  const reviewSignals = [
+    missingDocumentsCount
+      ? `${missingDocumentsCount} missing document item${missingDocumentsCount === 1 ? "" : "s"}`
+      : "No missing document flags.",
+    pendingFiles
+      ? `${pendingFiles} file${pendingFiles === 1 ? "" : "s"} still need review.`
+      : "All evidence states are current.",
+    item.latestInternalNote ? "Internal note already exists." : "No internal note saved yet.",
+  ];
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow={item.reference}
         title="Admin review workspace"
-        description="Review the citizen packet, manage evidence, log internal notes, and make the next decision from one protected control surface."
+        description="Read the case story quickly, review the file packet, and take the next operational decision from one protected workspace."
       />
+
+      <section className="surface-panel p-6 sm:p-7">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.55fr)]">
+          <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground sm:p-7">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70">
+                  Case packet
+                </p>
+                <h2 className="mt-2 text-balance font-heading text-3xl font-bold tracking-tight">
+                  {item.title}
+                </h2>
+              </div>
+              <StatusBadge status={item.status} className="bg-white/12 text-white" />
+            </div>
+            <p className="mt-4 text-sm leading-7 text-primary-foreground/82">
+              {item.intake.adminSummary}
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            <div className="rounded-[24px] bg-muted/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                What to do next
+              </p>
+              <p className="mt-3 text-sm leading-6 text-foreground">{nextAction}</p>
+            </div>
+            <div className="rounded-[24px] bg-rose-50/80 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
+                Needs attention
+              </p>
+              <p className="mt-3 text-2xl font-black tracking-tight text-rose-900">
+                {pendingFiles + missingDocumentsCount}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-rose-900/80">
+                Open review items across files and missing documents.
+              </p>
+            </div>
+            <div className="rounded-[24px] bg-emerald-50/80 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                Accepted files
+              </p>
+              <p className="mt-3 text-2xl font-black tracking-tight text-emerald-900">
+                {acceptedFiles}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-emerald-900/80">
+                Evidence already cleared for the live case record.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="grid gap-6 xl:grid-cols-12">
         <aside className="space-y-6 xl:col-span-4 2xl:col-span-3">
           <div className="surface-panel p-6">
+            <div className="flex items-center gap-3">
+              <UserRound className="size-5 text-primary" />
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                Citizen summary
+              </p>
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                <UserRound className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground">{item.citizenName}</p>
+                <p className="truncate text-sm text-muted-foreground">{item.location}</p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              {item.intake.citizenSummary}
+            </p>
+          </div>
+
+          <div className="surface-panel p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-              Case overview
+              Case facts
             </p>
             <div className="mt-4 space-y-3">
               {[
@@ -125,24 +216,6 @@ export default async function AdminCaseDetailPage({
           </div>
 
           <div className="surface-panel p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-              Citizen summary
-            </p>
-            <div className="mt-4 flex items-center gap-3">
-              <div className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                <UserRound className="size-4" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">{item.citizenName}</p>
-                <p className="text-sm text-muted-foreground">{item.location}</p>
-              </div>
-            </div>
-            <p className="mt-4 text-sm leading-7 text-muted-foreground">
-              {item.intake.citizenSummary}
-            </p>
-          </div>
-
-          <div className="surface-panel p-6">
             <div className="flex items-center gap-3">
               <Sparkles className="size-5 text-primary" />
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
@@ -150,20 +223,11 @@ export default async function AdminCaseDetailPage({
               </p>
             </div>
             <div className="mt-4 space-y-3">
-              {[
-                item.intake.missingDocuments.length
-                  ? `Missing docs: ${item.intake.missingDocuments.join(", ")}`
-                  : "No missing document signals are flagged right now.",
-                item.evidence.some((file) =>
-                  ["uploaded", "under_review", "needs_replacement"].includes(file.status)
-                )
-                  ? "At least one file still needs explicit review."
-                  : "Evidence states are up to date for the current file set.",
-                item.latestInternalNote
-                  ? `Latest internal note: ${item.latestInternalNote}`
-                  : "No internal note has been saved yet.",
-              ].map((entry) => (
-                <div key={entry} className="rounded-[22px] bg-muted/80 p-4 text-sm leading-7 text-muted-foreground">
+              {reviewSignals.map((entry) => (
+                <div
+                  key={entry}
+                  className="rounded-[22px] bg-muted/80 p-4 text-sm leading-6 text-muted-foreground"
+                >
                   {entry}
                 </div>
               ))}
@@ -172,105 +236,102 @@ export default async function AdminCaseDetailPage({
 
           <LocationPreviewCard
             title="Operational map context"
-            description="Use the resolved location, coordinates, and landmark detail to validate routing and field assignment."
+            description="Validate routing and field assignment against the resolved location."
             location={item.locationMeta}
             compact
           />
         </aside>
 
         <div className="space-y-6 xl:col-span-8 2xl:col-span-6">
-          <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground sm:p-7">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-xs uppercase tracking-[0.22em] text-primary-foreground/70">
-                  Case packet
+          <section className="surface-panel p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                  Review brief
                 </p>
-                <h2 className="mt-2 text-balance font-heading text-3xl font-bold tracking-tight">
-                  {item.title}
+                <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-primary">
+                  Case story and action context
                 </h2>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Keep urgency, location, and document pressure together before taking an action
+                  from the decision lane.
+                </p>
               </div>
-              <StatusBadge status={item.status} className="bg-white/12 text-white" />
+              <Link
+                href="#decision-center"
+                className={cn(buttonVariants({ variant: "outline" }), "rounded-full px-5")}
+              >
+                Go to next action
+                <ArrowRight className="size-4" />
+              </Link>
             </div>
-            <p className="mt-4 text-sm leading-7 text-primary-foreground/82">
-              {item.intake.adminSummary}
-            </p>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2 min-[1680px]:grid-cols-3">
-            <div className="surface-panel p-5">
-              <div className="flex items-center gap-2 text-primary">
-                <UserRound className="size-4" />
-                <span className="text-sm font-semibold">Citizen</span>
+            <div className="mt-5 grid gap-4 md:grid-cols-2 min-[1680px]:grid-cols-3">
+              <div className="rounded-[22px] bg-muted/70 p-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Layers3 className="size-4" />
+                  <span className="text-sm font-semibold">Category</span>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                  {item.intake.category}
+                </p>
               </div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.citizenName}</p>
-            </div>
-            <div className="surface-panel p-5">
-              <div className="flex items-center gap-2 text-primary">
-                <Layers3 className="size-4" />
-                <span className="text-sm font-semibold">Category</span>
+              <div className="rounded-[22px] bg-rose-50/70 p-4">
+                <div className="flex items-center gap-2 text-rose-800">
+                  <AlertTriangle className="size-4" />
+                  <span className="text-sm font-semibold">Urgency</span>
+                </div>
+                <p className="mt-3 text-sm capitalize leading-7 text-rose-900/85">
+                  {item.intake.urgency}
+                </p>
               </div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                {item.intake.category}
-              </p>
-            </div>
-            <div className="surface-panel p-5">
-              <div className="flex items-center gap-2 text-primary">
-                <AlertTriangle className="size-4" />
-                <span className="text-sm font-semibold">Urgency</span>
+              <div className="rounded-[22px] bg-amber-50/80 p-4">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <FileText className="size-4" />
+                  <span className="text-sm font-semibold">Missing docs</span>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-amber-900/85">
+                  {item.intake.missingDocuments.length
+                    ? item.intake.missingDocuments.join(", ")
+                    : "No missing docs flagged"}
+                </p>
               </div>
-              <p className="mt-3 text-sm capitalize leading-7 text-muted-foreground">
-                {item.intake.urgency}
-              </p>
-            </div>
-            <div className="surface-panel p-5">
-              <div className="flex items-center gap-2 text-primary">
-                <FileText className="size-4" />
-                <span className="text-sm font-semibold">Missing docs</span>
+              <div className="rounded-[22px] bg-muted/70 p-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <MapPin className="size-4" />
+                  <span className="text-sm font-semibold">Location</span>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.location}</p>
               </div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                {item.intake.missingDocuments.length
-                  ? item.intake.missingDocuments.join(", ")
-                  : "No missing docs flagged"}
-              </p>
-            </div>
-            <div className="surface-panel p-5">
-              <div className="flex items-center gap-2 text-primary">
-                <MapPin className="size-4" />
-                <span className="text-sm font-semibold">Location</span>
+              <div className="rounded-[22px] bg-muted/70 p-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Clock3 className="size-4" />
+                  <span className="text-sm font-semibold">Timeline depth</span>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                  {item.timeline.length} recorded events
+                </p>
               </div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.location}</p>
+              <div className="rounded-[22px] bg-emerald-50/80 p-4">
+                <div className="flex items-center gap-2 text-emerald-800">
+                  <CheckCircle2 className="size-4" />
+                  <span className="text-sm font-semibold">Evidence cleared</span>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-emerald-900/85">
+                  {acceptedFiles} accepted file{acceptedFiles === 1 ? "" : "s"}
+                </p>
+              </div>
             </div>
-          </div>
+          </section>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="surface-panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Accepted files
-              </p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{acceptedFiles}</p>
-            </div>
-            <div className="surface-panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Pending review
-              </p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{pendingFiles}</p>
-            </div>
-            <div className="surface-panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Timeline depth
-              </p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{item.timeline.length}</p>
-            </div>
-          </div>
-
-          <div className="surface-panel p-6">
+          <section className="surface-panel p-6">
             <div className="flex items-center gap-3">
               <Sparkles className="size-5 text-primary" />
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
                 AI decision support
               </p>
             </div>
-            <div className="mt-4 grid gap-4 xl:grid-cols-2 min-[1680px]:grid-cols-3">
+            <div className="mt-4 grid gap-4 xl:grid-cols-3">
               <div className="rounded-[22px] bg-muted/75 p-4">
                 <p className="text-sm font-semibold text-foreground">Issue summary</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -278,30 +339,25 @@ export default async function AdminCaseDetailPage({
                 </p>
               </div>
               <div className="rounded-[22px] bg-muted/75 p-4">
-                <p className="text-sm font-semibold text-foreground">Missing doc suggestion</p>
+                <p className="text-sm font-semibold text-foreground">Document gap</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {item.intake.missingDocuments.length
                     ? `Ask for ${item.intake.missingDocuments[0]} first so the citizen sees one clear next step.`
-                    : "No document gap is currently blocking review. Focus on routing and resolution language."}
+                    : "No document gap is currently blocking review. Focus on routing and resolution."}
                 </p>
               </div>
               <div className="rounded-[22px] bg-muted/75 p-4">
                 <p className="text-sm font-semibold text-foreground">Next best action</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {item.status === "need_more_docs"
-                    ? "Keep the citizen-facing follow-up concise, then wait for the replacement evidence packet."
-                    : item.status === "submitted"
-                      ? "Mark the case for review and confirm whether the current evidence supports assignment."
-                      : "Prepare the routing or resolution note so the timeline stays operationally clear."}
-                </p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{nextAction}</p>
               </div>
             </div>
-          </div>
+          </section>
 
           <EvidenceManager
             files={item.evidence}
-            title="Evidence workspace"
-            description="Uploaded evidence stays grouped with current review states, making it easier to decide whether to accept, route, or request a better copy."
+            title="Evidence at a glance"
+            description="Read the current file packet quickly before making review decisions below."
+            dense
           />
 
           <EvidenceReviewPanel caseId={item.id} files={item.evidence} />
@@ -322,7 +378,10 @@ export default async function AdminCaseDetailPage({
           </div>
         </div>
 
-        <div className="space-y-6 xl:col-span-12 2xl:col-span-3 2xl:sticky 2xl:top-6 2xl:self-start">
+        <div
+          id="decision-center"
+          className="space-y-6 xl:col-span-12 2xl:col-span-3 2xl:sticky 2xl:top-6 2xl:self-start"
+        >
           <AdminReviewPanel caseId={item.id} initialNote={item.latestInternalNote} />
         </div>
       </section>
@@ -332,7 +391,7 @@ export default async function AdminCaseDetailPage({
           caseId={item.id}
           initialMessages={messages || []}
           title="AI review helper"
-          subtitle="Use the assistant to summarize the packet, check for missing documents, and prepare a clearer citizen-facing follow-up note."
+          subtitle="Use AI only after the case story and file packet are clear. Keep it for summary, gap-checking, and drafting a cleaner follow-up note."
           suggestedPrompts={[
             "Draft an officer summary for this case",
             "Summarize the uploaded files",

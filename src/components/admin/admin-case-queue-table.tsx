@@ -44,6 +44,7 @@ type AdminSortKey =
   | "priority";
 type SortDirection = "asc" | "desc";
 type VisibilityFilter = "visible" | "hidden" | "all";
+
 const CASES_PER_PAGE = 5;
 
 function compareText(left: string, right: string, direction: SortDirection) {
@@ -62,6 +63,40 @@ function getPriorityRank(urgency: CaseItem["intake"]["urgency"]) {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("en-GB");
+}
+
+function isStalled(item: CaseItem) {
+  if (["resolved", "rejected"].includes(item.status)) return false;
+  const daysSinceUpdate =
+    (Date.now() - new Date(item.updatedAt).getTime()) / (1000 * 60 * 60 * 24);
+  return daysSinceUpdate >= 7;
+}
+
+function getRowTone(item: CaseItem) {
+  if (item.isHidden) return "bg-muted/20 opacity-80";
+  if (item.status === "need_more_docs") return "bg-amber-50/70";
+  if (item.intake.urgency === "high") return "bg-rose-50/60";
+  if (isStalled(item)) return "bg-sky-50/60";
+  return "bg-background";
+}
+
+function getQueueSignals(item: CaseItem) {
+  const signals: Array<{ label: string; className: string }> = [];
+
+  if (item.intake.urgency === "high") {
+    signals.push({ label: "Urgent", className: "bg-rose-100 text-rose-800" });
+  }
+  if (item.status === "need_more_docs") {
+    signals.push({ label: "Waiting on citizen", className: "bg-amber-100 text-amber-800" });
+  }
+  if (isStalled(item)) {
+    signals.push({ label: "Stalled", className: "bg-sky-100 text-sky-800" });
+  }
+  if (item.isHidden) {
+    signals.push({ label: "Hidden", className: "bg-slate-200 text-slate-800" });
+  }
+
+  return signals;
 }
 
 function SortIcon({
@@ -93,6 +128,14 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
   const normalizedQuery = deferredQuery.trim().toLowerCase();
   const visibleCount = cases.filter((item) => !item.isHidden).length;
   const hiddenCount = cases.filter((item) => item.isHidden).length;
+  const actionNeededCount = cases.filter(
+    (item) =>
+      !item.isHidden &&
+      (item.intake.urgency === "high" ||
+        item.status === "need_more_docs" ||
+        item.status === "submitted" ||
+        isStalled(item))
+  ).length;
 
   const filteredCases = [...cases]
     .filter((item) => {
@@ -191,15 +234,18 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
               <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 {cases.length} saved
               </span>
+              <span className="rounded-full bg-rose-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-800">
+                {actionNeededCount} need action
+              </span>
             </div>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              This is the persistent admin source of truth. Every submitted case stays here, even after it is hidden from citizen and visible admin dashboards.
+              Use this table to scan what is urgent, blocked, stalled, or hidden, then open the next case without reading every row in full.
             </p>
             <div className="flex flex-wrap gap-2">
               {[
                 { label: "Visible", value: "visible" as const, count: visibleCount },
                 { label: "Hidden", value: "hidden" as const, count: hiddenCount },
-                { label: "All", value: "all" as const, count: cases.length },
+                { label: "All saved", value: "all" as const, count: cases.length },
               ].map((item) => (
                 <button
                   key={item.value}
@@ -228,7 +274,7 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
                 setCurrentPage(1);
                 setQuery(event.target.value);
               }}
-              placeholder="Search by case, citizen, status, location, or desk"
+              placeholder="Search by case, citizen, desk, location, or state"
               className="h-12 rounded-full pl-11"
             />
           </div>
@@ -237,19 +283,16 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
 
       {filteredCases.length ? (
         <div className="overflow-x-auto rounded-[28px] border border-border/70 bg-background/90">
-          <table className="min-w-[1180px] table-fixed border-separate border-spacing-0">
+          <table className="min-w-[1120px] table-fixed border-separate border-spacing-0">
             <thead>
               <tr className="text-left">
                 {[
-                  { label: "Case ID", key: "submitted" as const, className: "w-[12%]" },
-                  { label: "Title / Subject", key: "title" as const, className: "w-[22%]" },
-                  { label: "Citizen", key: "citizen" as const, className: "w-[14%]" },
-                  { label: "Submitted", key: "submitted" as const, className: "w-[10%]" },
-                  { label: "Updated", key: "updated" as const, className: "w-[10%]" },
-                  { label: "Status", key: "status" as const, className: "w-[11%]" },
-                  { label: "Priority", key: "priority" as const, className: "w-[8%]" },
+                  { label: "Case", key: "title" as const, className: "w-[31%]" },
+                  { label: "Review state", key: "status" as const, className: "w-[20%]" },
+                  { label: "Evidence and routing", key: "priority" as const, className: "w-[19%]" },
+                  { label: "Updated", key: "updated" as const, className: "w-[12%]" },
                   { label: "Visibility", key: "priority" as const, className: "w-[8%]" },
-                  { label: "Actions", key: "priority" as const, className: "w-[15%]" },
+                  { label: "Actions", key: "priority" as const, className: "w-[10%]" },
                 ].map((column, index) => (
                   <th
                     key={column.label}
@@ -257,7 +300,7 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
                       "border-b border-border/70 bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground",
                       column.className,
                       index === 0 ? "rounded-tl-[24px]" : "",
-                      index === 8 ? "rounded-tr-[24px]" : ""
+                      index === 5 ? "rounded-tr-[24px]" : ""
                     )}
                   >
                     {column.label === "Visibility" || column.label === "Actions" ? (
@@ -277,82 +320,114 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
               </tr>
             </thead>
             <tbody>
-              {paginatedCases.map((item) => (
-                <tr
-                  key={item.id}
-                  className={cn(
-                    "group",
-                    item.isHidden ? "bg-muted/25 opacity-75" : "bg-background"
-                  )}
-                >
-                  <td className="border-b border-border/60 px-4 py-4 align-top text-sm font-semibold text-foreground">
-                    <div className="space-y-1">
-                      <p>{item.reference}</p>
-                      <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                        {item.type.replaceAll("_", " ")}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="border-b border-border/60 px-4 py-4 align-top">
-                    <div className="space-y-1">
-                      <p className="font-semibold text-foreground group-hover:text-primary">{item.title}</p>
-                      <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
-                        {item.location}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="border-b border-border/60 px-4 py-4 align-top">
-                    <div className="space-y-1 text-sm">
-                      <p className="font-semibold text-foreground">{item.citizenName}</p>
-                      <p className="text-muted-foreground">{item.assignedUnit}</p>
-                    </div>
-                  </td>
-                  <td className="border-b border-border/60 px-4 py-4 align-top text-sm text-muted-foreground">
-                    {formatDate(item.createdAt)}
-                  </td>
-                  <td className="border-b border-border/60 px-4 py-4 align-top text-sm text-muted-foreground">
-                    {formatDate(item.updatedAt)}
-                  </td>
-                  <td className="border-b border-border/60 px-4 py-4 align-top">
-                    <StatusBadge status={item.status} />
-                  </td>
-                  <td className="border-b border-border/60 px-4 py-4 align-top">
-                    <PriorityBadge urgency={item.intake.urgency} />
-                  </td>
-                  <td className="border-b border-border/60 px-4 py-4 align-top">
-                    <span
-                      className={cn(
-                        "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-                        item.isHidden
-                          ? "bg-slate-200 text-slate-800"
-                          : "bg-emerald-100 text-emerald-900"
-                      )}
-                    >
-                      {item.isHidden ? "Hidden" : "Visible"}
-                    </span>
-                  </td>
-                  <td className="border-b border-border/60 px-4 py-4 align-top">
-                    <div className="flex flex-wrap gap-2">
-                      <Link
-                        href={`/admin/cases/${item.id}`}
-                        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full px-3")}
+              {paginatedCases.map((item) => {
+                const signals = getQueueSignals(item);
+
+                return (
+                  <tr key={item.id} className={cn("group", getRowTone(item))}>
+                    <td className="border-b border-border/60 px-4 py-4 align-top">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-foreground group-hover:text-primary">
+                              {item.title}
+                            </p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {item.reference} / {item.type.replaceAll("_", " ")}
+                            </p>
+                          </div>
+                          <PriorityBadge urgency={item.intake.urgency} />
+                        </div>
+                        <div className="text-sm leading-6 text-muted-foreground">
+                          <p className="font-medium text-foreground">{item.citizenName}</p>
+                          <p>{item.location}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="border-b border-border/60 px-4 py-4 align-top">
+                      <div className="space-y-3">
+                        <StatusBadge status={item.status} />
+                        <div className="flex flex-wrap gap-2">
+                          {signals.length ? (
+                            signals.map((signal) => (
+                              <span
+                                key={signal.label}
+                                className={cn(
+                                  "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+                                  signal.className
+                                )}
+                              >
+                                {signal.label}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
+                              On track
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="border-b border-border/60 px-4 py-4 align-top">
+                      <div className="space-y-2 text-sm">
+                        <p className="font-semibold text-foreground">{item.assignedUnit}</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+                          <span>{item.evidence.length} file{item.evidence.length === 1 ? "" : "s"}</span>
+                          <span>
+                            {item.intake.missingDocuments.length} missing doc
+                            {item.intake.missingDocuments.length === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="border-b border-border/60 px-4 py-4 align-top text-sm text-muted-foreground">
+                      <div className="space-y-1">
+                        <p>Updated {formatDate(item.updatedAt)}</p>
+                        <p>Submitted {formatDate(item.createdAt)}</p>
+                      </div>
+                    </td>
+                    <td className="border-b border-border/60 px-4 py-4 align-top">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
+                          item.isHidden
+                            ? "bg-slate-200 text-slate-800"
+                            : "bg-emerald-100 text-emerald-900"
+                        )}
                       >
-                        <span>Open</span>
-                        <ExternalLink className="size-3.5" />
-                      </Link>
-                      <Button
-                        variant={item.isHidden ? "outline" : "destructive"}
-                        size="sm"
-                        className="rounded-full px-3"
-                        onClick={() => setSelectedCase(item)}
-                      >
-                        {item.isHidden ? <ArchiveRestore className="size-3.5" /> : <EyeOff className="size-3.5" />}
-                        {item.isHidden ? "Unhide" : "Hide"}
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {item.isHidden ? "Hidden" : "Visible"}
+                      </span>
+                    </td>
+                    <td className="border-b border-border/60 px-4 py-4 align-top">
+                      <div className="flex flex-col gap-2">
+                        <Link
+                          href={`/admin/cases/${item.id}`}
+                          className={cn(
+                            buttonVariants({ size: "sm" }),
+                            "rounded-full px-3"
+                          )}
+                        >
+                          <span>Open</span>
+                          <ExternalLink className="size-3.5" />
+                        </Link>
+                        <Button
+                          variant={item.isHidden ? "outline" : "destructive"}
+                          size="sm"
+                          className="rounded-full px-3"
+                          onClick={() => setSelectedCase(item)}
+                        >
+                          {item.isHidden ? (
+                            <ArchiveRestore className="size-3.5" />
+                          ) : (
+                            <EyeOff className="size-3.5" />
+                          )}
+                          {item.isHidden ? "Unhide" : "Hide"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           {filteredCases.length > CASES_PER_PAGE ? (
@@ -423,7 +498,13 @@ export function AdminCaseQueueTable({ cases }: { cases: CaseItem[] }) {
               Cancel
             </Button>
             <Button onClick={confirmVisibilityChange} disabled={isPending}>
-              {isPending ? <LoaderCircle className="size-4 animate-spin" /> : selectedCase?.isHidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+              {isPending ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : selectedCase?.isHidden ? (
+                <Eye className="size-4" />
+              ) : (
+                <EyeOff className="size-4" />
+              )}
               {selectedCase?.isHidden ? "Unhide case" : "Hide case"}
             </Button>
           </DialogFooter>
