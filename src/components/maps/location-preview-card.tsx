@@ -28,7 +28,7 @@ export function LocationPreviewCard({
         <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
 
-      <div className={compact ? "aspect-[16/9] min-h-56 w-full" : "aspect-[4/3] min-h-64 w-full"}>
+      <div className={compact ? "aspect-[16/9] min-h-56 w-full" : "aspect-[16/10] min-h-52 w-full"}>
         {location && typeof location.lat === "number" && typeof location.lng === "number" ? (
           <LeafletPreviewMap location={location} />
         ) : (

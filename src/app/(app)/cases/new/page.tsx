@@ -15,8 +15,8 @@ export default async function NewCasePage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="New case"
-        title="Create a case in one guided flow"
-        description="Describe the issue, add any useful proof, and send it with confidence. You will track progress from your case page right after submit."
+        title="Create a case with one clear guided flow"
+        description="Work through three simple steps: describe the issue, add proof if you have it, then review and submit with confidence."
       />
       <CaseIntakeForm userId={session.uid} />
     </div>

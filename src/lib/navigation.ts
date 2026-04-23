@@ -17,6 +17,7 @@ export type AppNavItem = {
   shortLabel?: string;
   icon: LucideIcon;
   matchPrefixes?: string[];
+  excludePrefixes?: string[];
   exact?: boolean;
 };
 
@@ -28,6 +29,7 @@ export const roleNavigation: Record<UserRole, AppNavItem[]> = {
       shortLabel: "Home",
       icon: LayoutDashboard,
       matchPrefixes: ["/dashboard", "/cases"],
+      excludePrefixes: ["/cases/new"],
     },
     {
       href: "/cases/new",
@@ -96,6 +98,18 @@ function normalizePath(path: string) {
 export function isNavItemActive(currentPath: string, item: AppNavItem) {
   const normalizedCurrentPath = normalizePath(currentPath);
   const normalizedHref = normalizePath(item.href);
+  const matchesExcludedPrefix = item.excludePrefixes?.some((prefix) => {
+    const normalizedPrefix = normalizePath(prefix);
+
+    return (
+      normalizedCurrentPath === normalizedPrefix ||
+      normalizedCurrentPath.startsWith(`${normalizedPrefix}/`)
+    );
+  });
+
+  if (matchesExcludedPrefix) {
+    return false;
+  }
 
   if (item.matchPrefixes?.length) {
     return item.matchPrefixes.some((prefix) => {

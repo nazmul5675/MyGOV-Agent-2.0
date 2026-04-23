@@ -6,11 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
   CheckCircle2,
+  CircleHelp,
   FileAudio2,
   FileText,
   ImagePlus,
   LoaderCircle,
-  Mic,
+  MapPin,
   Trash2,
   Sparkles,
   Upload,
@@ -107,16 +108,40 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
   };
 
   return (
-    <form
-      onSubmit={form.handleSubmit(onSubmit)}
-      className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]"
-    >
+    <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+      <section className="surface-panel p-4 sm:p-5">
+        <div className="flex flex-wrap gap-2">
+          {[
+            "1. Describe the issue",
+            "2. Add proof if you have it",
+            "3. Review and submit",
+          ].map((item, index) => (
+            <div
+              key={item}
+              className={
+                index === 2
+                  ? "rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                  : "rounded-full bg-muted px-4 py-2 text-sm font-semibold text-muted-foreground"
+              }
+            >
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="space-y-6">
         <Card className="surface-panel">
           <CardHeader>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+              Step 1
+            </p>
             <CardTitle className="font-heading text-2xl font-bold tracking-tight text-primary">
               Tell us what happened
             </CardTitle>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Keep this simple and clear. Focus on the issue, the location, and anything urgent.
+            </p>
           </CardHeader>
           <CardContent className="grid gap-5 sm:grid-cols-2">
             <div className="grid gap-2 sm:col-span-2">
@@ -179,11 +204,14 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
         <Card className="surface-panel overflow-hidden">
           <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row">
             <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+                Step 2
+              </p>
               <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
                 Supporting files
               </CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                Add the strongest proof you have first. Photos, PDFs, and voice notes all work here.
+                Add the strongest proof you have first. If you do not have a file yet, you can still submit the case.
               </p>
             </div>
             <div className="self-start rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -244,6 +272,18 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               })}
             </div>
 
+            <div className="grid gap-3 md:grid-cols-3">
+              {[
+                "Use the clearest proof first, not every file you have.",
+                "You can add more files later if the case needs them.",
+                "If a file uploads successfully, it will stay attached to this case.",
+              ].map((item) => (
+                <div key={item} className="rounded-[20px] bg-primary/[0.04] p-4 text-sm leading-6 text-muted-foreground">
+                  {item}
+                </div>
+              ))}
+            </div>
+
             <div className="space-y-3">
               {uploads.map((item) => (
                 <div key={item.id} className="rounded-[24px] bg-white/80 p-4">
@@ -299,15 +339,21 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
 
         <Card className="surface-panel">
           <CardHeader>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
+              Step 3
+            </p>
             <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
-              Before you submit
+              Review before you submit
             </CardTitle>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Make sure the case is easy to understand and includes your best supporting proof.
+            </p>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-3">
             {[
               "Keep the title clear and describe the issue in plain language.",
-              "Upload your strongest supporting file first, then add any extra proof.",
-              "After submit, you can follow updates, requested documents, and file decisions from the case page.",
+              "A single strong file is enough to start if you have one.",
+              "After submit, you can follow updates from the case page.",
             ].map((item, index) => (
               <div key={item} className="rounded-[22px] bg-muted/75 p-4">
                 <div className="flex items-center gap-2 text-primary">
@@ -321,40 +367,66 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             ))}
           </CardContent>
         </Card>
-      </div>
 
-      <div className="space-y-6">
-        <AssistantPanel
-          initialMessages={[]}
-          title="Need help before you submit?"
-          subtitle="Use the assistant while you prepare your case. It can help you write a clearer summary and think through what proof may help."
-        />
-
-        <Card className="hero-gradient rounded-[32px] border-none text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)]">
+        <Card className="surface-panel border-primary/10 bg-primary/[0.03]">
           <CardContent className="space-y-4 p-7">
             <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-full bg-white/10">
-                <Mic className="size-5" />
+              <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <CheckCircle2 className="size-5" />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/70">
-                  Guided submission
+                <p className="text-xs uppercase tracking-[0.18em] text-primary/70">
+                  What happens next
                 </p>
-                <p className="font-heading text-2xl font-bold tracking-tight">
-                  Calm, step-by-step intake
+                <p className="font-heading text-2xl font-bold tracking-tight text-primary">
+                  Submit, then track everything from your case page
                 </p>
               </div>
             </div>
-            <p className="text-sm leading-7 text-primary-foreground/80">
-              Your summary, files, and case details stay together so the next review step is clearer and easier to trust.
-            </p>
+            <div className="space-y-3">
+              {[
+                "Your files upload first, then the case is created.",
+                "You will be taken straight to the new case page after submit.",
+                "That page will show updates, requested documents, and file decisions.",
+              ].map((item) => (
+                <div key={item} className="rounded-[20px] bg-white/70 p-4 text-sm leading-6 text-muted-foreground">
+                  {item}
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
         <Card className="surface-panel">
           <CardHeader>
             <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
-              Submission checklist
+              Need help while filling this out?
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              { icon: MapPin, text: "Be as specific as you can about where the issue happened." },
+              { icon: FileText, text: "A short plain-language description is better than a long complicated one." },
+              { icon: CircleHelp, text: "If you are unsure what proof to add, start with the clearest file you have or submit without one." },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.text} className="flex items-start gap-3 rounded-[20px] bg-muted/70 p-4">
+                  <Icon className="mt-0.5 size-4 text-primary" />
+                  <p className="text-sm leading-6 text-muted-foreground">{item.text}</p>
+                </div>
+              );
+            })}
+            <div className="rounded-[20px] bg-accent/65 p-4 text-sm leading-6 text-accent-foreground">
+              You do not need a perfect case packet. Submit the clearest information you have now, and follow-up requests can happen later if needed.
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="surface-panel">
+          <CardHeader>
+            <CardTitle className="font-heading text-xl font-bold tracking-tight text-primary">
+              Ready to send?
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -369,7 +441,7 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
               </div>
             ))}
             <div className="rounded-[20px] bg-accent/65 p-4 text-sm leading-6 text-accent-foreground">
-              When you submit, your files are uploaded first. Then your case is created and ready to track.
+              When you submit, your files upload first. Then the case is created and ready to track.
             </div>
             <Button type="submit" size="lg" className="h-12 w-full rounded-2xl" disabled={isPending}>
               {isPending ? <LoaderCircle className="size-4 animate-spin" /> : null}
@@ -377,6 +449,14 @@ export function CaseIntakeForm({ userId }: CaseIntakeFormProps) {
             </Button>
           </CardContent>
         </Card>
+
+        <div className="rounded-[28px] border border-border/70 bg-background/85 p-4">
+          <AssistantPanel
+            initialMessages={[]}
+            title="Optional case help"
+            subtitle="Use the assistant only if you want help tightening your summary or choosing which proof to upload first."
+          />
+        </div>
       </div>
     </form>
   );

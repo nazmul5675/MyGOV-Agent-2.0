@@ -17,11 +17,13 @@ export function EvidenceManager({
   title = "Files and evidence",
   description,
   dense = false,
+  className,
 }: {
   files: EvidenceFile[];
   title?: string;
   description?: string;
   dense?: boolean;
+  className?: string;
 }) {
   const accepted = files.filter((file) => file.status === "accepted").length;
   const pendingReview = files.filter((file) =>
@@ -32,7 +34,7 @@ export function EvidenceManager({
   ).length;
 
   return (
-    <section className="surface-panel p-5 sm:p-6">
+    <section className={cn("surface-panel flex h-full flex-col p-5 sm:p-6", className)}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
@@ -61,7 +63,13 @@ export function EvidenceManager({
       </div>
 
       {files.length ? (
-        <div className={cn("mt-5", dense ? "space-y-3" : "grid gap-4 2xl:grid-cols-1")}>
+        <div
+          className={cn(
+            "mt-5",
+            dense ? "space-y-3" : "grid gap-4 2xl:grid-cols-1",
+            "flex-1"
+          )}
+        >
           {files.map((file) => (
             <article
               key={file.id}
@@ -183,11 +191,12 @@ export function EvidenceManager({
           ))}
         </div>
       ) : (
-        <div className="mt-5">
+        <div className="mt-5 flex flex-1">
           <EmptyState
             icon={<FileStack className="size-5" />}
             title="No files linked yet"
             description="Upload evidence to create a real document trail for citizens, admins, and future AI-assisted summaries."
+            className="w-full"
           />
         </div>
       )}

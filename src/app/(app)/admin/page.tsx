@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowRight,
-  ClipboardCheck,
   Clock3,
   FileSearch,
   ShieldAlert,
@@ -13,21 +12,55 @@ import {
   Workflow,
 } from "lucide-react";
 
-import { EvidenceManager } from "@/components/common/evidence-manager";
 import { EmptyState } from "@/components/common/empty-state";
+import { FileStatusBadge } from "@/components/common/file-status-badge";
 import { LiveDataState } from "@/components/common/live-data-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Reveal } from "@/components/common/reveal";
-import { StatCard } from "@/components/common/stat-card";
 import { Timeline } from "@/components/common/timeline";
 import { requireRole } from "@/lib/auth/session";
 import { getAdminDashboardData } from "@/lib/repositories/cases";
+import type { CaseItem } from "@/lib/types";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
 };
+
+type QueueLane = {
+  title: string;
+  hint: string;
+  countTone: string;
+  surfaceTone: string;
+  rowTone: string;
+  actionLabel: string;
+  items: CaseItem[];
+};
+
+function formatCompactDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(value));
+}
+
+function getRecommendedCase(
+  urgentCases: CaseItem[],
+  needsCitizenResponse: CaseItem[],
+  recentIncoming: CaseItem[],
+  stalledCases: CaseItem[],
+  queue: CaseItem[]
+) {
+  return (
+    urgentCases[0] ||
+    needsCitizenResponse[0] ||
+    recentIncoming[0] ||
+    stalledCases[0] ||
+    queue[0] ||
+    null
+  );
+}
 
 export default async function AdminDashboardPage() {
   await requireRole("admin");
@@ -50,8 +83,8 @@ export default async function AdminDashboardPage() {
       <div className="space-y-6">
         <PageHeader
           eyebrow="Admin dashboard"
-          title="Review queue with cleaner context and faster decisions"
-          description="Use the queue as your starting point, then open the next case that needs action."
+          title="Queue overview unavailable"
+          description="Retry the live dashboard to reopen the admin work queue."
         />
         <LiveDataState
           tone="setup"
@@ -80,8 +113,12 @@ export default async function AdminDashboardPage() {
     queueBuckets,
     roleActivity,
   } = data;
-  const primaryStats = stats.slice(0, 6);
-  const priorityQueue = queue.slice(0, 5);
+
+  const urgentCases = queueBuckets?.urgentCases || [];
+  const needsCitizenResponse = queueBuckets?.needsCitizenResponse || [];
+  const recentIncoming = queueBuckets?.recentIncoming || [];
+  const stalledCases = queueBuckets?.stalledCases || [];
+
   const evidencePending = filesNeedingReview.filter((file) =>
     ["uploaded", "under_review"].includes(file.status)
   ).length;
@@ -89,310 +126,403 @@ export default async function AdminDashboardPage() {
     ["needs_replacement", "rejected"].includes(file.status)
   ).length;
 
-  const statIcons = [
-    <ClipboardCheck className="size-5" key="total" />,
-    <ShieldCheck className="size-5" key="review" />,
-    <Clock3 className="size-5" key="waiting" />,
-    <Clock3 className="size-5" key="progress" />,
-    <ClipboardCheck className="size-5" key="resolved" />,
-    <ShieldAlert className="size-5" key="urgent" />,
+  const pressureStats = [
+    {
+      label: stats[1]?.label || "Needs review",
+      value: stats[1]?.value || "0",
+      note: "Waiting for first review",
+      icon: <ShieldCheck className="size-4" />,
+    },
+    {
+      label: stats[5]?.label || "Urgent items",
+      value: stats[5]?.value || "0",
+      note: "Handle before anything else",
+      icon: <ShieldAlert className="size-4" />,
+    },
+    {
+      label: stats[2]?.label || "Waiting on citizen",
+      value: stats[2]?.value || "0",
+      note: "Blocked by missing response",
+      icon: <Clock3 className="size-4" />,
+    },
+    {
+      label: "Files waiting",
+      value: String(evidencePending + evidenceNeedsAction),
+      note: "Evidence to review or resolve",
+      icon: <FileSearch className="size-4" />,
+    },
   ];
+
+  const lanes: QueueLane[] = [
+    {
+      title: "Urgent first",
+      hint: "Start here when cases need a fast decision.",
+      countTone: "bg-rose-100 text-rose-800",
+      surfaceTone: "bg-rose-50/75 ring-1 ring-rose-200/70",
+      rowTone: "bg-white/90",
+      actionLabel: "Open urgent queue",
+      items: urgentCases,
+    },
+    {
+      title: "Waiting on citizen",
+      hint: "Unblock these with one clear next request.",
+      countTone: "bg-amber-100 text-amber-800",
+      surfaceTone: "bg-amber-50/70",
+      rowTone: "bg-white/88",
+      actionLabel: "Review blocked cases",
+      items: needsCitizenResponse,
+    },
+    {
+      title: "Fresh intake",
+      hint: "New submissions ready for first review.",
+      countTone: "bg-slate-200 text-slate-700",
+      surfaceTone: "bg-slate-50/80",
+      rowTone: "bg-white/88",
+      actionLabel: "Check new intake",
+      items: recentIncoming,
+    },
+    {
+      title: "Stalled cases",
+      hint: "Reopen work that has stopped moving.",
+      countTone: "bg-sky-100 text-sky-800",
+      surfaceTone: "bg-sky-50/75",
+      rowTone: "bg-white/88",
+      actionLabel: "Reopen stalled work",
+      items: stalledCases,
+    },
+  ];
+
+  const recommendedCase = getRecommendedCase(
+    urgentCases,
+    needsCitizenResponse,
+    recentIncoming,
+    stalledCases,
+    queue
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Admin dashboard"
-        title="Run the queue like a real operations control center"
-        description="See what needs review now, what is blocked, and what should move next."
+        title="Open the next case that needs a decision"
+        description="Use the lanes below to triage urgent, blocked, and newly submitted work quickly."
+        actions={
+          <>
+            <Link
+              href="/admin/case-queue"
+              className={cn(buttonVariants({ variant: "default" }), "rounded-full px-5")}
+            >
+              Open full case queue
+              <ArrowRight className="size-4" />
+            </Link>
+            <Link
+              href="/admin/users"
+              className={cn(buttonVariants({ variant: "outline" }), "rounded-full px-5")}
+            >
+              Manage users
+            </Link>
+          </>
+        }
       />
 
       <Reveal>
-        <section className="surface-panel p-5 sm:p-6">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                Operations pulse
-              </p>
-              <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-                Keep the workload moving.
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Start with the queue, then use the right column only when it helps you decide faster.
-              </p>
+        <section className="grid gap-3 xl:grid-cols-4">
+          {pressureStats.map((stat) => (
+            <div
+              key={stat.label}
+              className="surface-panel flex items-center justify-between gap-4 px-4 py-3.5"
+            >
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {stat.label}
+                </p>
+                <p className="mt-1.5 text-2xl font-black leading-none tracking-tight text-primary">
+                  {stat.value}
+                </p>
+                <p className="mt-1.5 text-sm leading-5 text-muted-foreground">{stat.note}</p>
+              </div>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-[16px] bg-accent text-accent-foreground">
+                {stat.icon}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/admin/case-queue"
-                className={cn(buttonVariants({ variant: "default" }), "rounded-full px-5")}
-              >
-                Open case queue
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                href="/admin/users"
-                className={cn(buttonVariants({ variant: "outline" }), "rounded-full px-5")}
-              >
-                Manage users
-              </Link>
-            </div>
-          </div>
+          ))}
         </section>
       </Reveal>
 
-      <Reveal delay={0.03}>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-          {primaryStats.map((stat, index) => (
-            <StatCard key={stat.label} {...stat} icon={statIcons[index]} />
-          ))}
-        </div>
-      </Reveal>
-
-      <Reveal delay={0.06}>
-        <div className="space-y-6">
-          <section
-            id="queue"
-            className="grid gap-6 xl:grid-cols-[minmax(0,1.32fr)_minmax(21rem,0.68fr)]"
-          >
-            <div className="space-y-5">
-              <section className="surface-panel p-5 sm:p-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                  <div className="max-w-3xl">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                      Primary workload
-                    </p>
-                    <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-primary">
-                      Workload buckets
-                    </h2>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      Start here. Open what is urgent, blocked on the citizen, or overdue for movement.
-                    </p>
-                  </div>
-                  <Link
-                    href="/admin/case-queue"
-                    className={cn(buttonVariants({ variant: "outline" }), "rounded-full px-5")}
-                  >
-                    Open full queue
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </div>
-              </section>
-
-              <div className="grid gap-4 2xl:grid-cols-2">
-                {[
-                  {
-                    title: "Recent incoming",
-                    description: "Fresh packets entering triage.",
-                    tone: "bg-slate-50/80",
-                    items: queueBuckets?.recentIncoming || [],
-                  },
-                  {
-                    title: "Waiting on citizen",
-                    description: "Blocked by missing documents or clarification.",
-                    tone: "bg-amber-50/80",
-                    items: queueBuckets?.needsCitizenResponse || [],
-                  },
-                  {
-                    title: "Urgent cases",
-                    description: "High-priority records to open early.",
-                    tone: "bg-rose-50/80",
-                    items: queueBuckets?.urgentCases || [],
-                  },
-                  {
-                    title: "Stalled cases",
-                    description: "Packets that may need intervention.",
-                    tone: "bg-sky-50/80",
-                    items: queueBuckets?.stalledCases || [],
-                  },
-                ].map((bucket) => (
-                  <section key={bucket.title} className={`surface-panel p-5 ${bucket.tone}`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{bucket.title}</p>
-                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                          {bucket.description}
-                        </p>
-                      </div>
-                      <div className="rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        {bucket.items.length}
-                      </div>
-                    </div>
-                    <div className="mt-4 space-y-3">
-                      {bucket.items.length ? (
-                        bucket.items.slice(0, 3).map((item) => (
-                          <Link
-                            key={item.id}
-                            href={`/admin/cases/${item.id}`}
-                            className="block rounded-[20px] bg-muted/75 p-4 transition-colors hover:bg-accent"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <p className="line-clamp-2 font-semibold text-foreground">{item.title}</p>
-                              <span className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                                {item.status.replaceAll("_", " ")}
-                              </span>
-                            </div>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {item.reference} / {item.location}
-                            </p>
-                          </Link>
-                        ))
-                      ) : (
-                        <div className="rounded-[20px] bg-muted/70 p-4 text-sm leading-6 text-muted-foreground">
-                          Nothing needs attention in this bucket right now.
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-4">
-                      <Link
-                        href={bucket.items[0] ? `/admin/cases/${bucket.items[0].id}` : "/admin/case-queue"}
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
-                      >
-                        {bucket.items[0] ? "Open next case" : "Open full queue"}
-                        <ArrowRight className="size-4" />
-                      </Link>
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <section className="surface-panel p-5 sm:p-6">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="size-5 text-primary" />
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                    Open next
-                  </p>
-                </div>
-                <div className="mt-4 space-y-2">
-                  {suggestedActions.map((action, index) => (
-                    <div key={action} className="rounded-[22px] bg-muted/80 p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                          {index + 1}
-                        </span>
-                        <p className="text-sm leading-6 text-muted-foreground">{action}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <EvidenceManager
-                files={filesNeedingReview}
-                title="Files needing review"
-                description="Keep this list close to the queue so pending uploads and replacement requests are easy to act on."
-                dense
-              />
-            </div>
-          </section>
-
-          <section className="surface-panel p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
+      <Reveal delay={0.04}>
+        <section
+          id="queue"
+          className="grid gap-6 xl:grid-cols-[minmax(0,1.72fr)_minmax(17rem,0.48fr)]"
+        >
+          <section className="surface-panel p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-4 border-b border-border/60 pb-4">
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Queue priorities
+                  Triage lanes
                 </p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Latest cases worth opening next.
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                  Pick a lane, open the next case, move on.
                 </p>
               </div>
-              <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                {priorityQueue.length} items
-              </span>
+              <Link
+                href="/admin/case-queue"
+                className="hidden text-sm font-semibold text-primary underline-offset-4 hover:underline xl:inline-flex xl:items-center xl:gap-2"
+              >
+                Open full queue
+                <ArrowRight className="size-4" />
+              </Link>
             </div>
-            <div className="mt-4 grid gap-3 xl:grid-cols-2">
-              {priorityQueue.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/admin/cases/${item.id}`}
-                  className="block rounded-[22px] bg-muted/75 p-4 transition-colors hover:bg-accent"
+
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              {lanes.map((lane) => (
+                <section
+                  key={lane.title}
+                  className={cn("rounded-[24px] p-4", lane.surfaceTone)}
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-foreground">{item.title}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {item.reference} / {item.citizenName}
+                      <p className="font-semibold text-foreground">{lane.title}</p>
+                      <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                        {lane.hint}
                       </p>
                     </div>
-                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                      {item.intake.urgency}
+                    <span
+                      className={cn(
+                        "rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+                        lane.countTone
+                      )}
+                    >
+                      {lane.items.length}
                     </span>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                    <span>{item.status.replaceAll("_", " ")}</span>
-                    <span>{item.evidence.length} files</span>
-                    <span>Updated {new Date(item.updatedAt).toLocaleDateString("en-GB")}</span>
+
+                  <div className="mt-4 space-y-2.5">
+                    {lane.items.length ? (
+                      lane.items.slice(0, 3).map((item) => (
+                        <Link
+                          key={item.id}
+                          href={`/admin/cases/${item.id}`}
+                          className={cn(
+                            "block rounded-[16px] border border-white/80 px-3 py-2.5 transition-colors hover:bg-accent",
+                            lane.rowTone
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="line-clamp-1 font-semibold text-foreground">
+                                {item.title}
+                              </p>
+                              <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                                {item.reference} / {item.citizenName}
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+                              {item.status.replaceAll("_", " ")}
+                            </span>
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                            <span className="line-clamp-1 flex-1">{item.location}</span>
+                            <span>{item.evidence.length} files</span>
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="rounded-[16px] bg-white/75 px-4 py-3 text-sm leading-6 text-muted-foreground">
+                        Nothing needs attention in this lane right now.
+                      </div>
+                    )}
                   </div>
-                </Link>
+
+                  <div className="mt-4">
+                    <Link
+                      href={lane.items[0] ? `/admin/cases/${lane.items[0].id}` : "/admin/case-queue"}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                    >
+                      {lane.items[0] ? "Open next case" : lane.actionLabel}
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </div>
+                </section>
               ))}
             </div>
           </section>
-        </div>
+
+          <aside className="space-y-4">
+            <section className="surface-panel p-4">
+              <div className="flex items-center gap-3">
+                <Sparkles className="size-5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                  Open first
+                </p>
+              </div>
+
+              {recommendedCase ? (
+                <Link
+                  href={`/admin/cases/${recommendedCase.id}`}
+                  className="mt-4 block rounded-[20px] bg-primary px-4 py-4 text-primary-foreground transition-transform duration-200 hover:-translate-y-0.5"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/70">
+                    Recommended next case
+                  </p>
+                  <p className="mt-2 font-semibold">{recommendedCase.title}</p>
+                  <p className="mt-1 text-sm text-primary-foreground/75">
+                    {recommendedCase.reference} / {recommendedCase.citizenName}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs uppercase tracking-[0.16em] text-primary-foreground/70">
+                    <span>{recommendedCase.status.replaceAll("_", " ")}</span>
+                    <span>{recommendedCase.intake.urgency}</span>
+                  </div>
+                </Link>
+              ) : (
+                <div className="mt-4 rounded-[18px] bg-muted/75 p-4 text-sm leading-6 text-muted-foreground">
+                  No case needs immediate action right now.
+                </div>
+              )}
+
+              <div className="mt-4 space-y-2">
+                {suggestedActions.slice(0, 2).map((action, index) => (
+                  <div key={action} className="rounded-[18px] bg-muted/75 p-3">
+                    <div className="flex items-start gap-3">
+                      <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        {index + 1}
+                      </span>
+                      <p className="text-sm leading-6 text-muted-foreground">{action}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="surface-panel p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                  Files needing review
+                </p>
+                <span className="rounded-full bg-sky-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-800">
+                  {filesNeedingReview.length}
+                </span>
+              </div>
+
+              {filesNeedingReview.length ? (
+                <div className="mt-4 space-y-2.5">
+                  {filesNeedingReview.slice(0, 3).map((file) => {
+                    const rowContent = (
+                      <div className="rounded-[16px] border border-border/60 bg-white/78 p-3 transition-colors hover:bg-accent">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="line-clamp-1 text-sm font-semibold text-foreground">
+                              {file.name}
+                            </p>
+                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                              <span>{file.category || "Uncategorized"}</span>
+                              <span>{formatCompactDate(file.uploadedAt)}</span>
+                              <span>{file.sizeLabel}</span>
+                            </div>
+                          </div>
+                          <div className="shrink-0">
+                            <FileStatusBadge status={file.status} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+
+                    return file.caseId ? (
+                      <Link key={file.id} href={`/admin/cases/${file.caseId}`} className="block">
+                        {rowContent}
+                      </Link>
+                    ) : (
+                      <div key={file.id}>{rowContent}</div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <EmptyState
+                    icon={<FileSearch className="size-5" />}
+                    title="No files waiting"
+                    description="New uploads that need review will appear here."
+                    className="px-5 py-7"
+                  />
+                </div>
+              )}
+
+              <div className="mt-4">
+                <Link
+                  href="/admin/case-queue"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                >
+                  Open cases with evidence
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            </section>
+          </aside>
+        </section>
       </Reveal>
 
-      <Reveal delay={0.1}>
+      <Reveal delay={0.08}>
         <section
           id="activity"
-          className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(21rem,0.92fr)]"
+          className="grid gap-6 xl:grid-cols-[minmax(0,1.22fr)_minmax(18rem,0.78fr)]"
         >
-          <div className="surface-panel p-5 sm:p-6">
+          <div className="surface-panel p-4">
             <div className="flex items-center gap-3">
               <Workflow className="size-5 text-primary" />
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Recent operations activity
-                </p>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                Recent operations activity
+              </p>
             </div>
-            <div className="mt-5">
+            <div className="mt-5 max-h-[26rem] overflow-y-auto pr-2">
               {recentActivity.length ? (
                 <Timeline events={recentActivity} />
               ) : (
                 <EmptyState
                   icon={<Workflow className="size-5" />}
                   title="No recent operations activity yet"
-                  description="Once cases are submitted and reviewed, the latest workflow events will appear here."
+                  description="Recent workflow activity will appear here once new cases are reviewed."
                 />
               )}
             </div>
           </div>
 
-          <div className="space-y-6">
-            <section className="surface-panel p-5 sm:p-6">
+          <div className="space-y-4">
+            <section className="surface-panel p-4">
               <div className="flex items-center gap-3">
                 <Users2 className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Role and access activity
+                  Access activity
                 </p>
               </div>
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 space-y-2.5">
                 {roleActivity?.length ? (
                   roleActivity.slice(0, 4).map((item) => (
-                    <div key={item.id} className="rounded-[22px] bg-muted/80 p-4">
+                    <div key={item.id} className="rounded-[18px] bg-muted/70 p-3">
                       <p className="font-semibold text-foreground">{item.title}</p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      <p className="mt-1.5 text-sm leading-5 text-muted-foreground">
                         {item.description}
                       </p>
-                      <p className="mt-3 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
                         {item.actor} / {new Date(item.createdAt).toLocaleDateString("en-GB")}
                       </p>
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-[22px] bg-muted/75 p-4 text-sm leading-6 text-muted-foreground">
+                  <div className="rounded-[18px] bg-muted/70 p-4 text-sm leading-6 text-muted-foreground">
                     Role changes from the admin users screen will appear here.
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="surface-panel p-5 sm:p-6">
+            <section className="surface-panel p-4">
               <div className="flex items-center gap-3">
                 <FileSearch className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Evidence workload snapshot
+                  Evidence pressure
                 </p>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[22px] bg-muted/80 p-4">
+                <div className="rounded-[18px] bg-muted/75 p-3.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Pending review
                   </p>
@@ -400,10 +530,10 @@ export default async function AdminDashboardPage() {
                     {evidencePending}
                   </p>
                   <p className="mt-2 text-sm leading-5 text-muted-foreground">
-                    Files still waiting for a review decision.
+                    Files still waiting for review.
                   </p>
                 </div>
-                <div className="rounded-[22px] bg-muted/80 p-4">
+                <div className="rounded-[18px] bg-muted/75 p-3.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Need action
                   </p>
@@ -414,14 +544,6 @@ export default async function AdminDashboardPage() {
                     Files blocked by replacement or rejection.
                   </p>
                 </div>
-              </div>
-              <div className="mt-4 rounded-[22px] bg-primary/[0.04] p-4 text-sm leading-6 text-muted-foreground">
-                {filesNeedingReview.length
-                  ? `Latest evidence workload: ${filesNeedingReview
-                      .slice(0, 3)
-                      .map((file) => file.name)
-                      .join(", ")}.`
-                  : "No pending evidence workload right now."}
               </div>
             </section>
           </div>

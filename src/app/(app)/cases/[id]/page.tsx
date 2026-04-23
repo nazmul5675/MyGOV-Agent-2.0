@@ -298,30 +298,34 @@ export default async function CitizenCaseDetailPage({
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
               Latest updates
             </p>
-            {item.timeline.length ? (
-              <Timeline events={item.timeline} />
-            ) : (
-              <EmptyState
-                icon={<CheckCircle2 className="size-5" />}
-                title="No updates yet"
-                description="Updates will appear here as soon as your case moves forward."
-              />
-            )}
+            <div className="max-h-[22rem] overflow-y-auto pr-2">
+              {item.timeline.length ? (
+                <Timeline events={item.timeline} />
+              ) : (
+                <EmptyState
+                  icon={<CheckCircle2 className="size-5" />}
+                  title="No updates yet"
+                  description="Updates will appear here as soon as your case moves forward."
+                />
+              )}
+            </div>
           </section>
-
-          <AssistantPanel
-            caseId={item.id}
-            initialMessages={messages || []}
-            title="Case help"
-            subtitle="Ask what your status means, what file is still needed, or what to do next before you respond."
-            suggestedPrompts={[
-              "What do I need to do next?",
-              "Which file is still missing?",
-              "Summarize my uploaded files",
-              "Why is my case still under review?",
-            ]}
-          />
         </div>
+      </section>
+
+      <section>
+        <AssistantPanel
+          caseId={item.id}
+          initialMessages={messages || []}
+          title="Case help"
+          subtitle="Ask what your status means, what file is still needed, or what to do next before you respond."
+          suggestedPrompts={[
+            "What do I need to do next?",
+            "Which file is still missing?",
+            "Summarize my uploaded files",
+            "Why is my case still under review?",
+          ]}
+        />
       </section>
     </div>
   );
