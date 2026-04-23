@@ -17,7 +17,6 @@ import { LiveDataState } from "@/components/common/live-data-state";
 import { CitizenRecentCasesTable } from "@/components/cases/citizen-recent-cases-table";
 import { PageHeader } from "@/components/common/page-header";
 import { Reveal } from "@/components/common/reveal";
-import { StatCard } from "@/components/common/stat-card";
 import { Timeline } from "@/components/common/timeline";
 import { requireRole } from "@/lib/auth/session";
 import { getCitizenDashboardData, listDashboardAssistantMessages } from "@/lib/repositories/cases";
@@ -81,13 +80,39 @@ export default async function DashboardPage() {
       activeCase.evidence.some((file) => ["needs_replacement", "rejected"].includes(file.status))
     : false;
   const topReminder = reminders.find((item) => !item.read) || reminders[0] || null;
+  const actionStats = [
+    {
+      label: stats[0]?.label || "Total cases",
+      value: stats[0]?.value || "0",
+      note: "Visible in your tracking list",
+      icon: <Files className="size-4" />,
+    },
+    {
+      label: stats[1]?.label || "Active cases",
+      value: stats[1]?.value || "0",
+      note: "Still moving through review",
+      icon: <BellRing className="size-4" />,
+    },
+    {
+      label: stats[2]?.label || "Needs action",
+      value: stats[2]?.value || "0",
+      note: "Cases waiting on you",
+      icon: <CircleAlert className="size-4" />,
+    },
+    {
+      label: stats[3]?.label || "Resolved",
+      value: stats[3]?.value || "0",
+      note: "Completed and closed",
+      icon: <CheckCircle2 className="size-4" />,
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Citizen dashboard"
         title={`Welcome back, ${session.name.split(" ")[0]}.`}
-        description="Start with the one case that needs attention, then use the table below to scan the rest."
+        description="Start with the one case that needs you, then use the table below to track the rest."
         actions={
           <>
             <Link
@@ -110,7 +135,7 @@ export default async function DashboardPage() {
       />
 
       <Reveal>
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(20rem,0.7fr)]">
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(20rem,0.55fr)]">
           <div className="hero-gradient rounded-[32px] p-6 text-primary-foreground shadow-[0_24px_60px_rgba(0,30,64,0.28)] sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">
               Your next step
@@ -128,7 +153,7 @@ export default async function DashboardPage() {
                   ? activeCaseNeedsAction
                     ? `Open ${activeCase.title} and send the missing or replacement item first.`
                     : `Open ${activeCase.title} to check progress, reviewed files, and the latest update.`
-                  : "Start a new case when you are ready. Your uploads, timeline, and follow-up guidance will appear here right away."}
+                  : "Start a case when you are ready. Your uploads, updates, and next steps will appear here right away."}
               </p>
             </div>
 
@@ -164,14 +189,14 @@ export default async function DashboardPage() {
                 href={activeCase ? `/cases/${activeCase.id}` : "/cases/new"}
                 className={cn(buttonVariants({ size: "default" }), "rounded-full px-5")}
               >
-                {activeCase ? "Open this case" : "Create your first case"}
+                {activeCase ? "Open case" : "Create your first case"}
               </Link>
               {topReminder?.actionHref ? (
                 <Link
                   href={topReminder.actionHref}
                   className={cn(buttonVariants({ variant: "outline" }), "rounded-full border-white/25 bg-white/10 px-5 text-white hover:bg-white/20 hover:text-white")}
                 >
-                  Open latest reminder
+                  Open reminder
                 </Link>
               ) : null}
             </div>
@@ -191,7 +216,7 @@ export default async function DashboardPage() {
                   <CheckCircle2 className="size-5 text-primary" />
                 )}
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Attention summary
+                  What happens next
                 </p>
               </div>
               <div className="mt-4 space-y-3">
@@ -203,7 +228,7 @@ export default async function DashboardPage() {
                         : `${activeCase.title} is moving and does not need anything from you right now.`}
                     </div>
                     <div className="rounded-[22px] bg-white/80 p-4 text-sm leading-6 text-muted-foreground">
-                      {recommendedActions[0]}
+                      {recommendedActions[0] || "Open your latest case to check the next update."}
                     </div>
                   </>
                 ) : (
@@ -253,12 +278,27 @@ export default async function DashboardPage() {
       </Reveal>
 
       <Reveal delay={0.04}>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard {...stats[0]} icon={<Files className="size-5" />} />
-          <StatCard {...stats[1]} icon={<BellRing className="size-5" />} />
-          <StatCard {...stats[2]} icon={<CircleAlert className="size-5" />} />
-          <StatCard {...stats[3]} icon={<CheckCircle2 className="size-5" />} />
-        </div>
+        <section className="grid gap-3 xl:grid-cols-4">
+          {actionStats.map((stat) => (
+            <div
+              key={stat.label}
+              className="surface-panel flex items-center justify-between gap-4 px-4 py-3.5"
+            >
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {stat.label}
+                </p>
+                <p className="mt-1.5 text-2xl font-black leading-none tracking-tight text-primary">
+                  {stat.value}
+                </p>
+                <p className="mt-1.5 text-sm leading-5 text-muted-foreground">{stat.note}</p>
+              </div>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-[16px] bg-accent text-accent-foreground">
+                {stat.icon}
+              </div>
+            </div>
+          ))}
+        </section>
       </Reveal>
 
       <Reveal delay={0.06}>
@@ -271,58 +311,23 @@ export default async function DashboardPage() {
       </Reveal>
 
       <Reveal delay={0.08}>
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.28fr)_minmax(19rem,0.72fr)]">
           <div className="space-y-6">
-            <AssistantPanel
-              initialMessages={messages || []}
-              title="Need help?"
-              subtitle="Ask what to upload, what your status means, or what to do next."
-              suggestedPrompts={[
-                "What should I do next?",
-                "What documents do I need?",
-                "Summarize my uploaded files",
-                "Check if I missed anything",
-              ]}
-            />
-
             <EvidenceManager
               files={recentFiles}
-              title="Recent file updates"
-              description="Check whether each file was received, is under review, or still needs action."
+              title="Pending files"
+              description="Check what was received, what is still under review, and what still needs attention."
               dense
             />
-          </div>
 
-          <div className="space-y-6">
-            <section className="surface-panel p-6">
-              <div className="flex items-center gap-3">
-                <Sparkles className="size-5 text-primary" />
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Helpful next steps
-                </p>
-              </div>
-              <div className="mt-4 space-y-3">
-                {recommendedActions.map((action, index) => (
-                  <div key={action} className="rounded-[22px] bg-muted/80 p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                        {index + 1}
-                      </span>
-                      <p className="text-sm leading-6 text-muted-foreground">{action}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="surface-panel p-6">
+            <section className="surface-panel p-5 sm:p-6">
               <div className="flex items-center gap-3">
                 <Workflow className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Recent activity
+                  Recent updates
                 </p>
               </div>
-              <div className="mt-5">
+              <div className="mt-5 max-h-[28rem] overflow-y-auto pr-2">
                 {recentActivity.length ? (
                   <Timeline events={recentActivity} />
                 ) : (
@@ -335,7 +340,44 @@ export default async function DashboardPage() {
               </div>
             </section>
           </div>
+
+          <div className="space-y-6">
+            <section className="surface-panel p-5 sm:p-6">
+              <div className="flex items-center gap-3">
+                <Sparkles className="size-5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                  Needs your action
+                </p>
+              </div>
+              <div className="mt-4 space-y-3">
+                {recommendedActions.slice(0, 3).map((action, index) => (
+                  <div key={action} className="rounded-[22px] bg-muted/80 p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        {index + 1}
+                      </span>
+                      <p className="text-sm leading-6 text-muted-foreground">{action}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
         </section>
+      </Reveal>
+
+      <Reveal delay={0.1}>
+        <AssistantPanel
+          initialMessages={messages || []}
+          title="Need help?"
+          subtitle="Ask what to upload, what your status means, or what to do next."
+          suggestedPrompts={[
+            "What should I do next?",
+            "What documents do I need?",
+            "Summarize my uploaded files",
+            "Check if I missed anything",
+          ]}
+        />
       </Reveal>
     </div>
   );

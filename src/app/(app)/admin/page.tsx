@@ -352,7 +352,7 @@ export default async function AdminDashboardPage() {
               <div className="flex items-center gap-3">
                 <Sparkles className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Open first
+                  AI operations brief
                 </p>
               </div>
 
@@ -362,7 +362,7 @@ export default async function AdminDashboardPage() {
                   className="mt-4 block rounded-[20px] bg-primary px-4 py-4 text-primary-foreground transition-transform duration-200 hover:-translate-y-0.5"
                 >
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/70">
-                    Recommended next case
+                    Open first
                   </p>
                   <p className="mt-2 font-semibold">{recommendedCase.title}</p>
                   <p className="mt-1 text-sm text-primary-foreground/75">
@@ -390,6 +390,21 @@ export default async function AdminDashboardPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href="/admin/case-queue"
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full px-3")}
+                >
+                  Open queue
+                </Link>
+                <Link
+                  href="/admin/users"
+                  className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-full px-3")}
+                >
+                  Manage access
+                </Link>
               </div>
             </section>
 
@@ -469,7 +484,7 @@ export default async function AdminDashboardPage() {
             <div className="flex items-center gap-3">
               <Workflow className="size-5 text-primary" />
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                Recent operations activity
+                Recent updates
               </p>
             </div>
             <div className="mt-5 max-h-[26rem] overflow-y-auto pr-2">
@@ -490,7 +505,7 @@ export default async function AdminDashboardPage() {
               <div className="flex items-center gap-3">
                 <Users2 className="size-5 text-primary" />
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Access activity
+                  Access updates
                 </p>
               </div>
               <div className="mt-4 space-y-2.5">
