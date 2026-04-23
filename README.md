@@ -2,6 +2,37 @@
 
 MyGOV Agent 2.0 is a GovTech case-management app built in a single Next.js App Router repo. It runs in one live mode only: Firebase Auth for identity, MongoDB for application data, MongoDB GridFS for uploaded files, and Gemini for server-side AI assistance.
 
+## Hackathon Alignment
+
+- Hackathon: `PROJECT 2030: MyAI Future Hackathon`
+- Selected track: `Track 2 - Citizens First (GovTech & Digital Services)`
+- Core challenge addressed: reducing bureaucratic friction in citizen service delivery, case intake, document verification, and follow-up communication
+- Malaysia relevance: the project focuses on end-to-end digital public-service workflows, clearer status visibility, and document-driven case handling that fits real local government service needs including complaints, reminders, renewals, and flood-related aid workflows
+- Build With AI position: Gemini is used as a live server-side intelligence layer for case-aware guidance, summaries, document-context help, and next-step support for both citizens and admins
+
+## Problem
+
+Many public-service flows still create friction for citizens and staff:
+
+- citizens are often unsure where to start, what documents are needed, and what happens next
+- manual case handling leads to repeated questions, delayed reviews, and poor status visibility
+- document-heavy service requests can become especially stressful during time-sensitive situations such as flood-related support cases
+- admins need a clearer triage and review workspace to move cases forward without losing context
+
+MyGOV Agent 2.0 is designed to reduce that friction with one shared live case record across citizen and admin experiences.
+
+## Solution
+
+MyGOV Agent 2.0 provides:
+
+- a guided citizen case-submission flow
+- live evidence upload and review tracking
+- citizen dashboards that make the next step clear
+- an admin operations dashboard and review workspace for queue-based triage
+- server-side Gemini assistance grounded in live case, file, and workflow context
+
+The product goal is simple: help citizens submit and follow a case with confidence while giving public-service teams a clearer way to review, request documents, and decide next actions.
+
 Hero flow:
 
 `citizen login -> dashboard -> upload evidence -> create/open case -> AI help -> admin review -> status update -> citizen sees live change`
@@ -33,6 +64,22 @@ Admin console:
 - AI: Google Gemini, server-side only
 - Maps: Leaflet and OpenStreetMap
 - Validation: Zod
+
+## Why AI Is Core To The Product
+
+This project is not using AI as a decorative chatbot. Gemini is part of the core service workflow:
+
+- citizens can ask what to do next, what documents are needed, and how to understand case status
+- admins receive case-aware support while reviewing files, missing documents, and next decisions
+- prompts are built from live case summaries, evidence state, workflow history, and missing-document context
+- the assistant is designed to reduce uncertainty, repeated back-and-forth, and low-quality submissions
+
+Current implementation notes:
+
+- Gemini is implemented server-side only
+- the assistant works on live application context rather than static demo content
+- the live deployment runs on Google Cloud Run
+- this repository currently centers on Gemini-based intelligence and workflow guidance; it does not yet include Vertex AI Search or Firebase Genkit orchestration in the production codebase
 
 ## Runtime Architecture
 
@@ -108,6 +155,23 @@ If MongoDB, GridFS, Firebase Admin, or Gemini are unavailable, the app returns h
 - Gemini runs server-side only
 - case-aware prompts include summaries, status, files, and missing docs
 - assistant failures return explicit unavailable errors instead of simulated replies
+
+## GovTech Impact
+
+This project is aimed at practical public-service outcomes:
+
+- clearer citizen intake reduces incomplete submissions
+- file review and missing-document handling reduce manual follow-up loops
+- live dashboards improve status transparency for both sides
+- admin queue and review flows improve triage speed and decision clarity
+- a shared record of cases, files, notes, reminders, and events supports more accountable digital service delivery
+
+Potential real-world value:
+
+- better accessibility for citizens who need digital-first government support
+- lower case-handling friction for document-driven service workflows
+- improved response coordination for recurring public-service issues and crisis-related requests
+- stronger trust through honest live status, file review state, and clear next-step guidance
 
 ## Route Overview
 
@@ -199,6 +263,10 @@ Optional admin bootstrap:
 ```bash
 npm run seed:admin -- --email admin@example.com --password "StrongPass123!" --name "First Admin"
 ```
+
+## AI Tooling Disclosure
+
+AI-assisted development tools were used during the hackathon workflow for implementation support and iteration. The team remains responsible for the full codebase and should be able to explain the architecture, flows, and implementation decisions during judging.
 
 ## Security Notes
 
