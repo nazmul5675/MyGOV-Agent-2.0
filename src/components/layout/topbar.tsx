@@ -99,7 +99,7 @@ export function Topbar({
               <p className="truncate text-xs text-muted-foreground">{session.email}</p>
             </div>
           </div>
-          <Link
+          <a
             href="/api/auth/logout"
             className={cn(
               buttonVariants({ variant: "outline", size: "default" }),
@@ -108,7 +108,7 @@ export function Topbar({
           >
             <LogOut className="size-4" />
             Logout
-          </Link>
+          </a>
         </div>
       </div>
 
