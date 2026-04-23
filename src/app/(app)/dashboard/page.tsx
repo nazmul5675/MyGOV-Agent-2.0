@@ -311,58 +311,59 @@ export default async function DashboardPage() {
       </Reveal>
 
       <Reveal delay={0.08}>
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.28fr)_minmax(19rem,0.72fr)]">
-          <div className="space-y-6">
+        <section className="space-y-6">
+          <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(19rem,0.9fr)]">
             <EvidenceManager
               files={recentFiles}
               title="Pending files"
               description="Check what was received, what is still under review, and what still needs attention."
               dense
+              className="h-full"
             />
 
-            <section className="surface-panel p-5 sm:p-6">
-              <div className="flex items-center gap-3">
-                <Workflow className="size-5 text-primary" />
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Recent updates
-                </p>
-              </div>
-              <div className="mt-5 max-h-[28rem] overflow-y-auto pr-2">
-                {recentActivity.length ? (
-                  <Timeline events={recentActivity} />
-                ) : (
-                  <EmptyState
-                    icon={<Workflow className="size-5" />}
-                    title="No live activity yet"
-                    description="Updates will appear here as soon as a case is created or reviewed."
-                  />
-                )}
+            <section className="surface-panel h-full p-5 sm:p-6">
+              <div className="flex h-full flex-col">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="size-5 text-primary" />
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                    Needs your action
+                  </p>
+                </div>
+                <div className="mt-4 flex-1 space-y-3">
+                  {recommendedActions.slice(0, 3).map((action, index) => (
+                    <div key={action} className="rounded-[22px] bg-muted/80 p-4">
+                      <div className="flex items-start gap-3">
+                        <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                          {index + 1}
+                        </span>
+                        <p className="text-sm leading-6 text-muted-foreground">{action}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </section>
           </div>
 
-          <div className="space-y-6">
-            <section className="surface-panel p-5 sm:p-6">
-              <div className="flex items-center gap-3">
-                <Sparkles className="size-5 text-primary" />
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                  Needs your action
-                </p>
-              </div>
-              <div className="mt-4 space-y-3">
-                {recommendedActions.slice(0, 3).map((action, index) => (
-                  <div key={action} className="rounded-[22px] bg-muted/80 p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                        {index + 1}
-                      </span>
-                      <p className="text-sm leading-6 text-muted-foreground">{action}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
+          <section className="surface-panel p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <Workflow className="size-5 text-primary" />
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                Recent updates
+              </p>
+            </div>
+            <div className="mt-5 max-h-[28rem] overflow-y-auto pr-2">
+              {recentActivity.length ? (
+                <Timeline events={recentActivity} />
+              ) : (
+                <EmptyState
+                  icon={<Workflow className="size-5" />}
+                  title="No live activity yet"
+                  description="Updates will appear here as soon as a case is created or reviewed."
+                />
+              )}
+            </div>
+          </section>
         </section>
       </Reveal>
 
