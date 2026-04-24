@@ -53,108 +53,159 @@ Admin console:
 - Email: `first.admin@mygov.local`
 - Password: `Admin12345!`
 
-## Tech Stack
+## Technical Documentation
 
-- Framework: Next.js App Router
-- Language: TypeScript
-- Styling: Tailwind CSS and Lucide Icons
-- Authentication: Firebase Auth with server-side verification via Firebase Admin
-- Database: MongoDB
-- File Storage: MongoDB GridFS
-- AI: Google Gemini, server-side only
-- Maps: Leaflet and OpenStreetMap
-- Validation: Zod
+### Tech Stack
 
-## Why AI Is Core To The Product
+- **Framework:** Next.js App Router
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS and Lucide Icons
+- **Authentication:** Firebase Auth with server-side verification via Firebase Admin
+- **Database:** MongoDB
+- **File Storage:** MongoDB GridFS
+- **AI:** Google Gemini (Server-side only)
+- **Maps:** Leaflet and OpenStreetMap
+- **Validation:** Zod
 
-This project is not using AI as a decorative chatbot. Gemini is part of the core service workflow:
+### System Architecture
 
-- citizens can ask what to do next, what documents are needed, and how to understand case status
-- admins receive case-aware support while reviewing files, missing documents, and next decisions
-- prompts are built from live case summaries, evidence state, workflow history, and missing-document context
-- the assistant is designed to reduce uncertainty, repeated back-and-forth, and low-quality submissions
+The application follows a monolithic architecture built on top of Next.js App Router, combining both frontend UI and backend API routes in a single repository.
 
-Current implementation notes:
+```mermaid
+graph TD;
+    Client[Client Browser] -->|Next.js Server Components / API Routes| Server[Next.js App Server];
+    Server -->|Firebase Admin SDK| Auth[Firebase Auth];
+    Server -->|Mongoose/Native Driver| DB[(MongoDB)];
+    Server -->|GridFSStream| Storage[(MongoDB GridFS)];
+    Server -->|Gemini SDK| AI[Google Gemini API];
+```
 
-- Gemini is implemented server-side only
-- the assistant works on live application context rather than static demo content
-- the live deployment runs on Google Cloud Run
-- this repository currently centers on Gemini-based intelligence and workflow guidance; it does not yet include Vertex AI Search or Firebase Genkit orchestration in the production codebase
+#### Runtime Architecture
 
-## Runtime Architecture
-
-- `src/app/api/*`: route handlers
-- `src/lib/auth/*`: session and identity helpers
-- `src/lib/config/*`: environment checks
-- `src/lib/security/*`: errors and authorization helpers
-- `src/lib/repositories/*`: MongoDB data access
-- `src/lib/services/*`: business logic
+- `src/app/api/*`: Route handlers
+- `src/lib/auth/*`: Session and identity helpers
+- `src/lib/config/*`: Environment checks
+- `src/lib/security/*`: Errors and authorization helpers
+- `src/lib/repositories/*`: MongoDB data access layer
+- `src/lib/services/*`: Core business logic
 - `src/lib/storage/gridfs.ts`: GridFS upload, delete, and download helpers
-- `src/lib/ai/*`: Gemini prompts and model calls
-- `src/lib/audit/*`: audit helpers
-- `src/lib/validation/*`: Zod schemas
-- `src/types/*`: typed document models
+- `src/lib/ai/*`: Gemini prompts, context assembly, and model calls
+- `src/lib/audit/*`: Audit logging helpers
+- `src/lib/validation/*`: Zod schemas for input validation
+- `src/types/*`: Typed document models and API interfaces
 
-There is no separate Express backend, no Firestore dependency, no Firebase Storage dependency in the upload flow, and no runtime demo or prototype mode.
+There is no separate Express backend, no Firestore dependency, no Firebase Storage dependency in the upload flow, and no runtime demo or prototype mode. Everything runs through the Next.js API layer.
 
-## Role Model
+### Database Models
+
+- **Users Collection:** Extends Firebase identities with application-specific roles (`citizen`, `admin`) and profile data.
+- **Cases Collection:** Core entity tracking submissions, statuses (`open`, `under_review`, `action_required`, `closed`), and metadata.
+- **Case Events Collection:** Append-only log of all actions taken on a case for full audit trails.
+- **Files (GridFS):** Binary file chunks and metadata for evidence uploads.
+
+### AI Layer & Workflows (Gemini)
+
+This project is not using AI as a decorative chatbot. Gemini is deeply integrated into the core service workflow to provide context-aware intelligence.
+
+- **Citizen Assistance:** Citizens can query what to do next, what documents are needed, and how to interpret their case status. The AI guides them based on the specific requirements of their case type.
+- **Admin Support:** Admins receive case-aware support while reviewing files. Gemini summarizes cases, highlights missing documents, and suggests next actions or responses.
+- **Context Grounding:** Prompts are dynamically built from live case summaries, evidence state, workflow history, and missing-document context.
+- **Implementation:** Gemini operates purely server-side. Assistant failures return explicit unavailable errors instead of simulated or hallucinated replies. This repository currently focuses on Gemini-based intelligence; it does not yet include Vertex AI Search or Firebase Genkit orchestration.
+
+### Authentication & Authorization
+
+#### Role Model
 
 Supported roles:
-
 - `citizen`
 - `admin`
 
 Rules:
+- Public registration always creates a `citizen`.
+- Admins cannot self-register publicly.
+- Citizen routes redirect/resolve to `/dashboard`.
+- Admin routes redirect/resolve to `/admin`.
+- Role is resolved exclusively from MongoDB user records, not client-selected state.
+- Role changes are strictly admin-only and are logged to `role_audit_logs`.
+- Self-demotion and removal of the last admin are blocked by the backend.
 
-- public registration always creates `citizen`
-- admin cannot self-register publicly
-- citizen routes resolve to `/dashboard`
-- admin routes resolve to `/admin`
-- role is resolved from MongoDB user records, not client-selected state
-- role changes are admin-only and written to `role_audit_logs`
-- self-demotion and last-admin removal are blocked
+#### Data Boundaries
 
-## Data Boundaries
+- **Firebase Auth:** Handles client sign-in, registration, and password reset workflows.
+- **Firebase Admin:** Used server-side to verify ID tokens and manage secure, HTTP-only session cookies.
+- **MongoDB:** Source of truth for users, cases, case events, file metadata, notifications, reminders, chat, admin notes, and role audit logs.
+- **MongoDB GridFS:** Stores all uploaded evidence blobs securely.
+- **Gemini:** Provides live server-side assistant responses based only on verified database state.
 
-- Firebase Auth: client sign-in, registration, password reset
-- Firebase Admin: verify ID tokens, create and verify session cookies
-- MongoDB: users, cases, case events, file metadata, notifications, reminders, chat, admin notes, role audit logs
-- MongoDB GridFS: uploaded evidence blobs
-- Gemini: live server-side assistant responses
+If MongoDB, GridFS, Firebase Admin, or Gemini are unavailable, the app returns explicit failure states rather than gracefully degrading to fake content.
 
-If MongoDB, GridFS, Firebase Admin, or Gemini are unavailable, the app returns honest empty or failure states instead of switching to fake content.
+### Current Backend Capabilities
 
-## Current Backend Capabilities
+#### Auth
+- Firebase ID token exchange via `/api/auth/login`.
+- Server-issued, HTTP-only session cookie generation for protected routes.
+- MongoDB-backed application user resolution using `firebaseUid`.
+- Middleware-enforced citizen/admin protected routing.
 
-### Auth
+#### Cases And Timeline
+- Citizen case creation and own-case reads.
+- Admin queue reads and detailed case reviews.
+- Admin case state mutations.
+- Automatic `case_events` generation for creations, uploads, status changes, document requests, and review actions.
 
-- Firebase ID token exchange in `/api/auth/login`
-- server-issued session cookie for protected routes
-- Mongo-backed app user resolution by `firebaseUid`
-- citizen/admin protected routing
+#### Files
+- Uploads flow securely through `POST /api/uploads`.
+- Binary blobs are chunked and stored in GridFS.
+- Corresponding file metadata is indexed in MongoDB.
+- Secure file streaming via `GET /api/files/[id]`.
+- Admin file reviews update the review status and append notes to the MongoDB metadata.
 
-### Cases And Timeline
+### Route Overview
 
-- citizen case creation
-- citizen own-case reads
-- admin queue reads
-- admin case detail reads
-- admin case actions
-- automatic `case_events` writes for creation, uploads, status changes, doc requests, and review actions
+#### Public Routes
+- `/`
+- `/login`
+- `/register`
+- `/forgot-password`
 
-### Files
+#### Citizen Routes
+- `/dashboard`
+- `/cases/new`
+- `/cases/[id]`
+- `/notifications`
+- `/profile`
 
-- uploads flow through `POST /api/uploads`
-- blobs are stored in GridFS
-- metadata is stored in MongoDB
-- file streaming uses `GET /api/files/[id]`
-- admin review updates write review status and notes back to MongoDB
+#### Admin Routes
+- `/admin`
+- `/admin/cases/[id]`
+- `/admin/users`
 
-### AI Layer
+#### Backend API Routes
+- `/api/auth/login`
+- `/api/auth/register`
+- `/api/auth/logout`
+- `/api/cases`
+- `/api/cases/[id]`
+- `/api/cases/[id]/evidence`
+- `/api/uploads`
+- `/api/files/[id]`
+- `/api/admin/cases/[id]/actions`
+- `/api/admin/cases/[id]/files`
+- `/api/admin/users/[id]/role`
+- `/api/assistant/messages`
+- `/api/users`
+- `/api/notifications`
+- `/api/profile`
+- `/api/health`
 
-- Gemini runs server-side only
-- case-aware prompts include summaries, status, files, and missing docs
-- assistant failures return explicit unavailable errors instead of simulated replies
+### Security Notes
+
+- Firebase Admin SDK operations are strictly confined to the server.
+- Gemini API keys are never exposed to the client.
+- All API route handlers rigorously validate incoming payloads using Zod schemas.
+- Protected API routes and Server Actions verify session validity and RBAC before processing mutations.
+- File blobs are stored centrally in GridFS, separate from normal MongoDB collections.
+- All sensitive actions, particularly role changes, are tracked with audit logs.
 
 ## GovTech Impact
 
@@ -172,48 +223,6 @@ Potential real-world value:
 - lower case-handling friction for document-driven service workflows
 - improved response coordination for recurring public-service issues and crisis-related requests
 - stronger trust through honest live status, file review state, and clear next-step guidance
-
-## Route Overview
-
-Public routes:
-
-- `/`
-- `/login`
-- `/register`
-- `/forgot-password`
-
-Citizen routes:
-
-- `/dashboard`
-- `/cases/new`
-- `/cases/[id]`
-- `/notifications`
-- `/profile`
-
-Admin routes:
-
-- `/admin`
-- `/admin/cases/[id]`
-- `/admin/users`
-
-Backend routes:
-
-- `/api/auth/login`
-- `/api/auth/register`
-- `/api/auth/logout`
-- `/api/cases`
-- `/api/cases/[id]`
-- `/api/cases/[id]/evidence`
-- `/api/uploads`
-- `/api/files/[id]`
-- `/api/admin/cases/[id]/actions`
-- `/api/admin/cases/[id]/files`
-- `/api/admin/users/[id]/role`
-- `/api/assistant/messages`
-- `/api/users`
-- `/api/notifications`
-- `/api/profile`
-- `/api/health`
 
 ## Environment Variables
 
@@ -267,15 +276,6 @@ npm run seed:admin -- --email admin@example.com --password "StrongPass123!" --na
 ## AI Tooling Disclosure
 
 AI-assisted development tools were used during the hackathon workflow for implementation support and iteration. The team remains responsible for the full codebase and should be able to explain the architecture, flows, and implementation decisions during judging.
-
-## Security Notes
-
-- Firebase Admin runs server-side only
-- Gemini keys stay server-side only
-- route handlers validate payloads with Zod
-- protected routes verify the session before mutation
-- file blobs are stored in GridFS, not normal Mongo collections
-- role changes are audited
 
 ## Attribution
 
