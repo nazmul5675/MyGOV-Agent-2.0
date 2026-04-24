@@ -288,4 +288,4 @@ AI-assisted development tools were used during the hackathon workflow for implem
 
 ## License
 
-No license file is included yet. Add one before public redistribution if your submission requires it.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
